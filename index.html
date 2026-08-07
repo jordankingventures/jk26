@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YT View Tracker — Taylor Swift</title>
+  <style>
+    :root {
+      --bg: #0f0f13; --surface: #1a1a24; --surface2: #22222f;
+      --border: #2a2a3a; --accent: #7c5cfc; --accent2: #fc5c7d;
+      --green: #2ecc71; --text: #e8e8f0; --muted: #6666aa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh; padding: 20px 20px 60px;
+      max-width: 1100px; margin: 0 auto;
+    }
+
+    /* Header */
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+    h1 { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
+    h1 span { color: var(--text); }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 0.75rem; color: var(--muted); padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+    .badge.ok { color: var(--green); border-color: var(--green); }
+    .badge.err { color: var(--accent2); border-color: var(--accent2); }
+    button.refresh {
+      background: var(--accent); border: none; border-radius: 7px;
+      color: #fff; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+      padding: 6px 14px; transition: opacity .15s;
+    }
+    button.refresh:hover { opacity: .85; }
+    button.refresh:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Log */
+    .log-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+    .log-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface2);
+    }
+    .log-header h2 { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .log-empty { padding: 16px; color: var(--muted); font-size: 0.8rem; }
+
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .log-table th {
+      text-align: left; color: var(--muted); font-size: 0.68rem;
+      text-transform: uppercase; letter-spacing: .05em;
+      padding: 7px 14px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;
+    }
+    .log-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: var(--surface2); }
+    .new-row td { animation: rowFade .6s ease; }
+    @keyframes rowFade { from { background: #7c5cfc18; } to { background: transparent; } }
+
+    /* Delta colours */
+    .pos { color: var(--green); } .neg { color: var(--accent2); } .neu { color: var(--muted); }
+
+    /* Video table */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+    .section-header h2 { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .toolbar input[type=text] {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-size: 0.82rem; padding: 6px 12px; width: 220px;
+    }
+    .toolbar input[type=text]:focus { outline: none; border-color: var(--accent); }
+    .toolbar select {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-size: 0.8rem; padding: 6px 10px; cursor: pointer;
+    }
+
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    thead { background: var(--surface2); }
+    th {
+      text-align: left; color: var(--muted); font-weight: 600;
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: .05em;
+      padding: 9px 14px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    th:hover { color: var(--text); }
+    td { padding: 8px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .rank { color: var(--muted); font-size: 0.75rem; width: 32px; }
+    .thumb img { width: 60px; height: 34px; object-fit: cover; border-radius: 3px; display: block; }
+    .video-title a { color: var(--text); text-decoration: none; font-weight: 500; }
+    .video-title a:hover { color: var(--accent); }
+    .vid-date { color: var(--muted); font-size: 0.72rem; margin-top: 2px; }
+    .views-num { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    .state-box { text-align: center; padding: 48px 20px; color: var(--muted); }
+    .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .err-txt { color: var(--accent2); font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📺 <span>Taylor Swift</span> — View Tracker</h1>
+  <div class="header-right">
+    <span class="badge" id="badge-updated">Laden...</span>
+    <button class="refresh" id="btn-refresh" onclick="loadData()">↻ Ververs</button>
+  </div>
+</header>
+
+<!-- Log -->
+<div class="log-wrap">
+  <div class="log-header">
+    <h2>Refresh log</h2>
+  </div>
+  <div id="log-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+</div>
+
+<!-- Video table -->
+<div class="section-header">
+  <h2 id="vid-count-label" style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Video's</h2>
+  <div class="toolbar">
+    <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="renderTable()" />
+    <select id="sort-select" onchange="renderTable()">
+      <option value="views-desc">Meeste views</option>
+      <option value="views-asc">Minste views</option>
+      <option value="delta-desc">Meeste groei dit uur</option>
+      <option value="delta-day-desc">Meeste groei vandaag</option>
+      <option value="date-desc">Nieuwste eerst</option>
+      <option value="title-asc">Titel A–Z</option>
+    </select>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="rank">#</th>
+        <th></th>
+        <th>Titel</th>
+        <th onclick="setSortAndRender('views-desc')">Views</th>
+        <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
+        <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag</th>
+      </tr>
+    </thead>
+    <tbody id="video-tbody">
+      <tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+const fmt = (n) => Number(n).toLocaleString('nl-NL');
+
+function dHtml(d) {
+  if (d === null || d === undefined) return '<span class="neu">—</span>';
+  const cls = d > 0 ? 'pos' : d < 0 ? 'neg' : 'neu';
+  return `<span class="${cls}">${d > 0 ? '+' : ''}${fmt(d)}</span>`;
+}
+
+let appData = null;
+
+async function loadData() {
+  document.getElementById('btn-refresh').disabled = true;
+  document.getElementById('badge-updated').textContent = 'Laden...';
+  document.getElementById('badge-updated').className = 'badge';
+
+  try {
+    // Cache busting zodat de browser altijd de nieuwste JSON ophaalt
+    const resp = await fetch('yt_data.json?t=' + Date.now());
+    if (!resp.ok) throw new Error(`yt_data.json niet gevonden (${resp.status})`);
+    appData = await resp.json();
+    renderLog();
+    renderTable();
+    const b = document.getElementById('badge-updated');
+    // Toon tijdstip van meest recente server-run
+    const lastTs = appData.log?.[0]?.ts;
+    b.textContent = lastTs
+      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' })
+      : 'Geladen';
+    b.className = 'badge ok';
+  } catch (err) {
+    document.getElementById('log-body').innerHTML =
+      `<div class="log-empty"><span class="err-txt">Fout: </span>${err.message}<br><small>Zorg dat fetch_views.php minstens één keer gedraaid heeft.</small></div>`;
+    const b = document.getElementById('badge-updated');
+    b.textContent = 'Fout';
+    b.className = 'badge err';
+  }
+
+  document.getElementById('btn-refresh').disabled = false;
+  // Automatisch herladen na 5 minuten (data komt van server, geen API-quota kosten)
+  setTimeout(loadData, 5 * 60 * 1000);
+}
+
+function renderLog() {
+  const log = appData?.log || [];
+  const el  = document.getElementById('log-body');
+  if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
+
+  const rows = log.map((e, i) => {
+    const dt = new Date(e.ts);
+    const ts = dt.toLocaleDateString('nl-NL', { day:'2-digit', month:'short' })
+             + ' ' + dt.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
+    return `<tr class="${i === 0 ? 'new-row' : ''}">
+      <td>${ts}</td>
+      <td>${fmt(e.official_total ?? 0)}</td>
+      <td>${fmt(e.pub_total)}</td>
+      <td>${e.video_count ?? '—'}</td>
+      <td>${dHtml(e.views_today)}</td>
+      <td>${dHtml(e.delta_hour)}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `<table class="log-table">
+    <thead><tr>
+      <th>Tijdstip (server)</th>
+      <th>Officieel totaal</th>
+      <th>Som publieke video's</th>
+      <th>Aantal video's</th>
+      <th>Views vandaag</th>
+      <th>+/− vorige meting</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function renderTable() {
+  if (!appData?.videos) return;
+  const query = document.getElementById('search-input').value.toLowerCase();
+  const sort  = document.getElementById('sort-select').value;
+
+  // Bouw delta-lookup uit log (uur en dag)
+  const latest  = appData.log?.[0];
+  const prevLog = appData.log?.[1];
+  const today   = new Date().toISOString().split('T')[0];
+  const dayLog  = appData.log?.findLast?.(e => e.ts?.startsWith(today + 'T00')) ?? appData.log?.[appData.log.length - 1];
+
+  // views per video uit last_snapshot en day_baseline
+  const lastViews = appData.last_snapshot?.views ?? {};
+  const dayViews  = appData.day_baseline?.views   ?? {};
+
+  let filtered = appData.videos.filter(v => v.title.toLowerCase().includes(query));
+
+  const dHour = (v) => lastViews[v.id] !== undefined ? v.views - lastViews[v.id] : null;
+  // dag delta: current minus dag-baseline
+  const dDay  = (v) => dayViews[v.id]  !== undefined ? v.views - dayViews[v.id]  : null;
+
+  filtered.sort((a, b) => {
+    if (sort === 'views-desc')     return b.views - a.views;
+    if (sort === 'views-asc')      return a.views - b.views;
+    if (sort === 'title-asc')      return a.title.localeCompare(b.title);
+    if (sort === 'date-desc')      return new Date(b.published_at) - new Date(a.published_at);
+    if (sort === 'delta-desc')     return (dHour(b) ?? -Infinity) - (dHour(a) ?? -Infinity);
+    if (sort === 'delta-day-desc') return (dDay(b)  ?? -Infinity) - (dDay(a)  ?? -Infinity);
+    return 0;
+  });
+
+  document.getElementById('vid-count-label').textContent =
+    `${filtered.length} van ${appData.videos.length} video's`;
+
+  const rows = filtered.map((v, i) => {
+    const pubDate = v.published_at
+      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric' })
+      : '';
+    return `<tr>
+      <td class="rank">${i + 1}</td>
+      <td><img src="${v.thumbnail}" alt="" loading="lazy" width="60" height="34" style="border-radius:3px;display:block;object-fit:cover"/></td>
+      <td class="video-title">
+        <a href="https://youtube.com/watch?v=${v.id}" target="_blank" rel="noopener">${esc(v.title)}</a>
+        <div class="vid-date">${pubDate}</div>
+      </td>
+      <td class="views-num">${fmt(v.views)}</td>
+      <td>${dHtml(dHour(v))}</td>
+      <td>${dHtml(dDay(v))}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('video-tbody').innerHTML =
+    rows || `<tr><td colspan="6"><div class="state-box">Geen video's gevonden.</div></td></tr>`;
+}
+
+function setSortAndRender(val) { document.getElementById('sort-select').value = val; renderTable(); }
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+loadData();
+</script>
+</body>
+</html>
