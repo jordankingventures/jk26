@@ -2,8 +2,8 @@ name: Fetch YouTube Views
 
 on:
   schedule:
-    - cron: '0 * * * *'   # elk uur
-  workflow_dispatch:        # ook handmatig te starten
+    - cron: '*/5 * * * *'  # elke 5 minuten
+  workflow_dispatch:         # ook handmatig te starten
 
 permissions:
   contents: write
