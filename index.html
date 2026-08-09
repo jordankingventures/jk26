@@ -125,7 +125,7 @@
       <option value="views-desc">Meeste views</option>
       <option value="views-asc">Minste views</option>
       <option value="delta-desc">Meeste groei dit uur</option>
-      <option value="delta-day-desc">Meeste groei vandaag</option>
+      <option value="delta-day-desc">Meeste groei vandaag (PT)</option>
       <option value="date-desc">Nieuwste eerst</option>
       <option value="title-asc">Titel A–Z</option>
     </select>
@@ -141,7 +141,7 @@
         <th>Titel</th>
         <th onclick="setSortAndRender('views-desc')">Views</th>
         <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
-        <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag</th>
+        <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (PT)</th>
       </tr>
     </thead>
     <tbody id="video-tbody">
@@ -152,6 +152,7 @@
 
 <script>
 const fmt = (n) => Number(n).toLocaleString('nl-NL');
+const PT_TZ = 'America/Los_Angeles'; // YouTube Charts / Kalshi-resolver hanteert deze daggrens
 
 function dHtml(d) {
   if (d === null || d === undefined) return '<span class="neu">—</span>';
@@ -177,7 +178,7 @@ async function loadData() {
     // Toon tijdstip van meest recente server-run
     const lastTs = appData.log?.[0]?.ts;
     b.textContent = lastTs
-      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' })
+      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ }) + ' PT'
       : 'Geladen';
     b.className = 'badge ok';
   } catch (err) {
@@ -200,8 +201,8 @@ function renderLog() {
 
   const rows = log.map((e, i) => {
     const dt = new Date(e.ts);
-    const ts = dt.toLocaleDateString('nl-NL', { day:'2-digit', month:'short' })
-             + ' ' + dt.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
+    const ts = dt.toLocaleDateString('nl-NL', { day:'2-digit', month:'short', timeZone: PT_TZ })
+             + ' ' + dt.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
     return `<tr class="${i === 0 ? 'new-row' : ''}">
       <td>${ts}</td>
       <td>${fmt(e.official_total ?? 0)}</td>
@@ -214,11 +215,11 @@ function renderLog() {
 
   el.innerHTML = `<table class="log-table">
     <thead><tr>
-      <th>Tijdstip (server)</th>
+      <th>Tijdstip (PT)</th>
       <th>Officieel totaal</th>
       <th>Som publieke video's</th>
       <th>Aantal video's</th>
-      <th>Views vandaag</th>
+      <th>Views vandaag (PT)</th>
       <th>+/− vorige meting</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -261,7 +262,7 @@ function renderTable() {
 
   const rows = filtered.map((v, i) => {
     const pubDate = v.published_at
-      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric' })
+      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: PT_TZ })
       : '';
     return `<tr>
       <td class="rank">${i + 1}</td>

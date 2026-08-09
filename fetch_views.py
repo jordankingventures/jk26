@@ -9,11 +9,14 @@ import os
 import urllib.request
 import urllib.parse
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 API_KEY    = os.environ["YOUTUBE_API_KEY"]
 CHANNEL_ID = "UCqECaJ8Gagnn7YCbPEzWH6g"
 DATA_FILE  = "yt_data.json"
 CACHE_FILE = "yt_video_ids.json"
+# YouTube Charts (de Kalshi-resolver) hanteert Pacific Time als daggrens, niet UTC.
+PT = ZoneInfo("America/Los_Angeles")
 
 
 def yt_get(endpoint, params):
@@ -36,7 +39,7 @@ def get_channel_info():
 
 
 def get_video_ids(uploads_playlist_id):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(PT).strftime("%Y-%m-%d")
 
     if os.path.exists(CACHE_FILE):
         cache = json.loads(open(CACHE_FILE).read())
@@ -88,9 +91,9 @@ def save_snapshot(videos, official_total):
 
     pub_total = sum(v["views"] for v in videos)
     ts        = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    today     = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today     = datetime.now(PT).strftime("%Y-%m-%d")  # PT-dag, matcht charts.youtube.com
 
-    # Dag-baseline: reset elke dag
+    # Dag-baseline: reset elke dag (op Pacific Time middernacht)
     if not data["day_baseline"] or data["day_baseline"].get("date") != today:
         data["day_baseline"] = {
             "date":  today,
