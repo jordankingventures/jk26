@@ -56,11 +56,12 @@
     @keyframes rowFade { from { background: #7c5cfc18; } to { background: transparent; } }
 
     /* Dag-groepering in refresh log */
-    .day-row td { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface2); padding: 9px 14px 8px; border-bottom: 1px solid var(--border); white-space: normal; }
+    .day-row td { background: var(--surface2); padding: 9px 14px 8px; border-bottom: 1px solid var(--border); }
     .day-row:first-child td { border-top: none; }
-    .day-label { font-weight: 700; font-size: 0.8rem; text-transform: capitalize; color: var(--text); }
+    .day-row-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; }
+    .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.8rem; text-transform: capitalize; color: var(--text); }
     .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
-    .day-total { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.85rem; white-space: nowrap; }
+    .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.85rem; white-space: nowrap; }
 
     /* Berekend 00:00-record onderaan elke dag */
     .midnight-row td { font-style: italic; color: var(--muted); border-bottom: 1px dashed var(--border); cursor: help; }
@@ -231,7 +232,6 @@ function renderLog() {
       <td>${fmt(baseTotal)}</td>
       <td>—</td>
       <td>${dHtml(0)}</td>
-      <td>—</td>
     </tr>`;
   };
 
@@ -246,9 +246,11 @@ function renderLog() {
       groupKey = key;
       groupLatestEntry = e;
       const isToday = key === todayKey;
-      rows += `<tr class="day-row"><td colspan="6">
-        <span class="day-label">${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
-        <span class="day-total">${dHtml(e.views_today)} views</span>
+      rows += `<tr class="day-row"><td colspan="5">
+        <div class="day-row-inner">
+          <span class="day-label">${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
+          <span class="day-total">${dHtml(e.views_today)} views</span>
+        </div>
       </td></tr>`;
     }
     const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
@@ -258,7 +260,6 @@ function renderLog() {
       <td>${fmt(e.pub_total)}</td>
       <td>${e.video_count ?? '—'}</td>
       <td>${dHtml(e.views_today)}</td>
-      <td>${dHtml(e.delta_hour)}</td>
     </tr>`;
   });
   if (groupKey !== null) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
@@ -270,7 +271,6 @@ function renderLog() {
       <th>Som publieke video's</th>
       <th>Aantal video's</th>
       <th>Views vandaag (PT)</th>
-      <th>+/− vorige meting</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
