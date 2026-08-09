@@ -81,6 +81,48 @@ def get_video_details(ids):
     return videos
 
 
+def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
+    """
+    Schat de views per video op exact 00:00 Pacific Time van `today`.
+    Metingen komen onregelmatig binnen (elke ~1-2 uur, soms mislukt een run), dus de
+    eerste meting na middernacht ligt meestal al wat na 00:00 en bevat dan groei die
+    anders ten onrechte bij 'gisteren' zou horen. We interpoleren lineair tussen de
+    laatste meting vóór middernacht (last_snapshot) en de eerste erna (videos/now_utc)
+    naar het exacte 00:00-tijdstip.
+    """
+    curr_views = {v["id"]: v["views"] for v in videos}
+
+    if not last_snapshot:
+        return {"date": today, "views": curr_views, "interpolated": False}
+
+    try:
+        prev_ts_utc = datetime.strptime(last_snapshot["ts"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except (KeyError, ValueError):
+        return {"date": today, "views": curr_views, "interpolated": False}
+
+    midnight_utc = datetime.strptime(today, "%Y-%m-%d").replace(tzinfo=PT).astimezone(timezone.utc)
+    span_seconds = (now_utc - prev_ts_utc).total_seconds()
+
+    if span_seconds <= 0:
+        return {"date": today, "views": curr_views, "interpolated": False}
+
+    frac = (midnight_utc - prev_ts_utc).total_seconds() / span_seconds
+    frac = max(0.0, min(1.0, frac))  # clamp: bij een gemiste dag of rare gap niet extrapoleren
+
+    prev_views = last_snapshot.get("views", {})
+    estimated = {}
+    for vid, v_now in curr_views.items():
+        v_prev = prev_views.get(vid)
+        estimated[vid] = v_now if v_prev is None else round(v_prev + frac * (v_now - v_prev))
+
+    return {
+        "date":          today,
+        "views":         estimated,
+        "interpolated":  True,
+        "gap_minutes":   round(span_seconds / 60, 1),
+    }
+
+
 def save_snapshot(videos, official_total):
     data = {"log": [], "day_baseline": None, "last_snapshot": None, "videos": []}
     if os.path.exists(DATA_FILE):
@@ -90,15 +132,13 @@ def save_snapshot(videos, official_total):
             pass
 
     pub_total = sum(v["views"] for v in videos)
-    ts        = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    today     = datetime.now(PT).strftime("%Y-%m-%d")  # PT-dag, matcht charts.youtube.com
+    now_utc   = datetime.now(timezone.utc)
+    ts        = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    today     = now_utc.astimezone(PT).strftime("%Y-%m-%d")  # PT-dag, matcht charts.youtube.com
 
-    # Dag-baseline: reset elke dag (op Pacific Time middernacht)
+    # Dag-baseline: reset elke dag op middernacht Pacific Time, geschat via interpolatie.
     if not data["day_baseline"] or data["day_baseline"].get("date") != today:
-        data["day_baseline"] = {
-            "date":  today,
-            "views": {v["id"]: v["views"] for v in videos},
-        }
+        data["day_baseline"] = estimate_midnight_baseline(videos, data.get("last_snapshot"), today, now_utc)
 
     base_total  = sum(data["day_baseline"]["views"].values())
     views_today = pub_total - base_total
