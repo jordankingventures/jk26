@@ -55,6 +55,15 @@
     .new-row td { animation: rowFade .6s ease; }
     @keyframes rowFade { from { background: #7c5cfc18; } to { background: transparent; } }
 
+    /* Dag-groepering in refresh log */
+    .day-row td { background: var(--surface2); padding: 9px 14px 8px; border-bottom: 1px solid var(--border); white-space: normal; }
+    .day-row:first-child td { border-top: none; }
+    .day-row-inner { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .day-label { font-weight: 700; font-size: 0.8rem; text-transform: capitalize; color: var(--text); }
+    .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
+    .day-total { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.85rem; white-space: nowrap; }
+    .day-note { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+
     /* Delta colours */
     .pos { color: var(--green); } .neg { color: var(--accent2); } .neu { color: var(--muted); }
 
@@ -199,11 +208,32 @@ function renderLog() {
   const el  = document.getElementById('log-body');
   if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
 
-  const rows = log.map((e, i) => {
-    const dt = new Date(e.ts);
-    const ts = dt.toLocaleDateString('nl-NL', { day:'2-digit', month:'short', timeZone: PT_TZ })
-             + ' ' + dt.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
-    return `<tr class="${i === 0 ? 'new-row' : ''}">
+  const ptDateKey   = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: PT_TZ }); // YYYY-MM-DD, sorteerbaar
+  const ptDateLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: PT_TZ });
+  const todayKey    = new Date().toLocaleDateString('en-CA', { timeZone: PT_TZ });
+
+  let rows = '';
+  let groupKey = null;
+
+  log.forEach((e, i) => {
+    const key = ptDateKey(e.ts);
+    if (key !== groupKey) {
+      groupKey = key;
+      const isToday = key === todayKey;
+      const baseline = appData.day_baseline;
+      const note = (isToday && baseline?.date === key && baseline?.interpolated)
+        ? `<span class="day-note">startpunt 00:00 PT geïnterpoleerd (meetgat ${baseline.gap_minutes} min tussen vorige en eerste meting)</span>`
+        : '';
+      rows += `<tr class="day-row"><td colspan="6">
+        <div class="day-row-inner">
+          <span class="day-label">${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
+          <span class="day-total">${dHtml(e.views_today)} views</span>
+        </div>
+        ${note}
+      </td></tr>`;
+    }
+    const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
+    rows += `<tr class="${i === 0 ? 'new-row' : ''}">
       <td>${ts}</td>
       <td>${fmt(e.official_total ?? 0)}</td>
       <td>${fmt(e.pub_total)}</td>
@@ -211,7 +241,7 @@ function renderLog() {
       <td>${dHtml(e.views_today)}</td>
       <td>${dHtml(e.delta_hour)}</td>
     </tr>`;
-  }).join('');
+  });
 
   el.innerHTML = `<table class="log-table">
     <thead><tr>
