@@ -58,11 +58,14 @@
     .new-row td { animation: rowFade .6s ease; }
     @keyframes rowFade { from { background: #7c5cfc18; } to { background: transparent; } }
 
-    /* Dag-groepering in refresh log */
+    /* Dag-groepering in refresh log (inklapbaar) */
+    .day-row { cursor: pointer; user-select: none; }
     .day-row td { background: var(--surface2); padding: 9px 14px 8px; border-bottom: 1px solid var(--border); }
+    .day-row:hover td { background: var(--surface2); filter: brightness(1.12); }
     .day-row:first-child td { border-top: none; }
     .day-row-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; }
     .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.8rem; text-transform: capitalize; color: var(--text); }
+    .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
     .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.85rem; white-space: nowrap; }
 
@@ -74,9 +77,19 @@
     /* Delta colours */
     .pos { color: var(--green); } .neg { color: var(--accent2); } .neu { color: var(--muted); }
 
-    /* Video table */
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
-    .section-header h2 { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    /* Video table (inklapbaar) */
+    .video-details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+    .video-summary {
+      display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer;
+      padding: 10px 16px; background: var(--surface2);
+    }
+    .video-summary::-webkit-details-marker { display: none; }
+    .video-summary h2 { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .summary-chevron { display: inline-block; color: var(--muted); font-size: 0.7rem; transition: transform .15s; }
+    .video-details[open] .summary-chevron { transform: rotate(90deg); }
+    .video-details[open] .video-summary { border-bottom: 1px solid var(--border); }
+
+    .section-header { display: flex; align-items: center; justify-content: flex-end; margin: 12px 16px 10px; gap: 10px; flex-wrap: wrap; }
     .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .toolbar input[type=text] {
       background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
@@ -88,7 +101,7 @@
       color: var(--text); font-size: 0.8rem; padding: 6px 10px; cursor: pointer;
     }
 
-    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--border); }
     table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
     thead { background: var(--surface2); }
     th {
@@ -158,38 +171,44 @@
 </div>
 
 <!-- Video table -->
-<div class="section-header">
-  <h2 id="vid-count-label" style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Video's</h2>
-  <div class="toolbar">
-    <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="renderTable()" />
-    <select id="sort-select" onchange="renderTable()">
-      <option value="views-desc">Meeste views</option>
-      <option value="views-asc">Minste views</option>
-      <option value="delta-desc">Meeste groei dit uur</option>
-      <option value="delta-day-desc">Meeste groei vandaag (PT)</option>
-      <option value="date-desc">Nieuwste eerst</option>
-      <option value="title-asc">Titel A–Z</option>
-    </select>
-  </div>
-</div>
+<details class="video-details" id="video-details">
+  <summary class="video-summary">
+    <span class="summary-chevron">▸</span>
+    <h2 id="vid-count-label">Video's</h2>
+  </summary>
 
-<div class="table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th class="rank">#</th>
-        <th></th>
-        <th>Titel</th>
-        <th onclick="setSortAndRender('views-desc')">Views</th>
-        <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
-        <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (PT)</th>
-      </tr>
-    </thead>
-    <tbody id="video-tbody">
-      <tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>
-    </tbody>
-  </table>
-</div>
+  <div class="section-header">
+    <div class="toolbar">
+      <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="renderTable()" />
+      <select id="sort-select" onchange="renderTable()">
+        <option value="views-desc">Meeste views</option>
+        <option value="views-asc">Minste views</option>
+        <option value="delta-desc">Meeste groei dit uur</option>
+        <option value="delta-day-desc">Meeste groei vandaag (PT)</option>
+        <option value="date-desc">Nieuwste eerst</option>
+        <option value="title-asc">Titel A–Z</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th></th>
+          <th>Titel</th>
+          <th onclick="setSortAndRender('views-desc')">Views</th>
+          <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
+          <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (PT)</th>
+        </tr>
+      </thead>
+      <tbody id="video-tbody">
+        <tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</details>
 
 <script>
 const fmt = (n) => Number(n).toLocaleString('nl-NL');
@@ -202,6 +221,12 @@ function dHtml(d) {
 }
 
 let appData = null;
+let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
+
+function toggleDay(key) {
+  if (collapsedDays.has(key)) collapsedDays.delete(key); else collapsedDays.add(key);
+  renderLog();
+}
 
 async function loadData() {
   document.getElementById('btn-refresh').disabled = true;
@@ -244,6 +269,13 @@ function renderLog() {
   const ptDateLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: PT_TZ });
   const todayKey    = new Date().toLocaleDateString('en-CA', { timeZone: PT_TZ });
 
+  // Standaard: alleen vandaag uitgeklapt, oudere dagen ingeklapt. Wordt eenmalig
+  // bepaald en blijft daarna staan totdat de gebruiker zelf een dag toggelt.
+  if (collapsedDays === null) {
+    const allKeys = [...new Set(log.map(e => ptDateKey(e.ts)))];
+    collapsedDays = new Set(allKeys.filter(k => k !== todayKey));
+  }
+
   // "00:00"-regel: het teruggerekende dagtotaal op middernacht PT, afgeleid uit wat
   // al gelogd staat (pub_total - views_today) — geen extra data nodig.
   const midnightRowHtml = (entry, key, isToday) => {
@@ -270,27 +302,30 @@ function renderLog() {
   log.forEach((e, i) => {
     const key = ptDateKey(e.ts);
     if (key !== groupKey) {
-      if (groupKey !== null) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
+      if (groupKey !== null && !collapsedDays.has(groupKey)) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
       groupKey = key;
       groupLatestEntry = e;
       const isToday = key === todayKey;
-      rows += `<tr class="day-row"><td colspan="5">
+      const isCollapsed = collapsedDays.has(key);
+      rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="5">
         <div class="day-row-inner">
-          <span class="day-label">${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
+          <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
           <span class="day-total">${dHtml(e.views_today)} views</span>
         </div>
       </td></tr>`;
     }
-    const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
-    rows += `<tr class="${i === 0 ? 'new-row' : ''}">
-      <td>${ts}</td>
-      <td>${fmt(e.official_total ?? 0)}</td>
-      <td>${fmt(e.pub_total)}</td>
-      <td>${e.video_count ?? '—'}</td>
-      <td>${dHtml(e.views_today)}</td>
-    </tr>`;
+    if (!collapsedDays.has(groupKey)) {
+      const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
+      rows += `<tr class="${i === 0 ? 'new-row' : ''}">
+        <td>${ts}</td>
+        <td>${fmt(e.official_total ?? 0)}</td>
+        <td>${fmt(e.pub_total)}</td>
+        <td>${e.video_count ?? '—'}</td>
+        <td>${dHtml(e.views_today)}</td>
+      </tr>`;
+    }
   });
-  if (groupKey !== null) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
+  if (groupKey !== null && !collapsedDays.has(groupKey)) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
 
   el.innerHTML = `<table class="log-table">
     <thead><tr>
