@@ -222,10 +222,17 @@ function dHtml(d) {
 
 let appData = null;
 let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
+let collapsedChannels = new Set(); // kanalen die de gebruiker heeft ingeklapt in de videolijst
+const CHANNEL_ORDER = ['Hoofdkanaal', 'Topic']; // vaste weergavevolgorde; onbekende labels achteraan
 
 function toggleDay(key) {
   if (collapsedDays.has(key)) collapsedDays.delete(key); else collapsedDays.add(key);
   renderLog();
+}
+
+function toggleChannel(label) {
+  if (collapsedChannels.has(label)) collapsedChannels.delete(label); else collapsedChannels.add(label);
+  renderTable();
 }
 
 async function loadData() {
@@ -344,23 +351,15 @@ function renderTable() {
   const query = document.getElementById('search-input').value.toLowerCase();
   const sort  = document.getElementById('sort-select').value;
 
-  // Bouw delta-lookup uit log (uur en dag)
-  const latest  = appData.log?.[0];
-  const prevLog = appData.log?.[1];
-  const today   = new Date().toISOString().split('T')[0];
-  const dayLog  = appData.log?.findLast?.(e => e.ts?.startsWith(today + 'T00')) ?? appData.log?.[appData.log.length - 1];
-
   // views per video uit last_snapshot en day_baseline
   const lastViews = appData.last_snapshot?.views ?? {};
   const dayViews  = appData.day_baseline?.views   ?? {};
-
-  let filtered = appData.videos.filter(v => v.title.toLowerCase().includes(query));
 
   const dHour = (v) => lastViews[v.id] !== undefined ? v.views - lastViews[v.id] : null;
   // dag delta: current minus dag-baseline
   const dDay  = (v) => dayViews[v.id]  !== undefined ? v.views - dayViews[v.id]  : null;
 
-  filtered.sort((a, b) => {
+  const sortFn = (a, b) => {
     if (sort === 'views-desc')     return b.views - a.views;
     if (sort === 'views-asc')      return a.views - b.views;
     if (sort === 'title-asc')      return a.title.localeCompare(b.title);
@@ -368,12 +367,29 @@ function renderTable() {
     if (sort === 'delta-desc')     return (dHour(b) ?? -Infinity) - (dHour(a) ?? -Infinity);
     if (sort === 'delta-day-desc') return (dDay(b)  ?? -Infinity) - (dDay(a)  ?? -Infinity);
     return 0;
-  });
+  };
+
+  const filtered = appData.videos.filter(v => v.title.toLowerCase().includes(query));
 
   document.getElementById('vid-count-label').textContent =
     `${filtered.length} van ${appData.videos.length} video's`;
 
-  const rows = filtered.map((v, i) => {
+  // Groeperen per kanaal (Hoofdkanaal / Topic / evt. toekomstige kanalen)
+  const groups = new Map();
+  for (const v of filtered) {
+    const label = v.channel || 'Overig';
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(v);
+  }
+  const orderedLabels = [...groups.keys()].sort((a, b) => {
+    const ia = CHANNEL_ORDER.indexOf(a), ib = CHANNEL_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  const rowHtml = (v, i) => {
     const pubDate = v.published_at
       ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: PT_TZ })
       : '';
@@ -388,7 +404,21 @@ function renderTable() {
       <td>${dHtml(dHour(v))}</td>
       <td>${dHtml(dDay(v))}</td>
     </tr>`;
-  }).join('');
+  };
+
+  let rows = '';
+  for (const label of orderedLabels) {
+    const group = groups.get(label).sort(sortFn);
+    const totalViews = group.reduce((s, v) => s + v.views, 0);
+    const isCollapsed = collapsedChannels.has(label);
+    rows += `<tr class="day-row" onclick="toggleChannel('${label}')"><td colspan="6">
+      <div class="day-row-inner">
+        <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${esc(label)}</span>
+        <span class="day-total">${fmt(group.length)} video's · ${fmt(totalViews)} views</span>
+      </div>
+    </td></tr>`;
+    if (!isCollapsed) rows += group.map(rowHtml).join('');
+  }
 
   document.getElementById('video-tbody').innerHTML =
     rows || `<tr><td colspan="6"><div class="state-box">Geen video's gevonden.</div></td></tr>`;

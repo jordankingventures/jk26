@@ -213,9 +213,13 @@ if __name__ == "__main__":
             cache = {}
 
     all_ids = []
+    id_to_channel = {}
     for c in CHANNELS:
         info = channels_info[c["id"]]
-        all_ids.extend(get_video_ids(c["id"], info["uploads_playlist_id"], cache))
+        ids  = get_video_ids(c["id"], info["uploads_playlist_id"], cache)
+        all_ids.extend(ids)
+        for vid in ids:
+            id_to_channel.setdefault(vid, c["label"])  # eerste kanaal in CHANNELS wint bij overlap
 
     with open(CACHE_FILE, "w") as f:
         json.dump(cache, f)
@@ -223,7 +227,9 @@ if __name__ == "__main__":
     # Dedupliceren voor het geval een video-ID toch in meerdere kanalen voorkomt.
     unique_ids = list(dict.fromkeys(all_ids))
 
-    videos         = get_video_details(unique_ids)
+    videos = get_video_details(unique_ids)
+    for v in videos:
+        v["channel"] = id_to_channel.get(v["id"], "Onbekend")
     pub_total      = sum(v["views"] for v in videos)
     official_total = sum(info["official_view_count"] for info in channels_info.values())
 
