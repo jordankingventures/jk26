@@ -1,7 +1,8 @@
 """
 YouTube View Tracker — fetch_views.py
-Draait elk uur via GitHub Actions.
-Haalt views op van alle Taylor Swift video's en slaat op in yt_data.json.
+Draait via GitHub Actions (getriggerd door cron-job.org, elke ~15 min).
+Haalt views op van alle Taylor Swift video's over meerdere kanalen heen
+en slaat op in yt_data.json.
 """
 
 import json
@@ -12,11 +13,20 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 API_KEY    = os.environ["YOUTUBE_API_KEY"]
-CHANNEL_ID = "UCqECaJ8Gagnn7YCbPEzWH6g"
 DATA_FILE  = "yt_data.json"
 CACHE_FILE = "yt_video_ids.json"
 # YouTube Charts (de Kalshi-resolver) hanteert Pacific Time als daggrens, niet UTC.
 PT = ZoneInfo("America/Los_Angeles")
+
+# Alle kanalen die bij deze artiest horen. Het "Topic"-kanaal is een door
+# YouTube/het label auto-gegenereerd kanaal voor officiële audio (incl.
+# remixen en alternatieve versies) dat volledig los staat van het
+# hoofdkanaal — eigen video-ID's, eigen viewcounters, en werd hiervoor
+# helemaal niet meegeteld.
+CHANNELS = [
+    {"id": "UCqECaJ8Gagnn7YCbPEzWH6g", "label": "Hoofdkanaal"},
+    {"id": "UCPC0L1d253x-KuMNwa05TpA", "label": "Topic"},
+]
 
 
 def yt_get(endpoint, params):
@@ -29,23 +39,26 @@ def yt_get(endpoint, params):
     return data
 
 
-def get_channel_info():
-    data = yt_get("channels", {"id": CHANNEL_ID, "part": "contentDetails,statistics"})
-    item = data["items"][0]
-    return {
-        "uploads_playlist_id": item["contentDetails"]["relatedPlaylists"]["uploads"],
-        "official_view_count":  int(item["statistics"]["viewCount"]),
-    }
+def get_channels_info(channel_ids):
+    """Eén API-call voor alle kanalen tegelijk (channels.list accepteert een lijst ID's, kost 1 unit)."""
+    data = yt_get("channels", {"id": ",".join(channel_ids), "part": "contentDetails,statistics"})
+    info = {}
+    for item in data["items"]:
+        info[item["id"]] = {
+            "uploads_playlist_id": item["contentDetails"]["relatedPlaylists"]["uploads"],
+            "official_view_count": int(item["statistics"]["viewCount"]),
+        }
+    return info
 
 
-def get_video_ids(uploads_playlist_id):
+def get_video_ids(channel_id, uploads_playlist_id, cache):
+    """Video-ID's van de uploads-playlist van één kanaal, per kanaal 1x per PT-dag gecachet."""
     today = datetime.now(PT).strftime("%Y-%m-%d")
 
-    if os.path.exists(CACHE_FILE):
-        cache = json.loads(open(CACHE_FILE).read())
-        if cache.get("date") == today and cache.get("channel_id") == CHANNEL_ID:
-            print(f"  Video IDs uit cache: {len(cache['ids'])}")
-            return cache["ids"]
+    cached = cache.get(channel_id)
+    if cached and cached.get("date") == today:
+        print(f"  [{channel_id}] Video IDs uit cache: {len(cached['ids'])}")
+        return cached["ids"]
 
     ids, page_token = [], None
     while True:
@@ -59,9 +72,8 @@ def get_video_ids(uploads_playlist_id):
         if not page_token:
             break
 
-    with open(CACHE_FILE, "w") as f:
-        json.dump({"date": today, "channel_id": CHANNEL_ID, "ids": ids}, f)
-    print(f"  Video IDs opgehaald: {len(ids)}")
+    cache[channel_id] = {"date": today, "ids": ids}
+    print(f"  [{channel_id}] Video IDs opgehaald: {len(ids)}")
     return ids
 
 
@@ -174,12 +186,34 @@ def save_snapshot(videos, official_total):
 
 if __name__ == "__main__":
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Start")
-    channel = get_channel_info()
-    ids     = get_video_ids(channel["uploads_playlist_id"])
-    videos  = get_video_details(ids)
-    pub_total = sum(v["views"] for v in videos)
-    print(f"  Officieel totaal : {channel['official_view_count']:,}")
-    print(f"  Publieke video's : {pub_total:,}")
-    print(f"  Aantal video's   : {len(videos)}")
-    save_snapshot(videos, channel["official_view_count"])
+
+    channel_ids   = [c["id"] for c in CHANNELS]
+    channels_info = get_channels_info(channel_ids)
+
+    cache = {}
+    if os.path.exists(CACHE_FILE):
+        try:
+            cache = json.loads(open(CACHE_FILE).read())
+        except Exception:
+            cache = {}
+
+    all_ids = []
+    for c in CHANNELS:
+        info = channels_info[c["id"]]
+        all_ids.extend(get_video_ids(c["id"], info["uploads_playlist_id"], cache))
+
+    with open(CACHE_FILE, "w") as f:
+        json.dump(cache, f)
+
+    # Dedupliceren voor het geval een video-ID toch in meerdere kanalen voorkomt.
+    unique_ids = list(dict.fromkeys(all_ids))
+
+    videos         = get_video_details(unique_ids)
+    pub_total      = sum(v["views"] for v in videos)
+    official_total = sum(info["official_view_count"] for info in channels_info.values())
+
+    print(f"  Officieel totaal (alle kanalen): {official_total:,}")
+    print(f"  Publieke video's               : {pub_total:,}")
+    print(f"  Aantal video's                 : {len(videos)}")
+    save_snapshot(videos, official_total)
     print("[OK]")
