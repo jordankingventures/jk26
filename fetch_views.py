@@ -143,20 +143,35 @@ def save_snapshot(videos, official_total):
         except:
             pass
 
-    pub_total = sum(v["views"] for v in videos)
-    now_utc   = datetime.now(timezone.utc)
-    ts        = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-    today     = now_utc.astimezone(PT).strftime("%Y-%m-%d")  # PT-dag, matcht charts.youtube.com
+    pub_total  = sum(v["views"] for v in videos)
+    now_utc    = datetime.now(timezone.utc)
+    ts         = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    today      = now_utc.astimezone(PT).strftime("%Y-%m-%d")  # PT-dag, matcht charts.youtube.com
+    curr_views = {v["id"]: v["views"] for v in videos}
 
     # Dag-baseline: reset elke dag op middernacht Pacific Time, geschat via interpolatie.
     if not data["day_baseline"] or data["day_baseline"].get("date") != today:
         data["day_baseline"] = estimate_midnight_baseline(videos, data.get("last_snapshot"), today, now_utc)
 
+    # Nieuwe video-ID's (net gepubliceerd, of nieuw toegevoegd aan tracking, bv. een extra
+    # kanaal) missen nog een baseline-waarde voor vandaag. Zonder aanvulling zou hun
+    # volledige bestaande viewcount ten onrechte als "groei vandaag" meetellen. Start ze
+    # op hun huidige stand, zodat ze vanaf nu meetellen maar niet met terugwerkende kracht.
+    for vid, v_now in curr_views.items():
+        if vid not in data["day_baseline"]["views"]:
+            data["day_baseline"]["views"][vid] = v_now
+
     base_total  = sum(data["day_baseline"]["views"].values())
     views_today = pub_total - base_total
 
-    prev_total  = sum(data["last_snapshot"]["views"].values()) if data["last_snapshot"] else None
-    delta_hour  = pub_total - prev_total if prev_total is not None else None
+    # Zelfde probleem kan delta_hour raken: een video die er sinds de vorige meting
+    # nieuw bij kwam, zou anders in één klap als "groei dit uur" meetellen.
+    if data["last_snapshot"]:
+        prev_views = data["last_snapshot"]["views"]
+        prev_total = sum(prev_views.get(vid, v_now) for vid, v_now in curr_views.items())
+    else:
+        prev_total = None
+    delta_hour = pub_total - prev_total if prev_total is not None else None
 
     # Log entry toevoegen
     data["log"].insert(0, {
