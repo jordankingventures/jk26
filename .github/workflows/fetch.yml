@@ -1,4 +1,4 @@
-name: Fetch YouTube Views
+name: Fetch YouTube Views (Taylor Swift)
 
 on:
   # GitHub's eigen schedule-trigger is bewust uitgeschakeld: die vuurde te
@@ -20,7 +20,7 @@ jobs:
       - name: Run fetch script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python fetch_views.py
+        run: python fetch_views.py taylor
 
       - name: Commit & push data
         run: |

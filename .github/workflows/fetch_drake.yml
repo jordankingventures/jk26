@@ -1,0 +1,30 @@
+name: Fetch YouTube Views (Drake)
+
+on:
+  # Alleen handmatig/via API te starten -- cron-job.org triggert deze workflow
+  # betrouwbaar op een vast interval, GitHub's eigen schedule-trigger is bewust
+  # niet gebruikt (zie fetch.yml voor de reden).
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run fetch script
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python fetch_views.py drake
+
+      - name: Commit & push data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add drake_data.json drake_video_ids.json
+          git diff --staged --quiet || git commit -m "Update Drake views $(date -u '+%Y-%m-%d %H:%M') UTC"
+          git push

@@ -1,32 +1,52 @@
 """
 YouTube View Tracker — fetch_views.py
 Draait via GitHub Actions (getriggerd door cron-job.org, elke ~15 min).
-Haalt views op van alle Taylor Swift video's over meerdere kanalen heen
-en slaat op in yt_data.json.
+Haalt views op van alle video's van een artiest over meerdere kanalen heen
+(hoofdkanaal + het door YouTube/het label auto-gegenereerde "Topic"-kanaal
+voor officiële audio, incl. remixen en alternatieve versies -- staat
+volledig los van het hoofdkanaal, eigen video-ID's, eigen viewcounters)
+en slaat op in <artiest>_data.json.
+
+Gebruik: python fetch_views.py <artiest>   (bv. "taylor" of "drake")
 """
 
 import json
 import os
+import sys
 import urllib.request
 import urllib.parse
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-API_KEY    = os.environ["YOUTUBE_API_KEY"]
-DATA_FILE  = "yt_data.json"
-CACHE_FILE = "yt_video_ids.json"
+API_KEY = os.environ["YOUTUBE_API_KEY"]
 # YouTube Charts (de Kalshi-resolver) hanteert Pacific Time als daggrens, niet UTC.
 PT = ZoneInfo("America/Los_Angeles")
 
-# Alle kanalen die bij deze artiest horen. Het "Topic"-kanaal is een door
-# YouTube/het label auto-gegenereerd kanaal voor officiële audio (incl.
-# remixen en alternatieve versies) dat volledig los staat van het
-# hoofdkanaal — eigen video-ID's, eigen viewcounters, en werd hiervoor
-# helemaal niet meegeteld.
-CHANNELS = [
-    {"id": "UCqECaJ8Gagnn7YCbPEzWH6g", "label": "Hoofdkanaal"},
-    {"id": "UCPC0L1d253x-KuMNwa05TpA", "label": "Topic"},
-]
+# Eén set fetch-logica voor alle artiesten; alleen kanalen en bestandsnamen
+# verschillen per artiest, zodat een bugfix maar op één plek hoeft.
+ARTISTS = {
+    "taylor": {
+        "channels": [
+            {"id": "UCqECaJ8Gagnn7YCbPEzWH6g", "label": "Hoofdkanaal"},
+            {"id": "UCPC0L1d253x-KuMNwa05TpA", "label": "Topic"},
+        ],
+        "data_file":  "yt_data.json",
+        "cache_file": "yt_video_ids.json",
+    },
+    "drake": {
+        "channels": [
+            {"id": "UCByOQJjav0CUDwxCk-jVNRQ", "label": "Hoofdkanaal"},
+            {"id": "UCU6cE7pdJPc6DU2jSrKEsdQ", "label": "Topic"},
+        ],
+        "data_file":  "drake_data.json",
+        "cache_file": "drake_video_ids.json",
+    },
+}
+
+# Worden in __main__ gezet op basis van het artiest-argument.
+CHANNELS   = None
+DATA_FILE  = None
+CACHE_FILE = None
 
 
 def yt_get(endpoint, params):
@@ -200,7 +220,15 @@ def save_snapshot(videos, official_total):
 
 
 if __name__ == "__main__":
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Start")
+    artist_key = sys.argv[1] if len(sys.argv) > 1 else "taylor"
+    if artist_key not in ARTISTS:
+        raise SystemExit(f"Onbekende artiest '{artist_key}', kies uit: {', '.join(ARTISTS)}")
+    artist     = ARTISTS[artist_key]
+    CHANNELS   = artist["channels"]
+    DATA_FILE  = artist["data_file"]
+    CACHE_FILE = artist["cache_file"]
+
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Start ({artist_key})")
 
     channel_ids   = [c["id"] for c in CHANNELS]
     channels_info = get_channels_info(channel_ids)

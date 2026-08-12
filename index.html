@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YT View Tracker — Taylor Swift</title>
+  <title>YT View Tracker</title>
   <style>
     :root {
       --bg: #0f0f13; --surface: #1a1a24; --surface2: #22222f;
@@ -21,9 +21,19 @@
     }
 
     /* Header */
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
     h1 { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
     h1 span { color: var(--text); }
+
+    /* Artiest-tabs */
+    .tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--muted); font-size: 0.82rem; font-weight: 600; padding: 7px 16px; cursor: pointer;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .badge { font-size: 0.75rem; color: var(--muted); padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
     .badge.ok { color: var(--green); border-color: var(--green); }
@@ -155,12 +165,17 @@
 <body>
 
 <header>
-  <h1>📺 <span>Taylor Swift</span> — View Tracker</h1>
+  <h1>📺 <span id="artist-name">Taylor Swift</span> — View Tracker</h1>
   <div class="header-right">
     <span class="badge" id="badge-updated">Laden...</span>
     <button class="refresh" id="btn-refresh" onclick="loadData()">↻ Ververs</button>
   </div>
 </header>
+
+<div class="tabs" id="artist-tabs">
+  <button class="tab active" data-artist="taylor" onclick="switchArtist('taylor')">Taylor Swift</button>
+  <button class="tab" data-artist="drake" onclick="switchArtist('drake')">Drake</button>
+</div>
 
 <!-- Log -->
 <div class="log-wrap">
@@ -220,6 +235,13 @@ function dHtml(d) {
   return `<span class="${cls}">${d > 0 ? '+' : ''}${fmt(d)}</span>`;
 }
 
+const ARTISTS = {
+  taylor: { label: 'Taylor Swift', dataFile: 'yt_data.json' },
+  drake:  { label: 'Drake',        dataFile: 'drake_data.json' },
+};
+let activeArtist = 'taylor';
+const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays, collapsedChannels } bij tab-wissel
+
 let appData = null;
 let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedChannels = new Set(); // kanalen die de gebruiker heeft ingeklapt in de videolijst
@@ -235,16 +257,41 @@ function toggleChannel(label) {
   renderTable();
 }
 
+function switchArtist(key) {
+  if (key === activeArtist || !ARTISTS[key]) return;
+
+  artistCache[activeArtist] = { appData, collapsedDays, collapsedChannels };
+  activeArtist = key;
+
+  document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
+  document.getElementById('artist-name').textContent = ARTISTS[key].label;
+
+  const cached = artistCache[key];
+  if (cached) {
+    appData = cached.appData; collapsedDays = cached.collapsedDays; collapsedChannels = cached.collapsedChannels;
+    if (appData) { renderLog(); renderTable(); }
+  } else {
+    appData = null; collapsedDays = null; collapsedChannels = new Set();
+    document.getElementById('log-body').innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
+    document.getElementById('video-tbody').innerHTML = '<tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>';
+  }
+  loadData();
+}
+
 async function loadData() {
   document.getElementById('btn-refresh').disabled = true;
   document.getElementById('badge-updated').textContent = 'Laden...';
   document.getElementById('badge-updated').className = 'badge';
 
+  const artist = activeArtist; // vastleggen: voorkomt dat een trage fetch de verkeerde tab overschrijft bij wisselen
+
   try {
     // Cache busting zodat de browser altijd de nieuwste JSON ophaalt
-    const resp = await fetch('yt_data.json?t=' + Date.now());
-    if (!resp.ok) throw new Error(`yt_data.json niet gevonden (${resp.status})`);
-    appData = await resp.json();
+    const resp = await fetch(ARTISTS[artist].dataFile + '?t=' + Date.now());
+    if (!resp.ok) throw new Error(`${ARTISTS[artist].dataFile} niet gevonden (${resp.status})`);
+    const data = await resp.json();
+    if (artist !== activeArtist) return; // gebruiker is intussen naar een andere tab gewisseld
+    appData = data;
     renderLog();
     renderTable();
     const b = document.getElementById('badge-updated');
@@ -255,8 +302,9 @@ async function loadData() {
       : 'Geladen';
     b.className = 'badge ok';
   } catch (err) {
+    if (artist !== activeArtist) return;
     document.getElementById('log-body').innerHTML =
-      `<div class="log-empty"><span class="err-txt">Fout: </span>${err.message}<br><small>Zorg dat fetch_views.php minstens één keer gedraaid heeft.</small></div>`;
+      `<div class="log-empty"><span class="err-txt">Fout: </span>${err.message}<br><small>Zorg dat fetch_views.py minstens één keer gedraaid heeft voor ${ARTISTS[artist].label}.</small></div>`;
     const b = document.getElementById('badge-updated');
     b.textContent = 'Fout';
     b.className = 'badge err';
