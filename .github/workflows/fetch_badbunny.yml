@@ -1,0 +1,49 @@
+name: Fetch YouTube Views (Bad Bunny)
+
+on:
+  # Alleen handmatig/via API te starten -- cron-job.org triggert deze workflow
+  # betrouwbaar op een vast interval, GitHub's eigen schedule-trigger is bewust
+  # niet gebruikt (zie fetch.yml voor de reden).
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run fetch script
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python fetch_views.py badbunny
+
+      - name: Commit & push data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add badbunny_data.json badbunny_video_ids.json
+          if git diff --staged --quiet; then
+            echo "Geen wijzigingen om te committen"
+            exit 0
+          fi
+          git commit -m "Update Bad Bunny views $(date -u '+%Y-%m-%d %H:%M') UTC"
+
+          # Andere artiest-workflows pushen naar dezelfde branch en kunnen tegelijk
+          # lopen; bij een non-fast-forward reject rebasen we op de nieuwste main
+          # en proberen opnieuw (elke workflow raakt zijn eigen bestanden, dus een
+          # echt conflict is vrijwel uitgesloten).
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push mislukt (poging $i/5), main is intussen gewijzigd -- rebasen en opnieuw proberen..."
+            git fetch origin main
+            git rebase origin/main
+            sleep $((RANDOM % 4 + 1))
+          done
+          echo "::error::Kon na 5 pogingen niet pushen naar main"
+          exit 1

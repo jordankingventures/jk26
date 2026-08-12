@@ -41,6 +41,46 @@ ARTISTS = {
         "data_file":  "drake_data.json",
         "cache_file": "drake_video_ids.json",
     },
+    "wallen": {
+        "channels": [
+            {"id": "UCzIyoPv6j1MAZpDHKLGP_eA", "label": "Hoofdkanaal"},
+            {"id": "UC5xaQ6_dP7EGDmGLzVGZ1Ow", "label": "Topic"},
+        ],
+        "data_file":  "wallen_data.json",
+        "cache_file": "wallen_video_ids.json",
+    },
+    "badbunny": {
+        "channels": [
+            {"id": "UCmBA_wu8xGg1OfOkfW13Q0Q", "label": "Hoofdkanaal"},
+            {"id": "UCiY3z8HAGD6BlSNKVn2kSvQ", "label": "Topic"},
+        ],
+        "data_file":  "badbunny_data.json",
+        "cache_file": "badbunny_video_ids.json",
+    },
+    "ariana": {
+        "channels": [
+            {"id": "UC9CoOnJkIBMdeijd9qYoT_g", "label": "Hoofdkanaal"},
+            {"id": "UC0076UMUgEng8HORUw_MYHA", "label": "Topic"},
+        ],
+        "data_file":  "ariana_data.json",
+        "cache_file": "ariana_video_ids.json",
+    },
+    "youngboy": {
+        "channels": [
+            {"id": "UClW4jraMKz6Qj69lJf-tODA", "label": "Hoofdkanaal"},
+            {"id": "UCR28YDxjDE3ogQROaNdnRbQ", "label": "Topic"},
+        ],
+        "data_file":  "youngboy_data.json",
+        "cache_file": "youngboy_video_ids.json",
+    },
+    "bieber": {
+        "channels": [
+            {"id": "UCIwFjwMjI0y7PDBVEO9-bkQ", "label": "Hoofdkanaal"},
+            {"id": "UCGvj8kfUV5Q6lzECIrGY19g", "label": "Topic"},
+        ],
+        "data_file":  "bieber_data.json",
+        "cache_file": "bieber_video_ids.json",
+    },
 }
 
 # Worden in __main__ gezet op basis van het artiest-argument.

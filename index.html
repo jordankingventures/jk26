@@ -175,6 +175,11 @@
 <div class="tabs" id="artist-tabs">
   <button class="tab active" data-artist="taylor" onclick="switchArtist('taylor')">Taylor Swift</button>
   <button class="tab" data-artist="drake" onclick="switchArtist('drake')">Drake</button>
+  <button class="tab" data-artist="wallen" onclick="switchArtist('wallen')">Morgan Wallen</button>
+  <button class="tab" data-artist="badbunny" onclick="switchArtist('badbunny')">Bad Bunny</button>
+  <button class="tab" data-artist="ariana" onclick="switchArtist('ariana')">Ariana Grande</button>
+  <button class="tab" data-artist="youngboy" onclick="switchArtist('youngboy')">YoungBoy NBA</button>
+  <button class="tab" data-artist="bieber" onclick="switchArtist('bieber')">Justin Bieber</button>
 </div>
 
 <!-- Log -->
@@ -236,8 +241,13 @@ function dHtml(d) {
 }
 
 const ARTISTS = {
-  taylor: { label: 'Taylor Swift', dataFile: 'yt_data.json' },
-  drake:  { label: 'Drake',        dataFile: 'drake_data.json' },
+  taylor:   { label: 'Taylor Swift',              dataFile: 'yt_data.json' },
+  drake:    { label: 'Drake',                     dataFile: 'drake_data.json' },
+  wallen:   { label: 'Morgan Wallen',              dataFile: 'wallen_data.json' },
+  badbunny: { label: 'Bad Bunny',                  dataFile: 'badbunny_data.json' },
+  ariana:   { label: 'Ariana Grande',              dataFile: 'ariana_data.json' },
+  youngboy: { label: 'YoungBoy Never Broke Again',  dataFile: 'youngboy_data.json' },
+  bieber:   { label: 'Justin Bieber',              dataFile: 'bieber_data.json' },
 };
 let activeArtist = 'taylor';
 const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays, collapsedChannels } bij tab-wissel
