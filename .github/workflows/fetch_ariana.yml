@@ -33,17 +33,25 @@ jobs:
           git commit -m "Update Ariana Grande views $(date -u '+%Y-%m-%d %H:%M') UTC"
 
           # Andere artiest-workflows pushen naar dezelfde branch en kunnen tegelijk
-          # lopen; bij een non-fast-forward reject rebasen we op de nieuwste main
-          # en proberen opnieuw (elke workflow raakt zijn eigen bestanden, dus een
-          # echt conflict is vrijwel uitgesloten).
+          # lopen. Bij een non-fast-forward reject rebasen we op de nieuwste main
+          # en proberen opnieuw -- werkt altijd schoon, want elke workflow raakt
+          # zijn eigen bestanden. Als de rebase zelf conflicteert (bv. twee
+          # gelijktijdige runs van DEZELFDE workflow die allebei verse data
+          # pushen), heeft remote main al recente data van de andere run; dan
+          # laten we onze eigen update varen in plaats van te blijven vechten.
           for i in 1 2 3 4 5; do
             if git push; then
               exit 0
             fi
             echo "Push mislukt (poging $i/5), main is intussen gewijzigd -- rebasen en opnieuw proberen..."
             git fetch origin main
-            git rebase origin/main
-            sleep $((RANDOM % 4 + 1))
+            if git rebase origin/main; then
+              sleep $((RANDOM % 4 + 1))
+              continue
+            fi
+            git rebase --abort
+            echo "Rebase-conflict (waarschijnlijk een gelijktijdige dubbele run) -- eigen update overgeslagen, remote main heeft al recente data."
+            exit 0
           done
           echo "::error::Kon na 5 pogingen niet pushen naar main"
           exit 1
