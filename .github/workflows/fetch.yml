@@ -1,9 +1,11 @@
 name: Fetch YouTube Views
 
 on:
-  schedule:
-    - cron: '*/15 * * * *'  # elke 15 minuten
-  workflow_dispatch:         # ook handmatig te starten
+  # GitHub's eigen schedule-trigger is bewust uitgeschakeld: die vuurde te
+  # onregelmatig af (soms uren later dan gepland) en zorgde voor inconsistente
+  # gaten in de data. cron-job.org triggert deze workflow nu betrouwbaar elke
+  # 15 minuten via de API (workflow_dispatch), dus die is voldoende.
+  workflow_dispatch:
 
 permissions:
   contents: write
