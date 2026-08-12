@@ -26,5 +26,24 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add drake_data.json drake_video_ids.json
-          git diff --staged --quiet || git commit -m "Update Drake views $(date -u '+%Y-%m-%d %H:%M') UTC"
-          git push
+          if git diff --staged --quiet; then
+            echo "Geen wijzigingen om te committen"
+            exit 0
+          fi
+          git commit -m "Update Drake views $(date -u '+%Y-%m-%d %H:%M') UTC"
+
+          # De Taylor-workflow pusht naar dezelfde branch en kan tegelijk lopen;
+          # bij een non-fast-forward reject rebasen we op de nieuwste main en
+          # proberen opnieuw (beide workflows raken losse bestanden, dus een
+          # conflict is hier vrijwel uitgesloten).
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push mislukt (poging $i/5), main is intussen gewijzigd -- rebasen en opnieuw proberen..."
+            git fetch origin main
+            git rebase origin/main
+            sleep $((RANDOM % 4 + 1))
+          done
+          echo "::error::Kon na 5 pogingen niet pushen naar main"
+          exit 1
