@@ -283,43 +283,77 @@ function renderLog() {
     collapsedDays = new Set(allKeys.filter(k => k !== todayKey));
   }
 
-  // "00:00"-regel: het teruggerekende dagtotaal op middernacht PT, afgeleid uit wat
-  // al gelogd staat (pub_total - views_today) — geen extra data nodig.
-  const midnightRowHtml = (entry, key, isToday) => {
-    if (!Number.isFinite(entry.views_today)) return '';
-    const baseTotal = entry.pub_total - entry.views_today;
-    const baseline  = appData.day_baseline;
-    const interpolated = isToday && baseline?.date === key && baseline?.interpolated;
+  // 00:00-baseline van een afgeronde groep: teruggerekend uit wat al gelogd staat
+  // (pub_total - views_today van de laatste/meest recente meting van die dag).
+  const openingBaseline = (key, entry) => {
+    if (!Number.isFinite(entry.views_today)) return null;
+    const baseline = appData.day_baseline;
+    return {
+      baseTotal:    entry.pub_total - entry.views_today,
+      interpolated: key === todayKey && baseline?.date === key && baseline?.interpolated,
+      gapMinutes:   baseline?.gap_minutes,
+    };
+  };
+
+  // "00:00"-regel: zowel voor het begin van een dag (viewsAtRow = 0) als het einde
+  // ervan (viewsAtRow = het dagtotaal, want dat is dezelfde 00:00 als het begin
+  // van de eropvolgende dag).
+  const midnightRowHtml = (baseTotal, viewsAtRow, interpolated, gapMinutes) => {
+    if (baseTotal === null) return '';
     const title = interpolated
-      ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${baseline.gap_minutes} min)`
-      : 'Teruggerekend uit de eerst gemeten waarde van deze dag (geen interpolatie beschikbaar)';
+      ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
+      : 'Teruggerekend uit de eerst gemeten waarde van die dag (geen interpolatie beschikbaar)';
     return `<tr class="midnight-row" title="${title}">
       <td>00:00 <span class="est-tag">geschat</span></td>
       <td>—</td>
       <td>${fmt(baseTotal)}</td>
       <td>—</td>
-      <td>${dHtml(0)}</td>
+      <td>${dHtml(viewsAtRow)}</td>
     </tr>`;
   };
 
   let rows = '';
   let groupKey = null;
   let groupLatestEntry = null; // meest recente meting van de lopende groep, voor de 00:00-regel erna
+  let nextDay = null; // { baseTotal, interpolated, gapMinutes } van de eropvolgende (recentere) dag
 
   log.forEach((e, i) => {
     const key = ptDateKey(e.ts);
     if (key !== groupKey) {
-      if (groupKey !== null && !collapsedDays.has(groupKey)) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
+      if (groupKey !== null) {
+        const opening = openingBaseline(groupKey, groupLatestEntry);
+        if (!collapsedDays.has(groupKey) && opening) {
+          rows += midnightRowHtml(opening.baseTotal, 0, opening.interpolated, opening.gapMinutes);
+        }
+        // Baseline van de zojuist afgesloten (recentere) dag wordt het eindpunt
+        // voor de dag die we hierna gaan starten.
+        nextDay = opening;
+      }
       groupKey = key;
       groupLatestEntry = e;
       const isToday = key === todayKey;
       const isCollapsed = collapsedDays.has(key);
+
+      // Vandaag: het live, nog-groeiende cijfer. Afgeronde dagen: het echte
+      // dagtotaal (00:00-baseline van de volgende dag min die van deze dag),
+      // zodat het laatste kwartiertje tot middernacht niet ontbreekt.
+      let dayTotal = e.views_today;
+      if (!isToday && nextDay && Number.isFinite(e.views_today)) {
+        dayTotal = nextDay.baseTotal - (e.pub_total - e.views_today);
+      }
+
       rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="5">
         <div class="day-row-inner">
           <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
-          <span class="day-total">${dHtml(e.views_today)} views</span>
+          <span class="day-total">${dHtml(dayTotal)} views</span>
         </div>
       </td></tr>`;
+
+      // Sluitings-00:00: het einde van deze dag, meteen onder de header, zodat een
+      // dag ook los (ingeklapte buurdag) leesbaar is als 00:00 -> records -> 00:00.
+      if (!isCollapsed && !isToday && nextDay) {
+        rows += midnightRowHtml(nextDay.baseTotal, dayTotal, nextDay.interpolated, nextDay.gapMinutes);
+      }
     }
     if (!collapsedDays.has(groupKey)) {
       const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
@@ -332,7 +366,12 @@ function renderLog() {
       </tr>`;
     }
   });
-  if (groupKey !== null && !collapsedDays.has(groupKey)) rows += midnightRowHtml(groupLatestEntry, groupKey, groupKey === todayKey);
+  if (groupKey !== null) {
+    const opening = openingBaseline(groupKey, groupLatestEntry);
+    if (!collapsedDays.has(groupKey) && opening) {
+      rows += midnightRowHtml(opening.baseTotal, 0, opening.interpolated, opening.gapMinutes);
+    }
+  }
 
   el.innerHTML = `<table class="log-table">
     <thead><tr>
