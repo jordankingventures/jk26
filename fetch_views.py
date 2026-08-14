@@ -161,22 +161,30 @@ def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
     anders ten onrechte bij 'gisteren' zou horen. We interpoleren lineair tussen de
     laatste meting vóór middernacht (last_snapshot) en de eerste erna (videos/now_utc)
     naar het exacte 00:00-tijdstip.
+
+    Retourneert ook 'prev_day_end_total': een schatting van het totaal op datzelfde
+    middernacht-moment, maar dan opgeteld over uitsluitend de video's die de vorige
+    dag al zelf volgde (dus zonder de bestaande viewcount van nieuw ontdekte video's
+    mee te tellen als groei -- de dagelijkse video-lijst-verversing ontdekt bijna
+    elke dag oudere catalogus-video's, of ziet er juist eentje verdwijnen; dat mag
+    het dagtotaal van de afgelopen dag niet vervuilen). Video's die inmiddels uit de
+    scan zijn verdwenen tellen mee met hun laatst bekende waarde.
     """
     curr_views = {v["id"]: v["views"] for v in videos}
 
     if not last_snapshot:
-        return {"date": today, "views": curr_views, "interpolated": False}
+        return {"date": today, "views": curr_views, "interpolated": False, "prev_day_end_total": None}
 
     try:
         prev_ts_utc = datetime.strptime(last_snapshot["ts"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     except (KeyError, ValueError):
-        return {"date": today, "views": curr_views, "interpolated": False}
+        return {"date": today, "views": curr_views, "interpolated": False, "prev_day_end_total": None}
 
     midnight_utc = datetime.strptime(today, "%Y-%m-%d").replace(tzinfo=PT).astimezone(timezone.utc)
     span_seconds = (now_utc - prev_ts_utc).total_seconds()
 
     if span_seconds <= 0:
-        return {"date": today, "views": curr_views, "interpolated": False}
+        return {"date": today, "views": curr_views, "interpolated": False, "prev_day_end_total": None}
 
     frac = (midnight_utc - prev_ts_utc).total_seconds() / span_seconds
     frac = max(0.0, min(1.0, frac))  # clamp: bij een gemiste dag of rare gap niet extrapoleren
@@ -187,11 +195,16 @@ def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
         v_prev = prev_views.get(vid)
         estimated[vid] = v_now if v_prev is None else round(v_prev + frac * (v_now - v_prev))
 
+    prev_day_end_total = 0
+    for vid, v_prev in prev_views.items():
+        prev_day_end_total += estimated[vid] if vid in estimated else v_prev
+
     return {
-        "date":          today,
-        "views":         estimated,
-        "interpolated":  True,
-        "gap_minutes":   round(span_seconds / 60, 1),
+        "date":               today,
+        "views":              estimated,
+        "interpolated":       True,
+        "gap_minutes":        round(span_seconds / 60, 1),
+        "prev_day_end_total": prev_day_end_total,
     }
 
 
@@ -211,7 +224,19 @@ def save_snapshot(videos, official_total):
 
     # Dag-baseline: reset elke dag op middernacht Pacific Time, geschat via interpolatie.
     if not data["day_baseline"] or data["day_baseline"].get("date") != today:
-        data["day_baseline"] = estimate_midnight_baseline(videos, data.get("last_snapshot"), today, now_utc)
+        old_baseline = data["day_baseline"]
+        new_baseline = estimate_midnight_baseline(videos, data.get("last_snapshot"), today, now_utc)
+
+        # De zojuist afgesloten dag krijgt met terugwerkende kracht zijn echte,
+        # complete dagtotaal op de laatste logregel: inclusief het stukje groei
+        # tot middernacht, maar zonder vervuiling door nieuw ontdekte (of net
+        # verdwenen) video's. Zo hangt de juistheid niet af van hoe precies de
+        # cron rond middernacht getimed is.
+        if old_baseline and data["log"] and new_baseline.get("prev_day_end_total") is not None:
+            old_base_total = sum(old_baseline["views"].values())
+            data["log"][0]["final_day_total"] = new_baseline["prev_day_end_total"] - old_base_total
+
+        data["day_baseline"] = new_baseline
 
     # Nieuwe video-ID's (net gepubliceerd, of nieuw toegevoegd aan tracking, bv. een extra
     # kanaal) missen nog een baseline-waarde voor vandaag. Zonder aanvulling zou hun
