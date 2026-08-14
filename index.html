@@ -373,7 +373,7 @@ function renderLog() {
   let rows = '';
   let groupKey = null;
   let groupLatestEntry = null; // meest recente meting van de lopende groep, voor de 00:00-regel erna
-  let nextDay = null; // { baseTotal, interpolated, gapMinutes } van de eropvolgende (recentere) dag
+  let nextDay = null; // { baseTotal, interpolated, gapMinutes } van de eropvolgende (recentere) dag -- alleen voor de sluitings-00:00-regel, niet voor het dagtotaal
 
   log.forEach((e, i) => {
     const key = ptDateKey(e.ts);
@@ -392,13 +392,14 @@ function renderLog() {
       const isToday = key === todayKey;
       const isCollapsed = collapsedDays.has(key);
 
-      // Vandaag: het live, nog-groeiende cijfer. Afgeronde dagen: het echte
-      // dagtotaal (00:00-baseline van de volgende dag min die van deze dag),
-      // zodat het laatste kwartiertje tot middernacht niet ontbreekt.
-      let dayTotal = e.views_today;
-      if (!isToday && nextDay && Number.isFinite(e.views_today)) {
-        dayTotal = nextDay.baseTotal - (e.pub_total - e.views_today);
-      }
+      // Dagtotaal = de laatst gemeten "views vandaag" van die dag zelf (al correct
+      // per record). We trekken NIET de baseline van de volgende dag af van die
+      // van deze dag: als er tussen twee dagen nieuwe video's ontdekt worden
+      // (gebeurt vrijwel dagelijks door de dagelijkse video-lijst-verversing)
+      // bevat die volgende-dag-baseline ook hun volledige bestaande viewcount,
+      // die dan onterecht als groei van déze dag zou meetellen (leverde eerder
+      // een verdubbeld en een keer een negatief dagtotaal op).
+      const dayTotal = e.views_today;
 
       rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="5">
         <div class="day-row-inner">
