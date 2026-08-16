@@ -348,6 +348,7 @@ function renderLog() {
     const baseline = appData.day_baseline;
     return {
       baseTotal:    entry.pub_total - entry.views_today,
+      videoCount:   entry.video_count,
       interpolated: key === todayKey && baseline?.date === key && baseline?.interpolated,
       gapMinutes:   baseline?.gap_minutes,
     };
@@ -355,19 +356,21 @@ function renderLog() {
 
   // "00:00"-regel: zowel voor het begin van een dag (viewsAtRow = 0) als het einde
   // ervan (viewsAtRow = het dagtotaal, want dat is dezelfde 00:00 als het begin
-  // van de eropvolgende dag).
-  const midnightRowHtml = (baseTotal, viewsAtRow, interpolated, gapMinutes) => {
+  // van de eropvolgende dag). Toont ook het aantal video's op dat moment, want
+  // dat kan verschillen tussen twee opeenvolgende dagen (dagelijkse video-lijst-
+  // verversing ontdekt of verliest af en toe catalogus-video's) -- zonder die
+  // context leek hetzelfde geschatte totaal op twee plekken een fout.
+  const midnightRowHtml = (baseTotal, videoCount, viewsAtRow, interpolated, gapMinutes) => {
     if (baseTotal === null) return '';
     const title = interpolated
       ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
       : 'Teruggerekend uit de eerst gemeten waarde van die dag (geen interpolatie beschikbaar)';
-    return `<tr class="midnight-row" title="${title}">
-      <td>00:00 <span class="est-tag">geschat</span></td>
-      <td>—</td>
-      <td>${fmt(baseTotal)}</td>
-      <td>—</td>
-      <td>${dHtml(viewsAtRow)}</td>
-    </tr>`;
+    return `<tr class="midnight-row" title="${title}"><td colspan="5">
+      <div class="day-row-inner">
+        <span class="day-label">00:00 <span class="est-tag">geschat</span></span>
+        <span class="day-total">${videoCount ?? '—'} video's · ${fmt(baseTotal)} views · ${dHtml(viewsAtRow)} vandaag</span>
+      </div>
+    </td></tr>`;
   };
 
   let rows = '';
@@ -381,7 +384,7 @@ function renderLog() {
       if (groupKey !== null) {
         const opening = openingBaseline(groupKey, groupLatestEntry);
         if (!collapsedDays.has(groupKey) && opening) {
-          rows += midnightRowHtml(opening.baseTotal, 0, opening.interpolated, opening.gapMinutes);
+          rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes);
         }
         // Baseline van de zojuist afgesloten (recentere) dag wordt het eindpunt
         // voor de dag die we hierna gaan starten.
@@ -410,7 +413,7 @@ function renderLog() {
       // Sluitings-00:00: het einde van deze dag, meteen onder de header, zodat een
       // dag ook los (ingeklapte buurdag) leesbaar is als 00:00 -> records -> 00:00.
       if (!isCollapsed && !isToday && nextDay) {
-        rows += midnightRowHtml(nextDay.baseTotal, dayTotal, nextDay.interpolated, nextDay.gapMinutes);
+        rows += midnightRowHtml(nextDay.baseTotal, nextDay.videoCount, dayTotal, nextDay.interpolated, nextDay.gapMinutes);
       }
     }
     if (!collapsedDays.has(groupKey)) {
@@ -418,16 +421,16 @@ function renderLog() {
       rows += `<tr class="${i === 0 ? 'new-row' : ''}">
         <td>${ts}</td>
         <td>${fmt(e.official_total ?? 0)}</td>
-        <td>${fmt(e.pub_total)}</td>
         <td>${e.video_count ?? '—'}</td>
         <td>${dHtml(e.views_today)}</td>
+        <td>${dHtml(e.delta_hour)}</td>
       </tr>`;
     }
   });
   if (groupKey !== null) {
     const opening = openingBaseline(groupKey, groupLatestEntry);
     if (!collapsedDays.has(groupKey) && opening) {
-      rows += midnightRowHtml(opening.baseTotal, 0, opening.interpolated, opening.gapMinutes);
+      rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes);
     }
   }
 
@@ -435,9 +438,9 @@ function renderLog() {
     <thead><tr>
       <th>Tijdstip (PT)</th>
       <th>Officieel totaal</th>
-      <th>Som publieke video's</th>
       <th>Aantal video's</th>
       <th>Views vandaag (PT)</th>
+      <th>+/− vorige meting</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
