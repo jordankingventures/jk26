@@ -231,10 +231,17 @@ def save_snapshot(videos, official_total):
         # complete dagtotaal op de laatste logregel: inclusief het stukje groei
         # tot middernacht, maar zonder vervuiling door nieuw ontdekte (of net
         # verdwenen) video's. Zo hangt de juistheid niet af van hoe precies de
-        # cron rond middernacht getimed is.
+        # cron rond middernacht getimed is. We bewaren ook het absolute geschatte
+        # eindtotaal (en het aantal video's waarover dat gaat) zelf, zodat de
+        # 00:00-regel in de UI dat kan tonen zonder de contaminatie van de
+        # volgende dag se (grotere of kleinere) videoset.
         if old_baseline and data["log"] and new_baseline.get("prev_day_end_total") is not None:
             old_base_total = sum(old_baseline["views"].values())
             data["log"][0]["final_day_total"] = new_baseline["prev_day_end_total"] - old_base_total
+            data["log"][0]["final_day_pub_total"] = new_baseline["prev_day_end_total"]
+            data["log"][0]["final_day_video_count"] = len(old_baseline["views"])
+            data["log"][0]["final_day_interpolated"] = new_baseline.get("interpolated", False)
+            data["log"][0]["final_day_gap_minutes"] = new_baseline.get("gap_minutes")
 
         data["day_baseline"] = new_baseline
 

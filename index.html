@@ -365,18 +365,34 @@ function renderLog() {
     const title = interpolated
       ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
       : 'Teruggerekend uit de eerst gemeten waarde van die dag (geen interpolatie beschikbaar)';
-    return `<tr class="midnight-row" title="${title}"><td colspan="5">
-      <div class="day-row-inner">
-        <span class="day-label">00:00 <span class="est-tag">geschat</span></span>
-        <span class="day-total">${videoCount ?? '—'} video's · ${fmt(baseTotal)} views · ${dHtml(viewsAtRow)} vandaag</span>
-      </div>
-    </td></tr>`;
+    return `<tr class="midnight-row" title="${title}">
+      <td>00:00 <span class="est-tag">geschat</span></td>
+      <td>—</td>
+      <td>${fmt(baseTotal)}</td>
+      <td>${videoCount ?? '—'}</td>
+      <td>${dHtml(viewsAtRow)}</td>
+      <td>—</td>
+    </tr>`;
+  };
+
+  // Sluitings-00:00 van een afgeronde dag: de backend berekent dit bij de
+  // dagwissel zelf (final_day_*) en telt daarbij uitsluitend de video's mee die
+  // díé dag al zelf volgde -- dus niet vervuild door de (grotere of kleinere)
+  // videoset van de eropvolgende dag.
+  const closingTotal = (entry) => {
+    if (!Number.isFinite(entry.final_day_total) || !Number.isFinite(entry.final_day_pub_total)) return null;
+    return {
+      baseTotal:    entry.final_day_pub_total,
+      videoCount:   entry.final_day_video_count,
+      viewsAtRow:   entry.final_day_total,
+      interpolated: entry.final_day_interpolated,
+      gapMinutes:   entry.final_day_gap_minutes,
+    };
   };
 
   let rows = '';
   let groupKey = null;
   let groupLatestEntry = null; // meest recente meting van de lopende groep, voor de 00:00-regel erna
-  let nextDay = null; // { baseTotal, interpolated, gapMinutes } van de eropvolgende (recentere) dag -- alleen voor de sluitings-00:00-regel, niet voor het dagtotaal
 
   log.forEach((e, i) => {
     const key = ptDateKey(e.ts);
@@ -386,9 +402,6 @@ function renderLog() {
         if (!collapsedDays.has(groupKey) && opening) {
           rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes);
         }
-        // Baseline van de zojuist afgesloten (recentere) dag wordt het eindpunt
-        // voor de dag die we hierna gaan starten.
-        nextDay = opening;
       }
       groupKey = key;
       groupLatestEntry = e;
@@ -403,7 +416,7 @@ function renderLog() {
       // (bv. voor oudere dagen van vóór deze fix, of de nog lopende huidige dag).
       const dayTotal = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
 
-      rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="5">
+      rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
         <div class="day-row-inner">
           <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
           <span class="day-total">${dHtml(dayTotal)} views</span>
@@ -412,8 +425,13 @@ function renderLog() {
 
       // Sluitings-00:00: het einde van deze dag, meteen onder de header, zodat een
       // dag ook los (ingeklapte buurdag) leesbaar is als 00:00 -> records -> 00:00.
-      if (!isCollapsed && !isToday && nextDay) {
-        rows += midnightRowHtml(nextDay.baseTotal, nextDay.videoCount, dayTotal, nextDay.interpolated, nextDay.gapMinutes);
+      // Gebruikt de eigen final_day_*-velden van deze dag (zie hierboven), niet
+      // de baseline van de volgende dag.
+      if (!isCollapsed && !isToday) {
+        const closing = closingTotal(e);
+        if (closing) {
+          rows += midnightRowHtml(closing.baseTotal, closing.videoCount, closing.viewsAtRow, closing.interpolated, closing.gapMinutes);
+        }
       }
     }
     if (!collapsedDays.has(groupKey)) {
@@ -421,6 +439,7 @@ function renderLog() {
       rows += `<tr class="${i === 0 ? 'new-row' : ''}">
         <td>${ts}</td>
         <td>${fmt(e.official_total ?? 0)}</td>
+        <td>${fmt(e.pub_total)}</td>
         <td>${e.video_count ?? '—'}</td>
         <td>${dHtml(e.views_today)}</td>
         <td>${dHtml(e.delta_hour)}</td>
@@ -438,6 +457,7 @@ function renderLog() {
     <thead><tr>
       <th>Tijdstip (PT)</th>
       <th>Officieel totaal</th>
+      <th>Som publieke video's</th>
       <th>Aantal video's</th>
       <th>Views vandaag (PT)</th>
       <th>+/− vorige meting</th>
