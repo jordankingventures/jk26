@@ -360,7 +360,7 @@ function renderLog() {
   // dat kan verschillen tussen twee opeenvolgende dagen (dagelijkse video-lijst-
   // verversing ontdekt of verliest af en toe catalogus-video's) -- zonder die
   // context leek hetzelfde geschatte totaal op twee plekken een fout.
-  const midnightRowHtml = (baseTotal, videoCount, viewsAtRow, interpolated, gapMinutes) => {
+  const midnightRowHtml = (baseTotal, videoCount, viewsAtRow, interpolated, gapMinutes, deltaHour) => {
     if (baseTotal === null) return '';
     const title = interpolated
       ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
@@ -371,14 +371,16 @@ function renderLog() {
       <td>${fmt(baseTotal)}</td>
       <td>${videoCount ?? '—'}</td>
       <td>${dHtml(viewsAtRow)}</td>
-      <td>—</td>
+      <td>${deltaHour == null ? '—' : dHtml(deltaHour)}</td>
     </tr>`;
   };
 
   // Sluitings-00:00 van een afgeronde dag: de backend berekent dit bij de
   // dagwissel zelf (final_day_*) en telt daarbij uitsluitend de video's mee die
   // díé dag al zelf volgde -- dus niet vervuild door de (grotere of kleinere)
-  // videoset van de eropvolgende dag.
+  // videoset van de eropvolgende dag. De "+/- vorige meting" van deze regel is
+  // het stukje groei tussen de laatste échte meting van de dag en dit geschatte
+  // 00:00-eindpunt -- beide op dezelfde videoset, dus een schone vergelijking.
   const closingTotal = (entry) => {
     if (!Number.isFinite(entry.final_day_total) || !Number.isFinite(entry.final_day_pub_total)) return null;
     return {
@@ -387,6 +389,7 @@ function renderLog() {
       viewsAtRow:   entry.final_day_total,
       interpolated: entry.final_day_interpolated,
       gapMinutes:   entry.final_day_gap_minutes,
+      deltaHour:    entry.final_day_pub_total - entry.pub_total,
     };
   };
 
@@ -400,7 +403,7 @@ function renderLog() {
       if (groupKey !== null) {
         const opening = openingBaseline(groupKey, groupLatestEntry);
         if (!collapsedDays.has(groupKey) && opening) {
-          rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes);
+          rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes, null);
         }
       }
       groupKey = key;
@@ -430,7 +433,7 @@ function renderLog() {
       if (!isCollapsed && !isToday) {
         const closing = closingTotal(e);
         if (closing) {
-          rows += midnightRowHtml(closing.baseTotal, closing.videoCount, closing.viewsAtRow, closing.interpolated, closing.gapMinutes);
+          rows += midnightRowHtml(closing.baseTotal, closing.videoCount, closing.viewsAtRow, closing.interpolated, closing.gapMinutes, closing.deltaHour);
         }
       }
     }
@@ -449,7 +452,7 @@ function renderLog() {
   if (groupKey !== null) {
     const opening = openingBaseline(groupKey, groupLatestEntry);
     if (!collapsedDays.has(groupKey) && opening) {
-      rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes);
+      rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes, null);
     }
   }
 
