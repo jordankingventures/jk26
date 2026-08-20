@@ -253,6 +253,16 @@ def save_snapshot(videos, official_total):
         if vid not in data["day_baseline"]["views"]:
             data["day_baseline"]["views"][vid] = v_now
 
+    # Omgekeerd geval, midden op de dag (dus los van de dagwissel hierboven):
+    # video's die vandaag al meetelden maar nu even niet meer in de scan
+    # voorkomen (tijdelijk API-hikje, of een video die net verdwenen is). Hun
+    # oude baseline-waarde blijft anders staan terwijl pub_total ze niet meer
+    # meetelt -- dan wordt de aftrekking te groot en duikt views_today
+    # vals-negatief. Verwijder ze uit de baseline, symmetrisch aan hierboven.
+    for vid in list(data["day_baseline"]["views"].keys()):
+        if vid not in curr_views:
+            del data["day_baseline"]["views"][vid]
+
     base_total  = sum(data["day_baseline"]["views"].values())
     views_today = pub_total - base_total
 
