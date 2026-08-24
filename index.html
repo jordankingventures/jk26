@@ -161,6 +161,21 @@
 
       .thumb img { width: 44px; height: 25px; }
       .rank { width: 22px; }
+
+      /* Brede tabellen (log, video's) op mobiel "stapelen" tot kaarten i.p.v.
+         horizontaal laten scrollen -- alleen normale rijen, dag-headers
+         (colspan+flex) blijven zoals ze zijn. */
+      .stack-mobile thead { display: none; }
+      .stack-mobile tbody tr:not(.day-row) { display: block; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+      .stack-mobile tbody tr:not(.day-row):hover td { background: transparent; }
+      .stack-mobile tbody tr:not(.day-row) td { display: block; padding: 2px 0; border-bottom: none; white-space: normal; }
+      .stack-mobile tbody tr:not(.day-row) td[data-label]:not([data-label=""]) {
+        display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+      }
+      .stack-mobile tbody tr:not(.day-row) td[data-label]:not([data-label=""])::before {
+        content: attr(data-label); color: var(--muted); font-size: 0.65rem;
+        text-transform: uppercase; letter-spacing: .03em; font-weight: 600; flex: 0 0 auto;
+      }
     }
   </style>
 </head>
@@ -214,7 +229,7 @@
   </div>
 
   <div class="table-wrap">
-    <table>
+    <table class="stack-mobile">
       <thead>
         <tr>
           <th class="rank">#</th>
@@ -397,12 +412,12 @@ function renderLog() {
       ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
       : 'Teruggerekend uit de eerst gemeten waarde van die dag (geen interpolatie beschikbaar)';
     return `<tr class="midnight-row" title="${title}">
-      <td>00:00 <span class="est-tag">geschat</span></td>
-      <td>—</td>
-      <td>${fmt(baseTotal)}</td>
-      <td>${videoCount ?? '—'}</td>
-      <td>${dHtml(viewsAtRow)}</td>
-      <td>${deltaHour == null ? '—' : dHtml(deltaHour)}</td>
+      <td data-label="Tijdstip (PT)">00:00 <span class="est-tag">geschat</span></td>
+      <td data-label="Officieel totaal">—</td>
+      <td data-label="Som publieke video's">${fmt(baseTotal)}</td>
+      <td data-label="Aantal video's">${videoCount ?? '—'}</td>
+      <td data-label="Views vandaag (PT)">${dHtml(viewsAtRow)}</td>
+      <td data-label="+/− vorige meting">${deltaHour == null ? '—' : dHtml(deltaHour)}</td>
     </tr>`;
   };
 
@@ -453,11 +468,12 @@ function renderLog() {
         // val anders terug op de laatst gemeten "views vandaag" van die dag zelf
         // (bv. voor oudere dagen van vóór deze fix, of de nog lopende huidige dag).
         const dayTotal = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
+        const dayVideoCount = (!isToday && Number.isFinite(e.final_day_video_count)) ? e.final_day_video_count : e.video_count;
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
           <div class="day-row-inner">
             <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
-            <span class="day-total">${dHtml(dayTotal)} views</span>
+            <span class="day-total">${dHtml(dayTotal)} views · ${dayVideoCount ?? '—'} video's</span>
           </div>
         </td></tr>`;
 
@@ -475,12 +491,12 @@ function renderLog() {
       if (!collapsedDays.has(groupKey)) {
         const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
         rows += `<tr class="${e === log[0] ? 'new-row' : ''}">
-          <td>${ts}</td>
-          <td>${fmt(e.official_total ?? 0)}</td>
-          <td>${fmt(e.pub_total)}</td>
-          <td>${e.video_count ?? '—'}</td>
-          <td>${dHtml(e.views_today)}</td>
-          <td>${dHtml(e.delta_hour)}</td>
+          <td data-label="Tijdstip (PT)">${ts}</td>
+          <td data-label="Officieel totaal">${fmt(e.official_total ?? 0)}</td>
+          <td data-label="Som publieke video's">${fmt(e.pub_total)}</td>
+          <td data-label="Aantal video's">${e.video_count ?? '—'}</td>
+          <td data-label="Views vandaag (PT)">${dHtml(e.views_today)}</td>
+          <td data-label="+/− vorige meting">${dHtml(e.delta_hour)}</td>
         </tr>`;
       }
     });
@@ -538,7 +554,7 @@ function renderLog() {
     }
   }
 
-  el.innerHTML = `<table class="log-table">
+  el.innerHTML = `<table class="log-table stack-mobile">
     <thead><tr>
       <th>Tijdstip (PT)</th>
       <th>Officieel totaal</th>
@@ -599,15 +615,15 @@ function renderTable() {
       ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: PT_TZ })
       : '';
     return `<tr>
-      <td class="rank">${i + 1}</td>
+      <td class="rank" data-label="#">${i + 1}</td>
       <td><img src="${v.thumbnail}" alt="" loading="lazy" width="60" height="34" style="border-radius:3px;display:block;object-fit:cover"/></td>
       <td class="video-title">
         <a href="https://youtube.com/watch?v=${v.id}" target="_blank" rel="noopener">${esc(v.title)}</a>
         <div class="vid-date">${pubDate}</div>
       </td>
-      <td class="views-num">${fmt(v.views)}</td>
-      <td>${dHtml(dHour(v))}</td>
-      <td>${dHtml(dDay(v))}</td>
+      <td class="views-num" data-label="Views">${fmt(v.views)}</td>
+      <td data-label="+/− dit uur">${dHtml(dHour(v))}</td>
+      <td data-label="+/− vandaag (PT)">${dHtml(dDay(v))}</td>
     </tr>`;
   };
 
