@@ -21,15 +21,15 @@
     }
 
     /* Header */
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; }
-    h1 { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
-    h1 span { color: var(--text); }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+    h1 { font-size: 1.05rem; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    h1 .subtitle { font-size: 0.68rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 
     /* Artiest-tabs */
-    .tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 5px; margin-bottom: 16px; flex-wrap: wrap; }
     .tab {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
-      color: var(--muted); font-size: 0.82rem; font-weight: 600; padding: 7px 16px; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); font-size: 0.76rem; font-weight: 600; padding: 5px 12px; cursor: pointer;
       transition: color .15s, border-color .15s, background .15s;
     }
     .tab:hover { color: var(--text); }
@@ -52,17 +52,33 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface2);
     }
-    .log-header h2 { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    .log-header h2 { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
     .log-empty { padding: 16px; color: var(--muted); font-size: 0.8rem; }
+    .btn-toggle-cols {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); cursor: pointer; font-size: 0.66rem; font-weight: 600;
+      padding: 4px 10px; text-transform: uppercase; letter-spacing: .03em;
+    }
+    .btn-toggle-cols:hover { color: var(--text); border-color: var(--accent); }
+
+    /* Standaard alleen de kernkolommen tonen; "Officieel totaal"/"Som publieke
+       video's"/"Aantal video's" zijn controle-info, niet wat je dagelijks
+       afleest -- via de toggle-knop hierboven alsnog oproepbaar. */
+    .log-table th:nth-child(2), .log-table td:nth-child(2),
+    .log-table th:nth-child(3), .log-table td:nth-child(3),
+    .log-table th:nth-child(4), .log-table td:nth-child(4) { display: none; }
+    .log-table.show-all-cols th:nth-child(2), .log-table.show-all-cols td:nth-child(2),
+    .log-table.show-all-cols th:nth-child(3), .log-table.show-all-cols td:nth-child(3),
+    .log-table.show-all-cols th:nth-child(4), .log-table.show-all-cols td:nth-child(4) { display: table-cell; }
 
     #log-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .log-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
     .log-table th {
-      text-align: left; color: var(--muted); font-size: 0.68rem;
+      text-align: left; color: var(--muted); font-size: 0.66rem;
       text-transform: uppercase; letter-spacing: .05em;
-      padding: 7px 14px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;
+      padding: 6px 12px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;
     }
-    .log-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .log-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; white-space: nowrap; }
     .log-table tr:last-child td { border-bottom: none; }
     .log-table tr:hover td { background: var(--surface2); }
     .new-row td { animation: rowFade .6s ease; }
@@ -70,16 +86,16 @@
 
     /* Dag-groepering in refresh log (inklapbaar) */
     .day-row { cursor: pointer; user-select: none; }
-    .day-row td { background: var(--surface2); padding: 9px 14px 8px; border-bottom: 1px solid var(--border); }
+    .day-row td { background: var(--surface2); padding: 7px 12px 6px; border-bottom: 1px solid var(--border); }
     .day-row:hover td { background: var(--surface2); filter: brightness(1.12); }
     .day-row:first-child td { border-top: none; }
     .day-row-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; }
-    .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.8rem; text-transform: capitalize; color: var(--text); }
+    .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.77rem; text-transform: capitalize; color: var(--text); }
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
     .week-row .day-label { padding-left: 16px; text-transform: none; }
     .older-row .day-label { text-transform: none; }
-    .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.85rem; white-space: nowrap; }
+    .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.8rem; white-space: nowrap; }
 
     /* Berekend 00:00-record onderaan elke dag */
     .midnight-row td { font-style: italic; color: var(--muted); border-bottom: 1px dashed var(--border); cursor: help; }
@@ -114,15 +130,15 @@
     }
 
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
     thead { background: var(--surface2); }
     th {
       text-align: left; color: var(--muted); font-weight: 600;
-      font-size: 0.68rem; text-transform: uppercase; letter-spacing: .05em;
-      padding: 9px 14px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
+      font-size: 0.66rem; text-transform: uppercase; letter-spacing: .05em;
+      padding: 7px 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
     }
     th:hover { color: var(--text); }
-    td { padding: 8px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    td { padding: 6px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface2); }
 
@@ -142,47 +158,32 @@
     @media (max-width: 640px) {
       body { padding: 14px 10px 40px; }
       header { flex-wrap: wrap; gap: 8px; }
-      h1 { font-size: 0.95rem; }
+      h1 { font-size: 0.92rem; }
       .header-right { width: 100%; justify-content: space-between; }
 
-      .log-table, table { font-size: 0.74rem; }
-      .log-table th, table th { padding: 6px 8px; }
-      .log-table td, table td { padding: 6px 8px; }
+      .log-table, table { font-size: 0.72rem; }
+      .log-table th, table th { padding: 5px 7px; }
+      .log-table td, table td { padding: 5px 7px; }
 
       .section-header { gap: 8px; }
       .toolbar { width: 100%; }
       .toolbar input[type=text] { flex: 1 1 auto; width: auto; min-width: 0; }
       .toolbar select { flex: 0 0 auto; }
 
-      .day-row td { padding: 8px 8px 7px; }
-      .day-label { font-size: 0.74rem; }
-      .day-total { font-size: 0.78rem; }
-      .midnight-row td { padding: 6px 8px; }
+      .day-row td { padding: 7px 7px 6px; }
+      .day-label { font-size: 0.73rem; }
+      .day-total { font-size: 0.76rem; }
+      .midnight-row td { padding: 5px 7px; }
 
       .thumb img { width: 44px; height: 25px; }
       .rank { width: 22px; }
-
-      /* Brede tabellen (log, video's) op mobiel "stapelen" tot kaarten i.p.v.
-         horizontaal laten scrollen -- alleen normale rijen, dag-headers
-         (colspan+flex) blijven zoals ze zijn. */
-      .stack-mobile thead { display: none; }
-      .stack-mobile tbody tr:not(.day-row) { display: block; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-      .stack-mobile tbody tr:not(.day-row):hover td { background: transparent; }
-      .stack-mobile tbody tr:not(.day-row) td { display: block; padding: 2px 0; border-bottom: none; white-space: normal; }
-      .stack-mobile tbody tr:not(.day-row) td[data-label]:not([data-label=""]) {
-        display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
-      }
-      .stack-mobile tbody tr:not(.day-row) td[data-label]:not([data-label=""])::before {
-        content: attr(data-label); color: var(--muted); font-size: 0.65rem;
-        text-transform: uppercase; letter-spacing: .03em; font-weight: 600; flex: 0 0 auto;
-      }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>📺 <span id="artist-name">Taylor Swift</span> — View Tracker</h1>
+  <h1><span id="artist-name">Taylor Swift</span><span class="subtitle">View Tracker</span></h1>
   <div class="header-right">
     <span class="badge" id="badge-updated">Laden...</span>
     <button class="refresh" id="btn-refresh" onclick="loadData()">↻ Ververs</button>
@@ -203,6 +204,7 @@
 <div class="log-wrap">
   <div class="log-header">
     <h2>Refresh log</h2>
+    <button class="btn-toggle-cols" id="btn-toggle-cols" onclick="toggleFullLog()">+ Meer kolommen</button>
   </div>
   <div id="log-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
 </div>
@@ -229,7 +231,7 @@
   </div>
 
   <div class="table-wrap">
-    <table class="stack-mobile">
+    <table>
       <thead>
         <tr>
           <th class="rank">#</th>
@@ -275,6 +277,13 @@ let collapsedWeeks = null; // Set van ISO-weeksleutels (binnen de oudere-sectie)
 let collapsedOlder = true; // of de "oudere data"-sectie (alles voorbij de laatste 7 dagen) ingeklapt is
 let collapsedChannels = new Set(); // kanalen die de gebruiker heeft ingeklapt in de videolijst
 const CHANNEL_ORDER = ['Hoofdkanaal', 'Topic']; // vaste weergavevolgorde; onbekende labels achteraan
+
+let showFullLog = false; // toont "Officieel totaal"/"Som publieke video's"/"Aantal video's" in de logtabel; globale voorkeur, niet per artiest
+
+function toggleFullLog() {
+  showFullLog = !showFullLog;
+  renderLog();
+}
 
 function toggleDay(key) {
   if (collapsedDays.has(key)) collapsedDays.delete(key); else collapsedDays.add(key);
@@ -412,12 +421,12 @@ function renderLog() {
       ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
       : 'Teruggerekend uit de eerst gemeten waarde van die dag (geen interpolatie beschikbaar)';
     return `<tr class="midnight-row" title="${title}">
-      <td data-label="Tijdstip (PT)">00:00 <span class="est-tag">geschat</span></td>
-      <td data-label="Officieel totaal">—</td>
-      <td data-label="Som publieke video's">${fmt(baseTotal)}</td>
-      <td data-label="Aantal video's">${videoCount ?? '—'}</td>
-      <td data-label="Views vandaag (PT)">${dHtml(viewsAtRow)}</td>
-      <td data-label="+/− vorige meting">${deltaHour == null ? '—' : dHtml(deltaHour)}</td>
+      <td>00:00 <span class="est-tag">geschat</span></td>
+      <td>—</td>
+      <td>${fmt(baseTotal)}</td>
+      <td>${videoCount ?? '—'}</td>
+      <td>${dHtml(viewsAtRow)}</td>
+      <td>${deltaHour == null ? '—' : dHtml(deltaHour)}</td>
     </tr>`;
   };
 
@@ -491,12 +500,12 @@ function renderLog() {
       if (!collapsedDays.has(groupKey)) {
         const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
         rows += `<tr class="${e === log[0] ? 'new-row' : ''}">
-          <td data-label="Tijdstip (PT)">${ts}</td>
-          <td data-label="Officieel totaal">${fmt(e.official_total ?? 0)}</td>
-          <td data-label="Som publieke video's">${fmt(e.pub_total)}</td>
-          <td data-label="Aantal video's">${e.video_count ?? '—'}</td>
-          <td data-label="Views vandaag (PT)">${dHtml(e.views_today)}</td>
-          <td data-label="+/− vorige meting">${dHtml(e.delta_hour)}</td>
+          <td>${ts}</td>
+          <td>${fmt(e.official_total ?? 0)}</td>
+          <td>${fmt(e.pub_total)}</td>
+          <td>${e.video_count ?? '—'}</td>
+          <td>${dHtml(e.views_today)}</td>
+          <td>${dHtml(e.delta_hour)}</td>
         </tr>`;
       }
     });
@@ -554,7 +563,7 @@ function renderLog() {
     }
   }
 
-  el.innerHTML = `<table class="log-table stack-mobile">
+  el.innerHTML = `<table class="log-table${showFullLog ? ' show-all-cols' : ''}">
     <thead><tr>
       <th>Tijdstip (PT)</th>
       <th>Officieel totaal</th>
@@ -565,6 +574,9 @@ function renderLog() {
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+
+  const toggleBtn = document.getElementById('btn-toggle-cols');
+  if (toggleBtn) toggleBtn.textContent = showFullLog ? '− Minder kolommen' : '+ Meer kolommen';
 }
 
 function renderTable() {
@@ -615,15 +627,15 @@ function renderTable() {
       ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: PT_TZ })
       : '';
     return `<tr>
-      <td class="rank" data-label="#">${i + 1}</td>
+      <td class="rank">${i + 1}</td>
       <td><img src="${v.thumbnail}" alt="" loading="lazy" width="60" height="34" style="border-radius:3px;display:block;object-fit:cover"/></td>
       <td class="video-title">
         <a href="https://youtube.com/watch?v=${v.id}" target="_blank" rel="noopener">${esc(v.title)}</a>
         <div class="vid-date">${pubDate}</div>
       </td>
-      <td class="views-num" data-label="Views">${fmt(v.views)}</td>
-      <td data-label="+/− dit uur">${dHtml(dHour(v))}</td>
-      <td data-label="+/− vandaag (PT)">${dHtml(dDay(v))}</td>
+      <td class="views-num">${fmt(v.views)}</td>
+      <td>${dHtml(dHour(v))}</td>
+      <td>${dHtml(dDay(v))}</td>
     </tr>`;
   };
 
