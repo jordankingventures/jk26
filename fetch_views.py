@@ -1,6 +1,6 @@
 """
 YouTube View Tracker — fetch_views.py
-Draait via GitHub Actions (getriggerd door cron-job.org, elke ~15 min).
+Draait via GitHub Actions (getriggerd door cron-job.org, elk uur).
 Haalt views op van alle video's van een artiest over meerdere kanalen heen
 (hoofdkanaal + het door YouTube/het label auto-gegenereerde "Topic"-kanaal
 voor officiële audio, incl. remixen en alternatieve versies -- staat
@@ -135,6 +135,20 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
     cache[channel_id] = {"date": today, "ids": ids}
     print(f"  [{channel_id}] Video IDs opgehaald: {len(ids)}")
     return ids
+
+
+def get_recent_video_ids(uploads_playlist_id, count=10):
+    """
+    Lichte check op de nieuwste uploads van één kanaal (kost altijd maar 1
+    API-unit, ongeacht 'count' -- playlistItems.list rekent per call, niet
+    per resultaat). Draait elke run, los van de dagelijkse cache in
+    get_video_ids(), zodat een net-verschenen video (bv. een vrijdagochtend-
+    release) binnen het uur ontdekt wordt in plaats van pas bij de eerst-
+    volgende dagelijkse full-scan -- tot 24 uur later, waarbij zijn hele
+    groei tot dan toe onterecht als "al bestaand" zou worden weggebaseline'd.
+    """
+    data = yt_get("playlistItems", {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": count})
+    return [item["contentDetails"]["videoId"] for item in data.get("items", [])]
 
 
 def get_video_details(ids):
@@ -327,6 +341,17 @@ if __name__ == "__main__":
     for c in CHANNELS:
         info = channels_info[c["id"]]
         ids  = get_video_ids(c["id"], info["uploads_playlist_id"], cache)
+
+        # Elke run (niet alleen bij de dagelijkse full-scan) even de nieuwste
+        # uploads checken, zodat een video die net live gaat niet tot 24 uur
+        # onopgemerkt blijft -- zie get_recent_video_ids().
+        recent_ids = get_recent_video_ids(info["uploads_playlist_id"])
+        new_ids    = [vid for vid in recent_ids if vid not in ids]
+        if new_ids:
+            print(f"  [{c['id']}] Nieuw ontdekt via snelle check: {len(new_ids)}")
+            ids = ids + new_ids
+            cache[c["id"]]["ids"] = ids  # ook in de dagcache zetten, anders 'nieuw' bij elke volgende run
+
         all_ids.extend(ids)
         for vid in ids:
             id_to_channel.setdefault(vid, c["label"])  # eerste kanaal in CHANNELS wint bij overlap
