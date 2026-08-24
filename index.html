@@ -77,6 +77,8 @@
     .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.8rem; text-transform: capitalize; color: var(--text); }
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
+    .week-row .day-label { padding-left: 16px; text-transform: none; }
+    .older-row .day-label { text-transform: none; }
     .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.85rem; white-space: nowrap; }
 
     /* Berekend 00:00-record onderaan elke dag */
@@ -254,11 +256,23 @@ const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays,
 
 let appData = null;
 let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
+let collapsedWeeks = null; // Set van ISO-weeksleutels (binnen de oudere-sectie) die ingeklapt zijn; null = nog niet geinitialiseerd
+let collapsedOlder = true; // of de "oudere data"-sectie (alles voorbij de laatste 7 dagen) ingeklapt is
 let collapsedChannels = new Set(); // kanalen die de gebruiker heeft ingeklapt in de videolijst
 const CHANNEL_ORDER = ['Hoofdkanaal', 'Topic']; // vaste weergavevolgorde; onbekende labels achteraan
 
 function toggleDay(key) {
   if (collapsedDays.has(key)) collapsedDays.delete(key); else collapsedDays.add(key);
+  renderLog();
+}
+
+function toggleOlder() {
+  collapsedOlder = !collapsedOlder;
+  renderLog();
+}
+
+function toggleWeek(key) {
+  if (collapsedWeeks.has(key)) collapsedWeeks.delete(key); else collapsedWeeks.add(key);
   renderLog();
 }
 
@@ -270,7 +284,7 @@ function toggleChannel(label) {
 function switchArtist(key) {
   if (key === activeArtist || !ARTISTS[key]) return;
 
-  artistCache[activeArtist] = { appData, collapsedDays, collapsedChannels };
+  artistCache[activeArtist] = { appData, collapsedDays, collapsedWeeks, collapsedOlder, collapsedChannels };
   activeArtist = key;
 
   document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
@@ -278,10 +292,11 @@ function switchArtist(key) {
 
   const cached = artistCache[key];
   if (cached) {
-    appData = cached.appData; collapsedDays = cached.collapsedDays; collapsedChannels = cached.collapsedChannels;
+    appData = cached.appData; collapsedDays = cached.collapsedDays; collapsedWeeks = cached.collapsedWeeks;
+    collapsedOlder = cached.collapsedOlder; collapsedChannels = cached.collapsedChannels;
     if (appData) { renderLog(); renderTable(); }
   } else {
-    appData = null; collapsedDays = null; collapsedChannels = new Set();
+    appData = null; collapsedDays = null; collapsedWeeks = null; collapsedOlder = true; collapsedChannels = new Set();
     document.getElementById('log-body').innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
     document.getElementById('video-tbody').innerHTML = '<tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>';
   }
@@ -330,15 +345,31 @@ function renderLog() {
   const el  = document.getElementById('log-body');
   if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
 
-  const ptDateKey   = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: PT_TZ }); // YYYY-MM-DD, sorteerbaar
-  const ptDateLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: PT_TZ });
-  const todayKey    = new Date().toLocaleDateString('en-CA', { timeZone: PT_TZ });
+  const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: PT_TZ }); // YYYY-MM-DD, sorteerbaar
+  const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: PT_TZ });
+  const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: PT_TZ });
+  const todayKey     = new Date().toLocaleDateString('en-CA', { timeZone: PT_TZ });
 
-  // Standaard: alleen vandaag uitgeklapt, oudere dagen ingeklapt. Wordt eenmalig
-  // bepaald en blijft daarna staan totdat de gebruiker zelf een dag toggelt.
+  // ISO-8601-weeksleutel (bv. "2026-W34") voor een PT-datumsleutel, voor het
+  // groeperen van de oudere-dan-7-dagen sectie per week.
+  const isoWeekKey = (dateKeyStr) => {
+    const [y, m, d] = dateKeyStr.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    const dayNum = date.getUTCDay() || 7; // maandag=1 .. zondag=7
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum); // naar donderdag van deze ISO-week
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const week = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+  };
+
+  // Standaard: alleen vandaag uitgeklapt, oudere dagen/weken ingeklapt. Wordt
+  // eenmalig bepaald en blijft daarna staan totdat de gebruiker zelf toggelt.
   if (collapsedDays === null) {
     const allKeys = [...new Set(log.map(e => ptDateKey(e.ts)))];
     collapsedDays = new Set(allKeys.filter(k => k !== todayKey));
+  }
+  if (collapsedWeeks === null) {
+    collapsedWeeks = new Set(log.map(e => isoWeekKey(ptDateKey(e.ts))));
   }
 
   // 00:00-baseline van een afgeronde groep: teruggerekend uit wat al gelogd staat
@@ -393,66 +424,117 @@ function renderLog() {
     };
   };
 
-  let rows = '';
-  let groupKey = null;
-  let groupLatestEntry = null; // meest recente meting van de lopende groep, voor de 00:00-regel erna
+  // Rendert dag-headers + metingen + 00:00-regels voor een aaneengesloten,
+  // nieuw-naar-oud gesorteerde subset van het log. Wordt gebruikt voor zowel de
+  // losse recente dagen als, genest, voor elke week in de oudere-sectie.
+  const renderDayRows = (entries) => {
+    let rows = '';
+    let groupKey = null;
+    let groupLatestEntry = null; // meest recente meting van de lopende groep, voor de 00:00-regel erna
 
-  log.forEach((e, i) => {
-    const key = ptDateKey(e.ts);
-    if (key !== groupKey) {
-      if (groupKey !== null) {
-        const opening = openingBaseline(groupKey, groupLatestEntry);
-        if (!collapsedDays.has(groupKey) && opening) {
-          rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes, null);
+    entries.forEach((e) => {
+      const key = ptDateKey(e.ts);
+      if (key !== groupKey) {
+        if (groupKey !== null) {
+          const opening = openingBaseline(groupKey, groupLatestEntry);
+          if (!collapsedDays.has(groupKey) && opening) {
+            rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes, null);
+          }
+        }
+        groupKey = key;
+        groupLatestEntry = e;
+        const isToday = key === todayKey;
+        const isCollapsed = collapsedDays.has(key);
+
+        // Dagtotaal: de backend berekent bij elke dagwissel een gecorrigeerd
+        // "final_day_total" voor de zojuist afgesloten dag (inclusief het stukje
+        // groei tot middernacht, maar zonder vervuiling door nieuw ontdekte of
+        // verdwenen video's -- zie fetch_views.py). Gebruik dat zodra het er is;
+        // val anders terug op de laatst gemeten "views vandaag" van die dag zelf
+        // (bv. voor oudere dagen van vóór deze fix, of de nog lopende huidige dag).
+        const dayTotal = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
+
+        rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
+          <div class="day-row-inner">
+            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
+            <span class="day-total">${dHtml(dayTotal)} views</span>
+          </div>
+        </td></tr>`;
+
+        // Sluitings-00:00: het einde van deze dag, meteen onder de header, zodat een
+        // dag ook los (ingeklapte buurdag) leesbaar is als 00:00 -> records -> 00:00.
+        // Gebruikt de eigen final_day_*-velden van deze dag (zie hierboven), niet
+        // de baseline van de volgende dag.
+        if (!isCollapsed && !isToday) {
+          const closing = closingTotal(e);
+          if (closing) {
+            rows += midnightRowHtml(closing.baseTotal, closing.videoCount, closing.viewsAtRow, closing.interpolated, closing.gapMinutes, closing.deltaHour);
+          }
         }
       }
-      groupKey = key;
-      groupLatestEntry = e;
-      const isToday = key === todayKey;
-      const isCollapsed = collapsedDays.has(key);
-
-      // Dagtotaal: de backend berekent bij elke dagwissel een gecorrigeerd
-      // "final_day_total" voor de zojuist afgesloten dag (inclusief het stukje
-      // groei tot middernacht, maar zonder vervuiling door nieuw ontdekte of
-      // verdwenen video's -- zie fetch_views.py). Gebruik dat zodra het er is;
-      // val anders terug op de laatst gemeten "views vandaag" van die dag zelf
-      // (bv. voor oudere dagen van vóór deze fix, of de nog lopende huidige dag).
-      const dayTotal = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
-
-      rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
-        <div class="day-row-inner">
-          <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}</span>
-          <span class="day-total">${dHtml(dayTotal)} views</span>
-        </div>
-      </td></tr>`;
-
-      // Sluitings-00:00: het einde van deze dag, meteen onder de header, zodat een
-      // dag ook los (ingeklapte buurdag) leesbaar is als 00:00 -> records -> 00:00.
-      // Gebruikt de eigen final_day_*-velden van deze dag (zie hierboven), niet
-      // de baseline van de volgende dag.
-      if (!isCollapsed && !isToday) {
-        const closing = closingTotal(e);
-        if (closing) {
-          rows += midnightRowHtml(closing.baseTotal, closing.videoCount, closing.viewsAtRow, closing.interpolated, closing.gapMinutes, closing.deltaHour);
-        }
+      if (!collapsedDays.has(groupKey)) {
+        const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
+        rows += `<tr class="${e === log[0] ? 'new-row' : ''}">
+          <td>${ts}</td>
+          <td>${fmt(e.official_total ?? 0)}</td>
+          <td>${fmt(e.pub_total)}</td>
+          <td>${e.video_count ?? '—'}</td>
+          <td>${dHtml(e.views_today)}</td>
+          <td>${dHtml(e.delta_hour)}</td>
+        </tr>`;
+      }
+    });
+    if (groupKey !== null) {
+      const opening = openingBaseline(groupKey, groupLatestEntry);
+      if (!collapsedDays.has(groupKey) && opening) {
+        rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes, null);
       }
     }
-    if (!collapsedDays.has(groupKey)) {
-      const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
-      rows += `<tr class="${i === 0 ? 'new-row' : ''}">
-        <td>${ts}</td>
-        <td>${fmt(e.official_total ?? 0)}</td>
-        <td>${fmt(e.pub_total)}</td>
-        <td>${e.video_count ?? '—'}</td>
-        <td>${dHtml(e.views_today)}</td>
-        <td>${dHtml(e.delta_hour)}</td>
-      </tr>`;
-    }
-  });
-  if (groupKey !== null) {
-    const opening = openingBaseline(groupKey, groupLatestEntry);
-    if (!collapsedDays.has(groupKey) && opening) {
-      rows += midnightRowHtml(opening.baseTotal, opening.videoCount, 0, opening.interpolated, opening.gapMinutes, null);
+    return rows;
+  };
+
+  // Laatste 7 PT-dagen (inclusief vandaag) los tonen; alles ouder daarvan gaat
+  // in een aparte, standaard ingeklapte sectie, onderverdeeld per ISO-week.
+  const recentDayKeys = [...new Set(log.map(e => ptDateKey(e.ts)))].slice(0, 7);
+  const recentKeySet  = new Set(recentDayKeys);
+  const recentEntries = log.filter(e => recentKeySet.has(ptDateKey(e.ts)));
+  const olderEntries  = log.filter(e => !recentKeySet.has(ptDateKey(e.ts)));
+
+  let rows = renderDayRows(recentEntries);
+
+  if (olderEntries.length) {
+    const olderDayCount = new Set(olderEntries.map(e => ptDateKey(e.ts))).size;
+    rows += `<tr class="day-row older-row" onclick="toggleOlder()"><td colspan="6">
+      <div class="day-row-inner">
+        <span class="day-label"><span class="day-chevron">${collapsedOlder ? '▸' : '▾'}</span>Oudere data</span>
+        <span class="day-total">${olderDayCount} ${olderDayCount === 1 ? 'dag' : "dagen"}</span>
+      </div>
+    </td></tr>`;
+
+    if (!collapsedOlder) {
+      let weekKey = null;
+      let weekEntries = [];
+      const flushWeek = () => {
+        if (weekKey === null) return;
+        const isCollapsed = collapsedWeeks.has(weekKey);
+        const weekNum     = weekKey.split('-W')[1].replace(/^0/, '');
+        const dayCount    = new Set(weekEntries.map(e => ptDateKey(e.ts))).size;
+        const oldest      = weekEntries[weekEntries.length - 1];
+        const newest      = weekEntries[0];
+        rows += `<tr class="day-row week-row" onclick="toggleWeek('${weekKey}')"><td colspan="6">
+          <div class="day-row-inner">
+            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>Week ${weekNum} · ${ptShortLabel(oldest.ts)} – ${ptShortLabel(newest.ts)}</span>
+            <span class="day-total">${dayCount} ${dayCount === 1 ? 'dag' : 'dagen'}</span>
+          </div>
+        </td></tr>`;
+        if (!isCollapsed) rows += renderDayRows(weekEntries);
+      };
+      olderEntries.forEach((e) => {
+        const wk = isoWeekKey(ptDateKey(e.ts));
+        if (wk !== weekKey) { flushWeek(); weekKey = wk; weekEntries = []; }
+        weekEntries.push(e);
+      });
+      flushWeek();
     }
   }
 
