@@ -175,6 +175,7 @@
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .prediction-ucg-col { color: var(--green); }
+    .prediction-today-row td { color: #7c7b8a; font-style: italic; }
     .prediction-stats-table th, .prediction-stats-table td { padding: 4px 12px; font-size: 0.72rem; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
@@ -1018,7 +1019,7 @@ function renderPredictionDays() {
     const releaseBadge = predictionReleaseDays.has(d.key)
       ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
       : '';
-    return `<tr>
+    return `<tr class="${d.isToday ? 'prediction-today-row' : ''}">
       <td>${d.label}${todayBadge}${releaseBadge}</td>
       <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
       <td class="prediction-ucg-col">${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
