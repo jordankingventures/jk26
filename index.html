@@ -175,6 +175,7 @@
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .prediction-ucg-col { color: var(--green); }
+    .prediction-stats-table th, .prediction-stats-table td { padding: 4px 12px; font-size: 0.72rem; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -1051,9 +1052,8 @@ function computeUcgStats(factors) {
   const variance = factors.reduce((s, v) => s + (v - avg) ** 2, 0) / n;
   const stdev = Math.sqrt(variance);
   const cv = avg !== 0 ? (stdev / avg) * 100 : null;
-  const label = cv == null ? '—' : cv < 1.5 ? 'Hoog' : cv < 2.5 ? 'Middel' : 'Laag';
   return {
-    n, avg, stdev, cv, label,
+    n, avg, stdev, cv,
     min: Math.min(...factors), max: Math.max(...factors),
     ciLow: avg - 1.5 * stdev, ciHigh: avg + 1.5 * stdev,
   };
@@ -1065,12 +1065,14 @@ function renderUcgHistory() {
   if (!hist) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
 
   // De UCG-factor valt vlak na een release-dag artificieel laag uit (zie
-  // notitie in de bron-Excel), tot ~1 dag erna. Die dagen tellen niet mee in
-  // de "excl."-statistiek, maar blijven gewoon zichtbaar in de tabel eronder.
+  // notitie in de bron-Excel), tot ~2 dagen erna. Die dagen tellen niet mee
+  // in de "excl."-statistiek, maar blijven gewoon zichtbaar in de tabel
+  // eronder.
   const excludedDates = new Set();
   for (const d of predictionReleaseDays) {
     excludedDates.add(d);
     excludedDates.add(addDaysToDateKey(d, 1));
+    excludedDates.add(addDaysToDateKey(d, 2));
   }
 
   const rows = [...hist.points].reverse().map(p => {
@@ -1094,10 +1096,6 @@ function renderUcgHistory() {
   const inclStats = computeUcgStats(allFactors);
   const exclStats = computeUcgStats(cleanFactors);
 
-  const labelHtml = (label) => {
-    const cls = label === 'Hoog' ? 'pos' : label === 'Laag' ? 'neg' : 'neu';
-    return `<span class="${cls}">${label}</span>`;
-  };
   const statRow = (label, fn) => `<tr>
     <td>${label}</td>
     <td>${inclStats ? fn(inclStats) : '—'}</td>
@@ -1108,15 +1106,12 @@ function renderUcgHistory() {
     <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
-  <table class="log-table">
-    <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+1 dag)</th></tr></thead>
+  <table class="log-table prediction-stats-table">
+    <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+2 dagen)</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
-      ${statRow('Gemiddelde', s => s.avg.toFixed(2))}
-      ${statRow('Min – max', s => `${s.min.toFixed(2)} – ${s.max.toFixed(2)}`)}
-      ${statRow('Standaarddeviatie', s => s.stdev.toFixed(3))}
-      ${statRow('Variatiecoëfficiënt', s => s.cv.toFixed(1) + '%')}
-      ${statRow('Betrouwbaarheid', s => labelHtml(s.label))}
+      ${statRow('Gem. (min–max)', s => `${s.avg.toFixed(2)} (${s.min.toFixed(2)}–${s.max.toFixed(2)})`)}
+      ${statRow('Stdev (CV)', s => `${s.stdev.toFixed(3)} (${s.cv.toFixed(1)}%)`)}
       ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
     </tbody>
   </table>`;
