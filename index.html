@@ -511,14 +511,21 @@ function renderLog() {
     // andere meting zijn dan degene die hier als "nieuwste van de groep" wordt
     // doorgegeven. Zoek daarom in de hele groep i.p.v. alleen op `entry`.
     const withTotal = entry.final_day_total !== undefined ? entry : log.find(x => ptDateKey(x.ts) === key && x.final_day_total !== undefined);
-    if (!withTotal || !Number.isFinite(withTotal.final_day_total) || !Number.isFinite(withTotal.final_day_pub_total)) return null;
+    // Een negatief final_day_total is de "vals-negatief"-bug uit half augustus
+    // 2026 (gefixt op 20-08) -- die waarde was toen al fout, niet betrouwbaar
+    // om te tonen.
+    if (!withTotal || !Number.isFinite(withTotal.final_day_total) || withTotal.final_day_total < 0) return null;
+    // final_day_pub_total/-video_count/etc. bestaan pas sinds 16 augustus 2026;
+    // vóór die datum staat er alleen het kale final_day_total -- val dan terug
+    // op de eigen pub_total/video_count van die meting i.p.v. de rij te verbergen.
+    const hasSiblings = Number.isFinite(withTotal.final_day_pub_total);
     return {
-      baseTotal:    withTotal.final_day_pub_total,
-      videoCount:   withTotal.final_day_video_count,
+      baseTotal:    hasSiblings ? withTotal.final_day_pub_total : withTotal.pub_total,
+      videoCount:   hasSiblings ? withTotal.final_day_video_count : withTotal.video_count,
       viewsAtRow:   withTotal.final_day_total,
-      interpolated: withTotal.final_day_interpolated,
-      gapMinutes:   withTotal.final_day_gap_minutes,
-      deltaHour:    withTotal.final_day_pub_total - entry.pub_total,
+      interpolated: hasSiblings ? withTotal.final_day_interpolated : false,
+      gapMinutes:   hasSiblings ? withTotal.final_day_gap_minutes : null,
+      deltaHour:    hasSiblings ? withTotal.final_day_pub_total - entry.pub_total : null,
     };
   };
 
@@ -545,9 +552,18 @@ function renderLog() {
         const isCollapsed = collapsedDays.has(key);
 
         // Dagtotaal: herberekend op de UTC-8-daggrens (zie dayInfo hierboven),
-        // met terugvalwaarde het oude, backend-opgeslagen cijfer.
+        // met terugvalwaarde het oude, backend-opgeslagen cijfer. Voor vandaag
+        // is de lopende views_today altijd het juiste (enige) cijfer; voor een
+        // afgesloten dag zónder betrouwbare herberekening én zónder
+        // final_day_total (dagen van vóór 14 augustus 2026, toen dat veld nog
+        // niet bestond) is er écht geen betrouwbaar cijfer -- toon dan "—"
+        // i.p.v. het potentieel sterk misleidende ruwe views_today.
         const withTotal = e.final_day_total !== undefined ? e : log.find(x => ptDateKey(x.ts) === key && x.final_day_total !== undefined);
-        const fallback = (!isToday && withTotal && Number.isFinite(withTotal.final_day_total)) ? withTotal.final_day_total : e.views_today;
+        // Negatief final_day_total = de "vals-negatief"-bug uit half augustus
+        // 2026 (gefixt op 20-08) -- niet betrouwbaar, dan liever "—".
+        const fallback = isToday
+          ? e.views_today
+          : (withTotal && Number.isFinite(withTotal.final_day_total) && withTotal.final_day_total >= 0 ? withTotal.final_day_total : null);
         const dayTotal = dayTotalFor(key, fallback);
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
