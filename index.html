@@ -159,6 +159,23 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .err-txt { color: var(--accent2); font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
 
+    /* Voorspelling-tab */
+    .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
+    .prediction-controls input[type=range] { flex: 1 1 220px; accent-color: var(--accent); }
+    .prediction-controls input[type=number] {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-size: 0.85rem; padding: 6px 10px; width: 90px;
+      font-variant-numeric: tabular-nums;
+    }
+    .prediction-controls input[type=number]:focus { outline: none; border-color: var(--accent); }
+    .prediction-result-box {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-top: 1px solid var(--border); background: var(--surface2);
+    }
+    .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+    .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .prediction-sum-row td { font-weight: 700; border-top: 1px solid var(--border); }
+
     /* Mobiel */
     @media (max-width: 640px) {
       body { padding: 14px 10px 40px; }
@@ -224,53 +241,83 @@
   <button class="tab" data-artist="bieber" onclick="switchArtist('bieber')">Justin Bieber</button>
 </div>
 
-<!-- Log -->
-<div class="log-wrap">
-  <div class="log-header">
-    <h2>Refresh log</h2>
-  </div>
-  <div id="log-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+<div class="tabs" id="view-tabs">
+  <button class="tab active" data-view="log" onclick="switchView('log')">Log</button>
+  <button class="tab" data-view="prediction" onclick="switchView('prediction')">Voorspelling</button>
 </div>
 
-<!-- Video table -->
-<details class="video-details" id="video-details">
-  <summary class="video-summary">
-    <span class="summary-chevron">▸</span>
-    <h2 id="vid-count-label">Video's</h2>
-  </summary>
+<div id="log-view">
+  <!-- Log -->
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Refresh log</h2>
+    </div>
+    <div id="log-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+  </div>
 
-  <div class="section-header">
-    <div class="toolbar">
-      <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="renderTable()" />
-      <select id="sort-select" onchange="renderTable()">
-        <option value="views-desc">Meeste views</option>
-        <option value="views-asc">Minste views</option>
-        <option value="delta-desc">Meeste groei dit uur</option>
-        <option value="delta-day-desc">Meeste groei vandaag (UTC-8)</option>
-        <option value="date-desc">Nieuwste eerst</option>
-        <option value="title-asc">Titel A–Z</option>
-      </select>
+  <!-- Video table -->
+  <details class="video-details" id="video-details">
+    <summary class="video-summary">
+      <span class="summary-chevron">▸</span>
+      <h2 id="vid-count-label">Video's</h2>
+    </summary>
+
+    <div class="section-header">
+      <div class="toolbar">
+        <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="renderTable()" />
+        <select id="sort-select" onchange="renderTable()">
+          <option value="views-desc">Meeste views</option>
+          <option value="views-asc">Minste views</option>
+          <option value="delta-desc">Meeste groei dit uur</option>
+          <option value="delta-day-desc">Meeste groei vandaag (UTC-8)</option>
+          <option value="date-desc">Nieuwste eerst</option>
+          <option value="title-asc">Titel A–Z</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="rank">#</th>
+            <th></th>
+            <th>Titel</th>
+            <th onclick="setSortAndRender('views-desc')">Views</th>
+            <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
+            <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (UTC-8)</th>
+          </tr>
+        </thead>
+        <tbody id="video-tbody">
+          <tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<div id="prediction-view" style="display:none">
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Laatste 6 afgesloten dagen (UTC-8)</h2>
+    </div>
+    <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>UCG-factor</h2>
+    </div>
+    <div class="prediction-controls">
+      <input type="range" id="ucg-slider" min="1" max="1.5" step="0.001" value="1" oninput="onUcgSliderInput()">
+      <input type="number" id="ucg-number" min="1" max="5" step="0.001" value="1" oninput="onUcgNumberInput()">
+    </div>
+    <div class="prediction-result-box">
+      <span class="prediction-result-label">Verwacht totaal (incl. UCG)</span>
+      <span class="prediction-result-value" id="prediction-result">—</span>
     </div>
   </div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th class="rank">#</th>
-          <th></th>
-          <th>Titel</th>
-          <th onclick="setSortAndRender('views-desc')">Views</th>
-          <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
-          <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (UTC-8)</th>
-        </tr>
-      </thead>
-      <tbody id="video-tbody">
-        <tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>
-      </tbody>
-    </table>
-  </div>
-</details>
+</div>
 
 <script>
 const fmt = (n) => Number(n).toLocaleString('nl-NL');
@@ -281,6 +328,80 @@ const fmt = (n) => Number(n).toLocaleString('nl-NL');
 // Pacific Time gebruikte) hier consistent op UTC-8 getoond worden i.p.v. op
 // de PT-cijfers waarmee ze destijds zijn opgeslagen.
 const DAY_TZ = 'Etc/GMT+8';
+
+const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: DAY_TZ }); // YYYY-MM-DD, sorteerbaar
+const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: DAY_TZ });
+const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ });
+const todayKeyNow  = () => new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ });
+
+// ---- Dagtotalen client-side herberekenen op de vaste UTC-8-grens ----
+// Wordt gebruikt door zowel het Refresh log als de Voorspelling-tab, zodat
+// er maar één plek is met deze (nogal precieze) interpolatie- en
+// catalogus-sprong-bescherming -- zie renderLog() voor de volledige uitleg.
+function computeDayInfo(log) {
+  const pts = log.map(e => ({ ms: new Date(e.ts).getTime(), pub: e.pub_total, vc: e.video_count }))
+                 .sort((a, b) => a.ms - b.ms);
+
+  const interpAt = (boundaryMs) => {
+    let prev = null;
+    for (const p of pts) {
+      if (p.ms <= boundaryMs) { prev = p; continue; }
+      if (prev === null) return null;
+      if (prev.vc !== p.vc) return null;
+      if (p.ms === prev.ms) return prev.pub;
+      const frac = (boundaryMs - prev.ms) / (p.ms - prev.ms);
+      return prev.pub + frac * (p.pub - prev.pub);
+    }
+    return null; // grens ligt na de laatste meting (dag loopt nog)
+  };
+  const vcConstantBetween = (loMs, hiMs) => {
+    const seen = new Set(pts.filter(p => p.ms >= loMs && p.ms <= hiMs).map(p => p.vc));
+    return seen.size <= 1;
+  };
+
+  const dayInfo = {};
+  for (const key of new Set(log.map(e => ptDateKey(e.ts)))) {
+    const [y, m, d] = key.split('-').map(Number);
+    const startMs = Date.UTC(y, m - 1, d) + 8 * 3600 * 1000; // 00:00 UTC-8
+    const endMs   = startMs + 24 * 3600 * 1000;
+    const lastMs  = pts[pts.length - 1].ms;
+    dayInfo[key] = {
+      startTotal: interpAt(startMs),
+      endTotal:   endMs <= lastMs ? interpAt(endMs) : null, // null = dag loopt nog
+      valid:      vcConstantBetween(startMs, Math.min(endMs, lastMs)),
+      videoCount: log.find(e => ptDateKey(e.ts) === key)?.video_count,
+    };
+  }
+  const latestPub = pts[pts.length - 1].pub;
+
+  // Dagtotaal: herberekend eindtotaal min begintotaal (lopende dag: t/m de
+  // laatste meting). Valt terug op het meegegeven cijfer als de herberekening
+  // niet betrouwbaar is (catalogus-wijziging exact op de grens).
+  const dayTotalFor = (key, fallback) => {
+    const info = dayInfo[key];
+    if (!info || info.startTotal == null || !info.valid) return fallback;
+    const end = info.endTotal != null ? info.endTotal : latestPub;
+    return Math.round(end - info.startTotal);
+  };
+  // "Views vandaag" per meting: die meting se pub_total min de UTC-8-daggrens
+  // van díé dag -- i.p.v. het (deels PT-gebaseerde) views_today-veld.
+  const viewsTodayFor = (e) => {
+    const info = dayInfo[ptDateKey(e.ts)];
+    if (!info || info.startTotal == null || !info.valid) return e.views_today;
+    return Math.round(e.pub_total - info.startTotal);
+  };
+
+  return { dayInfo, dayTotalFor, viewsTodayFor, latestPub };
+}
+
+// Ruwe fallback-waarde voor een afgesloten dag: de backend-opgeslagen
+// final_day_total van die dag. Negatief = de bekende "vals-negatief"-bug uit
+// half augustus 2026 (gefixt op 20-08) -- die waarde was toen al fout.
+function rawFallbackTotal(log, key) {
+  const withTotal = log.find(x => ptDateKey(x.ts) === key && x.final_day_total !== undefined);
+  if (!withTotal || !Number.isFinite(withTotal.final_day_total) || withTotal.final_day_total < 0) return null;
+  return withTotal.final_day_total;
+}
 
 function dHtml(d) {
   if (d === null || d === undefined) return '<span class="neu">—</span>';
@@ -306,6 +427,7 @@ let collapsedWeeks = null; // Set van ISO-weeksleutels (binnen de oudere-sectie)
 let collapsedOlder = true; // of de "oudere data"-sectie (alles voorbij de laatste 7 dagen) ingeklapt is
 let collapsedChannels = new Set(); // kanalen die de gebruiker heeft ingeklapt in de videolijst
 const CHANNEL_ORDER = ['Hoofdkanaal', 'Topic']; // vaste weergavevolgorde; onbekende labels achteraan
+let activeView = 'log'; // 'log' of 'prediction' -- welke hoofdweergave nu zichtbaar is
 
 function toggleDay(key) {
   if (collapsedDays.has(key)) collapsedDays.delete(key); else collapsedDays.add(key);
@@ -336,18 +458,19 @@ function switchArtist(key) {
   artistCache[activeArtist] = { appData, collapsedDays, collapsedWeeks, collapsedOlder, collapsedChannels };
   activeArtist = key;
 
-  document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
+  document.querySelectorAll('#artist-tabs .tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
   document.getElementById('artist-name').textContent = ARTISTS[key].label;
 
   const cached = artistCache[key];
   if (cached) {
     appData = cached.appData; collapsedDays = cached.collapsedDays; collapsedWeeks = cached.collapsedWeeks;
     collapsedOlder = cached.collapsedOlder; collapsedChannels = cached.collapsedChannels;
-    if (appData) { renderLog(); renderTable(); }
+    if (appData) { renderLog(); renderTable(); if (activeView === 'prediction') renderPrediction(); }
   } else {
     appData = null; collapsedDays = null; collapsedWeeks = null; collapsedOlder = true; collapsedChannels = new Set();
     document.getElementById('log-body').innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
     document.getElementById('video-tbody').innerHTML = '<tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>';
+    document.getElementById('prediction-days').innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
   }
   loadData();
 }
@@ -367,6 +490,7 @@ async function loadData() {
     appData = data;
     renderLog();
     renderTable();
+    if (activeView === 'prediction') renderPrediction();
     const b = document.getElementById('badge-updated');
     // Toon tijdstip van meest recente server-run
     const lastTs = appData.log?.[0]?.ts;
@@ -392,10 +516,7 @@ function renderLog() {
   const el  = document.getElementById('log-body');
   if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
 
-  const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: DAY_TZ }); // YYYY-MM-DD, sorteerbaar
-  const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: DAY_TZ });
-  const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ });
-  const todayKey     = new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ });
+  const todayKey = todayKeyNow();
 
   // ---- Releasedagen markeren ----
   // published_at komt rechtstreeks van YouTube (niet van onze eigen ontdekking),
@@ -422,63 +543,7 @@ function renderLog() {
   // cumulatieve pub_total-reeks op elke UTC-8-middernacht -- exact dezelfde
   // aanpak als fetch_views.py's eigen middernacht-interpolatie, maar dan
   // uniform toegepast op het hele log, ook met terugwerkende kracht.
-  const pts = log.map(e => ({ ms: new Date(e.ts).getTime(), pub: e.pub_total, vc: e.video_count }))
-                 .sort((a, b) => a.ms - b.ms);
-
-  // Interpoleert de cumulatieve pub_total op een exact UTC-tijdstip. Retourneert
-  // null als de grens buiten het gemeten bereik valt, of als het video-aantal
-  // net op de omliggende metingen verschilt (catalogus-sprong -- zie eerdere
-  // analyse: dan zou "groei" eigenlijk een nieuw/verdwenen video zijn).
-  const interpAt = (boundaryMs) => {
-    let prev = null;
-    for (const p of pts) {
-      if (p.ms <= boundaryMs) { prev = p; continue; }
-      if (prev === null) return null;
-      if (prev.vc !== p.vc) return null;
-      if (p.ms === prev.ms) return prev.pub;
-      const frac = (boundaryMs - prev.ms) / (p.ms - prev.ms);
-      return prev.pub + frac * (p.pub - prev.pub);
-    }
-    return null; // grens ligt na de laatste meting (dag loopt nog)
-  };
-  const vcConstantBetween = (loMs, hiMs) => {
-    const seen = new Set(pts.filter(p => p.ms >= loMs && p.ms <= hiMs).map(p => p.vc));
-    return seen.size <= 1;
-  };
-
-  // Per UTC-8-kalenderdag: begin- en (indien al voorbij) eindtotaal, plus of
-  // de catalogus in dat venster stabiel bleef (anders niet betrouwbaar).
-  const dayInfo = {};
-  for (const key of new Set(log.map(e => ptDateKey(e.ts)))) {
-    const [y, m, d] = key.split('-').map(Number);
-    const startMs = Date.UTC(y, m - 1, d) + 8 * 3600 * 1000; // 00:00 UTC-8
-    const endMs   = startMs + 24 * 3600 * 1000;
-    const lastMs  = pts[pts.length - 1].ms;
-    dayInfo[key] = {
-      startTotal: interpAt(startMs),
-      endTotal:   endMs <= lastMs ? interpAt(endMs) : null, // null = dag loopt nog
-      valid:      vcConstantBetween(startMs, Math.min(endMs, lastMs)),
-      videoCount: log.find(e => ptDateKey(e.ts) === key)?.video_count,
-    };
-  }
-  const latestPub = pts[pts.length - 1].pub;
-
-  // Dagtotaal: herberekend eindtotaal min begintotaal (lopende dag: t/m de
-  // laatste meting). Valt terug op het oude, backend-opgeslagen cijfer als de
-  // herberekening niet betrouwbaar is (catalogus-wijziging exact op de grens).
-  const dayTotalFor = (key, fallback) => {
-    const info = dayInfo[key];
-    if (!info || info.startTotal == null || !info.valid) return fallback;
-    const end = info.endTotal != null ? info.endTotal : latestPub;
-    return Math.round(end - info.startTotal);
-  };
-  // "Views vandaag" per meting: die meting se pub_total min de UTC-8-daggrens
-  // van díé dag -- i.p.v. het (deels PT-gebaseerde) views_today-veld.
-  const viewsTodayFor = (e) => {
-    const info = dayInfo[ptDateKey(e.ts)];
-    if (!info || info.startTotal == null || !info.valid) return e.views_today;
-    return Math.round(e.pub_total - info.startTotal);
-  };
+  const { dayInfo, dayTotalFor, viewsTodayFor } = computeDayInfo(log);
 
   // ISO-8601-weeksleutel (bv. "2026-W34") voor een PT-datumsleutel, voor het
   // groeperen van de oudere-dan-7-dagen sectie per week.
@@ -802,6 +867,112 @@ function renderTable() {
 
 function setSortAndRender(val) { document.getElementById('sort-select').value = val; renderTable(); }
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function switchView(view) {
+  if (view === activeView) return;
+  activeView = view;
+  document.querySelectorAll('#view-tabs .tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
+  document.getElementById('log-view').style.display = view === 'log' ? '' : 'none';
+  document.getElementById('prediction-view').style.display = view === 'prediction' ? '' : 'none';
+  if (view === 'prediction' && appData) renderPrediction();
+}
+
+// De `count` meest recente, volledig AFGESLOTEN UTC-8-dagen (dus zonder
+// vandaag, die nog niet compleet is), nieuw-naar-oud, met hun herberekende
+// dagtotaal -- zelfde logica en fallbacks als het dagtotaal in het Refresh log.
+function getClosedDayTotals(log, count) {
+  const { dayTotalFor } = computeDayInfo(log);
+  const todayKey = todayKeyNow();
+  const allKeysDesc = [...new Set(log.map(e => ptDateKey(e.ts)))]; // log is nieuw-naar-oud
+  const closedKeysDesc = allKeysDesc.filter(k => k !== todayKey).slice(0, count);
+  return closedKeysDesc.map(key => ({
+    key,
+    label: ptDateLabel(log.find(e => ptDateKey(e.ts) === key).ts),
+    total: dayTotalFor(key, rawFallbackTotal(log, key)),
+  }));
+}
+
+function ucgStorageKey(artistKey) { return `ytTracker.ucgFactor.${artistKey}`; }
+
+// Startwaarde bij eerste gebruik (nog geen opgeslagen factor voor deze
+// artiest): de verhouding officieel/eigen totaal van de meest recente
+// meting -- een redelijk vertrekpunt dat de gebruiker vervolgens zelf
+// verfijnt. Wordt daarna per artiest onthouden in localStorage.
+function loadUcgFactor(artistKey) {
+  const saved = localStorage.getItem(ucgStorageKey(artistKey));
+  if (saved !== null && Number.isFinite(Number(saved)) && Number(saved) > 0) return Number(saved);
+  const latest = appData?.log?.[0];
+  if (latest && latest.official_total && latest.pub_total) {
+    return Math.round((latest.official_total / latest.pub_total) * 1000) / 1000;
+  }
+  return 1.05;
+}
+
+function saveUcgFactor(artistKey, value) {
+  localStorage.setItem(ucgStorageKey(artistKey), String(value));
+}
+
+let predictionSum = 0; // som van de dagtotalen (ongeafrond), voor live herberekening tijdens het schuiven
+
+function renderPrediction() {
+  const daysEl = document.getElementById('prediction-days');
+  const log = appData?.log || [];
+  if (!log.length) { daysEl.innerHTML = '<div class="log-empty">Nog geen data.</div>'; return; }
+
+  const days = getClosedDayTotals(log, 6);
+  predictionSum = days.reduce((s, d) => s + (d.total ?? 0), 0);
+  const missing = days.some(d => d.total == null);
+
+  const dayRows = days.map(d => `<tr>
+      <td>${d.label}</td>
+      <td>${d.total == null ? '<span class="neu">—</span>' : fmt(Math.round(d.total / 1000) * 1000)}</td>
+    </tr>`).join('');
+
+  daysEl.innerHTML = `<table class="log-table">
+    <thead><tr><th>Dag (UTC-8)</th><th>Views eigen counter (afgerond op 1.000)</th></tr></thead>
+    <tbody>
+      ${dayRows}
+      <tr class="prediction-sum-row">
+        <td>Som (${days.length} dagen)</td>
+        <td>${fmt(Math.round(predictionSum / 1000) * 1000)}</td>
+      </tr>
+    </tbody>
+  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar (telt mee als 0 in de som).</div>' : ''}`;
+
+  const factor    = loadUcgFactor(activeArtist);
+  const sliderEl  = document.getElementById('ucg-slider');
+  const numberEl  = document.getElementById('ucg-number');
+  sliderEl.value  = Math.min(Math.max(factor, Number(sliderEl.min)), Number(sliderEl.max));
+  numberEl.value  = factor;
+
+  updatePredictionResult();
+}
+
+function currentUcgFactor() {
+  const v = Number(document.getElementById('ucg-number').value);
+  return Number.isFinite(v) && v > 0 ? v : 1;
+}
+
+function updatePredictionResult() {
+  const total = predictionSum * currentUcgFactor();
+  document.getElementById('prediction-result').textContent = fmt(Math.round(total / 1000) * 1000) + ' views';
+}
+
+function onUcgSliderInput() {
+  const v = Number(document.getElementById('ucg-slider').value);
+  document.getElementById('ucg-number').value = v;
+  saveUcgFactor(activeArtist, v);
+  updatePredictionResult();
+}
+
+function onUcgNumberInput() {
+  const v = Number(document.getElementById('ucg-number').value);
+  if (!Number.isFinite(v) || v <= 0) return;
+  const sliderEl = document.getElementById('ucg-slider');
+  sliderEl.value = Math.min(Math.max(v, Number(sliderEl.min)), Number(sliderEl.max));
+  saveUcgFactor(activeArtist, v);
+  updatePredictionResult();
+}
 
 function toggleInfoModal(open) {
   document.getElementById('info-modal').classList.toggle('open', open);
