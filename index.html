@@ -499,14 +499,19 @@ function renderLog() {
         deltaHour:    Math.round(info.endTotal - entry.pub_total),
       };
     }
-    if (!Number.isFinite(entry.final_day_total) || !Number.isFinite(entry.final_day_pub_total)) return null;
+    // De backend hangt final_day_total op aan de meting die ZIJ als laatste van
+    // de (destijds PT-gebaseerde) dag zag -- door de UTC-8-daggrens kan dat een
+    // andere meting zijn dan degene die hier als "nieuwste van de groep" wordt
+    // doorgegeven. Zoek daarom in de hele groep i.p.v. alleen op `entry`.
+    const withTotal = entry.final_day_total !== undefined ? entry : log.find(x => ptDateKey(x.ts) === key && x.final_day_total !== undefined);
+    if (!withTotal || !Number.isFinite(withTotal.final_day_total) || !Number.isFinite(withTotal.final_day_pub_total)) return null;
     return {
-      baseTotal:    entry.final_day_pub_total,
-      videoCount:   entry.final_day_video_count,
-      viewsAtRow:   entry.final_day_total,
-      interpolated: entry.final_day_interpolated,
-      gapMinutes:   entry.final_day_gap_minutes,
-      deltaHour:    entry.final_day_pub_total - entry.pub_total,
+      baseTotal:    withTotal.final_day_pub_total,
+      videoCount:   withTotal.final_day_video_count,
+      viewsAtRow:   withTotal.final_day_total,
+      interpolated: withTotal.final_day_interpolated,
+      gapMinutes:   withTotal.final_day_gap_minutes,
+      deltaHour:    withTotal.final_day_pub_total - entry.pub_total,
     };
   };
 
@@ -534,7 +539,8 @@ function renderLog() {
 
         // Dagtotaal: herberekend op de UTC-8-daggrens (zie dayInfo hierboven),
         // met terugvalwaarde het oude, backend-opgeslagen cijfer.
-        const fallback = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
+        const withTotal = e.final_day_total !== undefined ? e : log.find(x => ptDateKey(x.ts) === key && x.final_day_total !== undefined);
+        const fallback = (!isToday && withTotal && Number.isFinite(withTotal.final_day_total)) ? withTotal.final_day_total : e.views_today;
         const dayTotal = dayTotalFor(key, fallback);
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
