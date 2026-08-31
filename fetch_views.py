@@ -305,7 +305,7 @@ def save_snapshot(videos, official_total):
         "views_today":    views_today,
         "delta_hour":     delta_hour,
     })
-    data["log"] = data["log"][:200]
+    data["log"] = data["log"][:420]  # ~17.5 dagen bij uurlijkse runs (was 200, ~8.3 dagen)
 
     # Laatste snapshot bewaren
     data["last_snapshot"] = {

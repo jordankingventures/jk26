@@ -445,16 +445,23 @@ function renderLog() {
 
   // 00:00-baseline van een groep: het herberekende begintotaal van die
   // UTC-8-dag (zie dayInfo hierboven). Valt terug op het oude, per-meting
-  // opgeslagen begintotaal als de herberekening niet betrouwbaar is.
+  // opgeslagen begintotaal als de herberekening niet betrouwbaar is -- en
+  // gebruikt daarvoor de OUDSTE meting van de dag (dichtst bij middernacht),
+  // niet de nieuwste: `entry` is de nieuwste meting van de groep en diens
+  // eigen views_today kan toevallig al bijna 0 zijn (bv. vlak na een
+  // backend-baseline-reset), wat de terugval-berekening zou laten lijken op
+  // het eínde van de dag i.p.v. het begin.
   const openingBaseline = (key, entry) => {
     const info = dayInfo[key];
     if (info && info.startTotal != null && info.valid) {
       return { baseTotal: Math.round(info.startTotal), videoCount: info.videoCount, interpolated: true, gapMinutes: null };
     }
-    if (!Number.isFinite(entry.views_today)) return null;
+    const dayEntries = log.filter(x => ptDateKey(x.ts) === key);
+    const oldest = dayEntries[dayEntries.length - 1] || entry;
+    if (!Number.isFinite(oldest.views_today)) return null;
     return {
-      baseTotal:    entry.pub_total - entry.views_today,
-      videoCount:   entry.video_count,
+      baseTotal:    oldest.pub_total - oldest.views_today,
+      videoCount:   oldest.video_count,
       interpolated: false,
       gapMinutes:   null,
     };
