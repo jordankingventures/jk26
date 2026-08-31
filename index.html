@@ -38,14 +38,6 @@
     .badge { font-size: 0.75rem; color: var(--muted); padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
     .badge.ok { color: var(--green); border-color: var(--green); }
     .badge.err { color: var(--accent2); border-color: var(--accent2); }
-    button.refresh {
-      background: var(--accent); border: none; border-radius: 7px;
-      color: #fff; cursor: pointer; font-size: 0.82rem; font-weight: 600;
-      padding: 6px 14px; transition: opacity .15s;
-    }
-    button.refresh:hover { opacity: .85; }
-    button.refresh:disabled { opacity: .4; cursor: not-allowed; }
-
     button.info-btn {
       background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
       color: var(--muted); cursor: pointer; font-size: 0.85rem; font-weight: 700;
@@ -200,7 +192,6 @@
   <div class="header-right">
     <span class="badge" id="badge-updated">Laden...</span>
     <button class="info-btn" onclick="toggleInfoModal(true)" title="Hoe werkt deze tracker?">ℹ</button>
-    <button class="refresh" id="btn-refresh" onclick="loadData()">↻ Ververs</button>
   </div>
 </header>
 
@@ -362,7 +353,6 @@ function switchArtist(key) {
 }
 
 async function loadData() {
-  document.getElementById('btn-refresh').disabled = true;
   document.getElementById('badge-updated').textContent = 'Laden...';
   document.getElementById('badge-updated').className = 'badge';
 
@@ -393,7 +383,6 @@ async function loadData() {
     b.className = 'badge err';
   }
 
-  document.getElementById('btn-refresh').disabled = false;
   // Automatisch herladen na 5 minuten (data komt van server, geen API-quota kosten)
   setTimeout(loadData, 5 * 60 * 1000);
 }
