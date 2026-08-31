@@ -174,6 +174,7 @@
     }
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .prediction-ucg-col { color: var(--accent); font-weight: 700; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -1000,12 +1001,12 @@ function renderPredictionDays() {
     return `<tr>
       <td>${d.label}${releaseBadge}</td>
       <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
-      <td>${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
+      <td class="prediction-ucg-col">${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
     </tr>`;
   }).join('');
 
   daysEl.innerHTML = `<table class="log-table">
-    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>YouTube Global Charts officieel</th></tr></thead>
+    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Incl. UCG</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
 }
@@ -1033,12 +1034,17 @@ function renderUcgHistory() {
   const hist = analysisData?.ucg_factor?.[activeArtist];
   if (!hist) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
 
-  const rows = [...hist.points].reverse().map(p => `<tr>
-    <td>${ptDateLabel(p.date + 'T12:00:00Z')}</td>
+  const rows = [...hist.points].reverse().map(p => {
+    const releaseBadge = predictionReleaseDays.has(p.date)
+      ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
+      : '';
+    return `<tr>
+    <td>${ptDateLabel(p.date + 'T12:00:00Z')}${releaseBadge}</td>
     <td>${fmt(floor1000(p.own_counter))}</td>
     <td>${fmt(floor1000(p.global_charts))}</td>
     <td>${p.factor.toFixed(2)}</td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 
   el.innerHTML = `<table class="log-table">
     <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
