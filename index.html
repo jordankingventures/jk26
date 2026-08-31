@@ -264,7 +264,7 @@
 
     <div class="section-header">
       <div class="toolbar">
-        <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="renderTable()" />
+        <input type="text" id="search-input" placeholder="Zoek videotitel..." oninput="onSearchInput()" />
         <select id="sort-select" onchange="renderTable()">
           <option value="views-desc">Meeste views</option>
           <option value="views-asc">Minste views</option>
@@ -329,10 +329,27 @@ const fmt = (n) => Number(n).toLocaleString('nl-NL');
 // de PT-cijfers waarmee ze destijds zijn opgeslagen.
 const DAY_TZ = 'Etc/GMT+8';
 
-const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: DAY_TZ }); // YYYY-MM-DD, sorteerbaar
-const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: DAY_TZ });
-const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ });
-const todayKeyNow  = () => new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ });
+// Intl-datumformattering (toLocaleDateString/toLocaleTimeString met timeZone)
+// is relatief traag (~20-30 microseconden per aanroep) en werd voor dezelfde
+// timestamp keer op keer opnieuw berekend (bv. 4.500+ keer voor maar ~450
+// unieke tijdstippen tijdens één dagtotaal-herberekening). Een timestamp-
+// string hoort altijd bij dezelfde dag/tijd in een vaste tijdzone, dus het
+// resultaat kan simpelweg per input onthouden worden.
+function memoized(fn) {
+  const cache = new Map();
+  return (arg) => {
+    let v = cache.get(arg);
+    if (v === undefined) { v = fn(arg); cache.set(arg, v); }
+    return v;
+  };
+}
+
+const ptDateKey    = memoized((ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: DAY_TZ })); // YYYY-MM-DD, sorteerbaar
+const ptDateLabel  = memoized((ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: DAY_TZ }));
+const ptShortLabel = memoized((ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ }));
+const ptTimeLabel  = memoized((ts) => new Date(ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ }));
+const pubDateLabel = memoized((publishedAt) => new Date(publishedAt).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: DAY_TZ }));
+const todayKeyNow  = () => new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ }); // "vandaag" verandert, dus bewust NIET memoized
 
 // ---- Dagtotalen client-side herberekenen op de vaste UTC-8-grens ----
 // Wordt gebruikt door zowel het Refresh log als de Voorspelling-tab, zodat
@@ -425,7 +442,7 @@ let appData = null;
 let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedWeeks = null; // Set van ISO-weeksleutels (binnen de oudere-sectie) die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedOlder = true; // of de "oudere data"-sectie (alles voorbij de laatste 7 dagen) ingeklapt is
-let collapsedChannels = new Set(); // kanalen die de gebruiker heeft ingeklapt in de videolijst
+let collapsedChannels = null; // Set van kanalen die ingeklapt zijn in de videolijst; null = nog niet geinitialiseerd (standaard: alles dicht, scheelt duizenden DOM-nodes bij grote catalogi)
 const CHANNEL_ORDER = ['Hoofdkanaal', 'Topic']; // vaste weergavevolgorde; onbekende labels achteraan
 let activeView = 'log'; // 'log' of 'prediction' -- welke hoofdweergave nu zichtbaar is
 
@@ -467,7 +484,7 @@ function switchArtist(key) {
     collapsedOlder = cached.collapsedOlder; collapsedChannels = cached.collapsedChannels;
     if (appData) { renderLog(); renderTable(); if (activeView === 'prediction') renderPrediction(); }
   } else {
-    appData = null; collapsedDays = null; collapsedWeeks = null; collapsedOlder = true; collapsedChannels = new Set();
+    appData = null; collapsedDays = null; collapsedWeeks = null; collapsedOlder = true; collapsedChannels = null;
     document.getElementById('log-body').innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
     document.getElementById('video-tbody').innerHTML = '<tr><td colspan="6"><div class="state-box"><div class="spinner"></div>Laden...</div></td></tr>';
     document.getElementById('prediction-days').innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
@@ -495,7 +512,7 @@ async function loadData() {
     // Toon tijdstip van meest recente server-run
     const lastTs = appData.log?.[0]?.ts;
     b.textContent = lastTs
-      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ }) + ' (UTC-8)'
+      ? 'Server: ' + ptTimeLabel(lastTs) + ' (UTC-8)'
       : 'Geladen';
     b.className = 'badge ok';
   } catch (err) {
@@ -709,7 +726,7 @@ function renderLog() {
         }
       }
       if (!collapsedDays.has(groupKey)) {
-        const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ });
+        const ts = ptTimeLabel(e.ts);
         rows += `<tr class="${e === log[0] ? 'new-row' : ''}">
           <td>${ts}</td>
           <td>${fmt(e.official_total ?? 0)}</td>
@@ -789,6 +806,14 @@ function renderLog() {
 
 function renderTable() {
   if (!appData?.videos) return;
+
+  // Standaard staan alle kanalen dichtgeklapt -- bij grote catalogi (2000-3000
+  // video's) scheelt dat duizenden DOM-nodes bij elke render. Eenmalig bepaald,
+  // blijft daarna staan totdat de gebruiker zelf een kanaal openklapt.
+  if (collapsedChannels === null) {
+    collapsedChannels = new Set(appData.videos.map(v => v.channel || 'Overig'));
+  }
+
   const query = document.getElementById('search-input').value.toLowerCase();
   const sort  = document.getElementById('sort-select').value;
 
@@ -831,9 +856,7 @@ function renderTable() {
   });
 
   const rowHtml = (v, i) => {
-    const pubDate = v.published_at
-      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: DAY_TZ })
-      : '';
+    const pubDate = v.published_at ? pubDateLabel(v.published_at) : '';
     return `<tr>
       <td class="rank">${i + 1}</td>
       <td><img src="${v.thumbnail}" alt="" loading="lazy" width="60" height="34" style="border-radius:3px;display:block;object-fit:cover"/></td>
@@ -866,6 +889,16 @@ function renderTable() {
 }
 
 function setSortAndRender(val) { document.getElementById('sort-select').value = val; renderTable(); }
+
+// renderTable() bouwt bij grote catalogi (2000-3000 video's) al gauw
+// honderden ms aan DOM op -- zonder debounce blokkeert elke toetsaanslag
+// in het zoekveld het scherm merkbaar. 200ms wachten na de laatste
+// toetsaanslag voordat er herbouwd wordt voelt nog steeds direct aan.
+let searchDebounceTimer = null;
+function onSearchInput() {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(renderTable, 200);
+}
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function switchView(view) {
