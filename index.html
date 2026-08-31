@@ -974,7 +974,7 @@ function renderPrediction() {
   const sliderEl = document.getElementById('ucg-slider');
   const numberEl = document.getElementById('ucg-number');
   sliderEl.value = Math.min(Math.max(factor, Number(sliderEl.min)), Number(sliderEl.max));
-  numberEl.value = factor;
+  numberEl.value = factor.toFixed(2); // altijd 2 decimalen tonen, ook bv. "1.10" i.p.v. "1.1"
 
   renderPredictionDays();
   renderUcgHistory();
@@ -1014,7 +1014,7 @@ function renderPredictionDays() {
 
 function onUcgSliderInput() {
   const v = Number(document.getElementById('ucg-slider').value);
-  document.getElementById('ucg-number').value = v;
+  document.getElementById('ucg-number').value = v.toFixed(2);
   saveUcgFactor(activeArtist, v);
   renderPredictionDays();
 }
