@@ -301,7 +301,7 @@
 <div id="prediction-view" style="display:none">
   <div class="log-wrap">
     <div class="log-header">
-      <h2>Laatste 5 afgesloten dagen (UTC-8)</h2>
+      <h2>Deze week (maandag t/m vandaag, UTC-8)</h2>
     </div>
     <div class="prediction-controls">
       <span class="prediction-result-label">UCG-factor</span>
@@ -917,19 +917,36 @@ function switchView(view) {
   if (view === 'prediction' && appData) renderPrediction();
 }
 
-// De `count` meest recente, volledig AFGESLOTEN UTC-8-dagen (dus zonder
-// vandaag, die nog niet compleet is), nieuw-naar-oud, met hun herberekende
-// dagtotaal -- zelfde logica en fallbacks als het dagtotaal in het Refresh log.
-function getClosedDayTotals(log, count) {
+// Alle dagen van de lopende week (maandag t/m vandaag, UTC-8), chronologisch.
+// Vandaag telt gewoon mee met zijn lopende, nog niet afgesloten stand --
+// dayTotalFor() valt daarvoor vanzelf terug op de laatste meting i.p.v. een
+// afgerond eindtotaal. Op maandag zelf bestaat de lijst dus uit 1 dag; op
+// zondag uit alle 7. Sluit aan bij hoe er ook daadwerkelijk wordt ingezet:
+// per (lopende) week, niet een vast aantal dagen terug.
+function getWeekToDateTotals(log) {
   const { dayTotalFor } = computeDayInfo(log);
   const todayKey = todayKeyNow();
-  const allKeysDesc = [...new Set(log.map(e => ptDateKey(e.ts)))]; // log is nieuw-naar-oud
-  const closedKeysDesc = allKeysDesc.filter(k => k !== todayKey).slice(0, count);
-  return closedKeysDesc.map(key => ({
-    key,
-    label: ptDateLabel(log.find(e => ptDateKey(e.ts) === key).ts),
-    total: dayTotalFor(key, rawFallbackTotal(log, key)),
-  }));
+  const [ty, tm, td] = todayKey.split('-').map(Number);
+  const todayMs = Date.UTC(ty, tm - 1, td);
+  const dow = new Date(todayMs).getUTCDay(); // 0=zo .. 6=za
+  const daysSinceMonday = (dow + 6) % 7;     // ma=0, di=1, ..., zo=6
+
+  const keys = [];
+  for (let i = 0; i <= daysSinceMonday; i++) {
+    keys.push(new Date(todayMs - (daysSinceMonday - i) * 86400000).toISOString().slice(0, 10));
+  }
+
+  return keys.map(key => {
+    const isToday = key === todayKey;
+    const entry = log.find(e => ptDateKey(e.ts) === key); // nieuwste meting van die dag (log is nieuw-naar-oud)
+    const fallback = isToday ? (entry ? entry.views_today : null) : rawFallbackTotal(log, key);
+    return {
+      key,
+      label: entry ? ptDateLabel(entry.ts) : ptDateLabel(key + 'T12:00:00Z'),
+      total: dayTotalFor(key, fallback),
+      isToday,
+    };
+  });
 }
 
 function ucgStorageKey(artistKey) { return `ytTracker.ucgFactor.${artistKey}`; }
@@ -969,7 +986,7 @@ function renderPrediction() {
   }
 
   predictionReleaseDays = computeReleaseDays(appData.videos);
-  predictionDays = getClosedDayTotals(log, 5);
+  predictionDays = getWeekToDateTotals(log);
 
   const factor   = Math.round(loadUcgFactor(activeArtist) * 100) / 100; // 2 decimalen -- 3 was te exact om nog wat aan te kunnen
   const sliderEl = document.getElementById('ucg-slider');
@@ -997,11 +1014,12 @@ function renderPredictionDays() {
 
   const rows = predictionDays.map((d) => {
     const projected = d.total == null ? null : d.total * factor;
+    const todayBadge = d.isToday ? ' <span class="badge ok day-badge">vandaag</span>' : '';
     const releaseBadge = predictionReleaseDays.has(d.key)
       ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
       : '';
     return `<tr>
-      <td>${d.label}${releaseBadge}</td>
+      <td>${d.label}${todayBadge}${releaseBadge}</td>
       <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
       <td class="prediction-ucg-col">${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
     </tr>`;
