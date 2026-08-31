@@ -174,8 +174,6 @@
     }
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
-    .prediction-sum-row td { font-weight: 700; border-top: 1px solid var(--border); }
-    .prediction-max-row td { background: #7c5cfc1f; font-weight: 700; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -301,17 +299,12 @@
 <div id="prediction-view" style="display:none">
   <div class="log-wrap">
     <div class="log-header">
-      <h2>UCG-factor</h2>
+      <h2>Laatste 5 afgesloten dagen (UTC-8)</h2>
     </div>
     <div class="prediction-controls">
+      <span class="prediction-result-label">UCG-factor</span>
       <input type="range" id="ucg-slider" min="1" max="1.5" step="0.01" value="1" oninput="onUcgSliderInput()">
       <input type="number" id="ucg-number" min="1" max="5" step="0.01" value="1" oninput="onUcgNumberInput()">
-    </div>
-  </div>
-
-  <div class="log-wrap">
-    <div class="log-header">
-      <h2>Laatste 6 afgesloten dagen (UTC-8)</h2>
     </div>
     <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
   </div>
@@ -973,7 +966,7 @@ function renderPrediction() {
   }
 
   predictionReleaseDays = computeReleaseDays(appData.videos);
-  predictionDays = getClosedDayTotals(log, 6);
+  predictionDays = getClosedDayTotals(log, 5);
 
   const factor   = Math.round(loadUcgFactor(activeArtist) * 100) / 100; // 2 decimalen -- 3 was te exact om nog wat aan te kunnen
   const sliderEl = document.getElementById('ucg-slider');
@@ -991,46 +984,29 @@ function currentUcgFactor() {
 }
 
 // De UCG-factor wordt PER DAG op de eigen-counter-total van die dag toegepast
-// (niet op de vooraf opgetelde som -- bij een uniforme factor komt dat
-// wiskundig op hetzelfde neer, maar zo is per dag te zien wat de geschatte
-// officiele stand wordt, en welke dag daarmee de hoogste van de week is).
-// Wordt zowel bij de eerste render als bij elke schuif-/typbeweging van de
-// UCG-factor opnieuw aangeroepen (goedkoop: geen dagtotalen-herberekening).
+// (niet op een vooraf opgetelde som). Wordt zowel bij de eerste render als
+// bij elke schuif-/typbeweging van de UCG-factor opnieuw aangeroepen
+// (goedkoop: geen dagtotalen-herberekening).
 function renderPredictionDays() {
   const daysEl = document.getElementById('prediction-days');
   const factor = currentUcgFactor();
-  const sum = predictionDays.reduce((s, d) => s + (d.total ?? 0), 0);
   const missing = predictionDays.some(d => d.total == null);
 
-  let maxIdx = -1, maxVal = -Infinity;
-  predictionDays.forEach((d, i) => {
+  const rows = predictionDays.map((d) => {
     const projected = d.total == null ? null : d.total * factor;
-    if (projected != null && projected > maxVal) { maxVal = projected; maxIdx = i; }
-  });
-
-  const rows = predictionDays.map((d, i) => {
-    const projected = d.total == null ? null : d.total * factor;
-    const isMax = i === maxIdx;
     const releaseBadge = predictionReleaseDays.has(d.key)
       ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
       : '';
-    return `<tr class="${isMax ? 'prediction-max-row' : ''}">
+    return `<tr>
       <td>${d.label}${releaseBadge}</td>
       <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
-      <td>${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}${isMax ? ' <span class="badge ok day-badge">hoogste</span>' : ''}</td>
+      <td>${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
     </tr>`;
   }).join('');
 
   daysEl.innerHTML = `<table class="log-table">
-    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter (afgekapt op 1.000)</th><th>Geschat officieel (incl. UCG)</th></tr></thead>
-    <tbody>
-      ${rows}
-      <tr class="prediction-sum-row">
-        <td>Som (${predictionDays.length} dagen, eigen counter)</td>
-        <td>${fmt(floor1000(sum))}</td>
-        <td>—</td>
-      </tr>
-    </tbody>
+    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>YouTube Global Charts officieel</th></tr></thead>
+    <tbody>${rows}</tbody>
   </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
 }
 
@@ -1057,7 +1033,7 @@ function renderUcgHistory() {
   const hist = analysisData?.ucg_factor?.[activeArtist];
   if (!hist) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
 
-  const rows = hist.points.map(p => `<tr>
+  const rows = [...hist.points].reverse().map(p => `<tr>
     <td>${ptDateLabel(p.date + 'T12:00:00Z')}</td>
     <td>${fmt(floor1000(p.own_counter))}</td>
     <td>${fmt(floor1000(p.global_charts))}</td>
