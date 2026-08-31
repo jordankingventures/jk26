@@ -78,8 +78,8 @@
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
     .badge.release { color: var(--accent); border-color: var(--accent); }
-    .week-row .day-label { padding-left: 16px; text-transform: none; }
-    .older-row .day-label { text-transform: none; }
+    .week-row .day-label { padding-left: 16px; text-transform: none; color: #9c9bab; }
+    .older-row .day-label { text-transform: none; color: #9c9bab; }
     .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.8rem; white-space: nowrap; }
 
     /* Berekend 00:00-record onderaan elke dag */
@@ -275,6 +275,9 @@ function toggleDay(key) {
 
 function toggleOlder() {
   collapsedOlder = !collapsedOlder;
+  // Bij het openen meteen alle weken uitklappen (dus alle dag-headers zichtbaar),
+  // de dagen zelf blijven individueel ingeklapt (geen uren automatisch tonen).
+  if (!collapsedOlder) collapsedWeeks = new Set();
   renderLog();
 }
 
