@@ -1030,31 +1030,96 @@ function onUcgNumberInput() {
 
 // ---- UCG-factor spreiding & historie (handmatig bijgehouden door Joris,
 // zie analysis_data.json) ----
+// Kalenderdatum + n dagen, als YYYY-MM-DD -- puur kalenderrekenen (UTC), geen
+// tijdzone-gevoeligheid nodig aangezien we alleen met datumsleutels werken.
+function addDaysToDateKey(dateKey, days) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+// Populatie-standaarddeviatie (n, niet n-1) -- we gebruiken de volledige
+// beschikbare reeks, geen steekproef uit een grotere populatie. CV
+// (variatiecoefficient = stdev/gemiddelde) maakt de spreiding vergelijkbaar
+// tussen artiesten met een heel andere factor-schaal (bv. Bieber ~1,4 vs
+// YoungBoy ~1,07 -- dezelfde absolute stdev betekent dan iets anders).
+function computeUcgStats(factors) {
+  const n = factors.length;
+  if (n === 0) return null;
+  const avg = factors.reduce((s, v) => s + v, 0) / n;
+  const variance = factors.reduce((s, v) => s + (v - avg) ** 2, 0) / n;
+  const stdev = Math.sqrt(variance);
+  const cv = avg !== 0 ? (stdev / avg) * 100 : null;
+  const label = cv == null ? '—' : cv < 1.5 ? 'Hoog' : cv < 2.5 ? 'Middel' : 'Laag';
+  return {
+    n, avg, stdev, cv, label,
+    min: Math.min(...factors), max: Math.max(...factors),
+    ciLow: avg - 1.5 * stdev, ciHigh: avg + 1.5 * stdev,
+  };
+}
+
 function renderUcgHistory() {
   const el = document.getElementById('ucg-history');
   const hist = analysisData?.ucg_factor?.[activeArtist];
   if (!hist) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
 
+  // De UCG-factor valt vlak na een release-dag artificieel laag uit (zie
+  // notitie in de bron-Excel), tot ~1 dag erna. Die dagen tellen niet mee in
+  // de "excl."-statistiek, maar blijven gewoon zichtbaar in de tabel eronder.
+  const excludedDates = new Set();
+  for (const d of predictionReleaseDays) {
+    excludedDates.add(d);
+    excludedDates.add(addDaysToDateKey(d, 1));
+  }
+
   const rows = [...hist.points].reverse().map(p => {
-    const releaseBadge = predictionReleaseDays.has(p.date)
+    const isRelease = predictionReleaseDays.has(p.date);
+    const isDayAfter = !isRelease && excludedDates.has(p.date);
+    const tag = isRelease
       ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
+      : isDayAfter
+      ? ' <span class="est-tag" title="Dag na een release -- uitgesloten van de excl.-statistiek hiernaast">na release</span>'
       : '';
     return `<tr>
-    <td>${ptDateLabel(p.date + 'T12:00:00Z')}${releaseBadge}</td>
+    <td>${ptDateLabel(p.date + 'T12:00:00Z')}${tag}</td>
     <td>${fmt(floor1000(p.own_counter))}</td>
     <td>${fmt(floor1000(p.global_charts))}</td>
     <td>${p.factor.toFixed(2)}</td>
   </tr>`;
   }).join('');
 
+  const allFactors   = hist.points.map(p => p.factor);
+  const cleanFactors = hist.points.filter(p => !excludedDates.has(p.date)).map(p => p.factor);
+  const inclStats = computeUcgStats(allFactors);
+  const exclStats = computeUcgStats(cleanFactors);
+
+  const labelHtml = (label) => {
+    const cls = label === 'Hoog' ? 'pos' : label === 'Laag' ? 'neg' : 'neu';
+    return `<span class="${cls}">${label}</span>`;
+  };
+  const statRow = (label, fn) => `<tr>
+    <td>${label}</td>
+    <td>${inclStats ? fn(inclStats) : '—'}</td>
+    <td>${exclStats ? fn(exclStats) : '—'}</td>
+  </tr>`;
+
   el.innerHTML = `<table class="log-table">
     <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
-  <div class="prediction-result-box">
-    <span class="prediction-result-label">Spreiding (min – gem. – max)</span>
-    <span class="prediction-result-value">${hist.min.toFixed(2)} – ${hist.avg.toFixed(2)} – ${hist.max.toFixed(2)}</span>
-  </div>`;
+  <table class="log-table">
+    <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+1 dag)</th></tr></thead>
+    <tbody>
+      ${statRow('Aantal dagen', s => s.n)}
+      ${statRow('Gemiddelde', s => s.avg.toFixed(2))}
+      ${statRow('Min – max', s => `${s.min.toFixed(2)} – ${s.max.toFixed(2)}`)}
+      ${statRow('Standaarddeviatie', s => s.stdev.toFixed(3))}
+      ${statRow('Variatiecoëfficiënt', s => s.cv.toFixed(1) + '%')}
+      ${statRow('Betrouwbaarheid', s => labelHtml(s.label))}
+      ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
+    </tbody>
+  </table>`;
 }
 
 function toggleInfoModal(open) {
