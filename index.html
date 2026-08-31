@@ -175,7 +175,19 @@
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .prediction-ucg-col { color: var(--green); }
-    .prediction-stats-table th, .prediction-stats-table td { padding: 4px 12px; font-size: 0.72rem; }
+    .ucg-stats-header {
+      padding: 10px 16px 0; font-size: 0.66rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .04em; color: var(--muted);
+    }
+    .ucg-stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px; padding: 8px 16px 16px;
+    }
+    .ucg-stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+    .ucg-stat-label { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-bottom: 4px; }
+    .ucg-stat-values { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 6px; font-variant-numeric: tabular-nums; font-size: 0.78rem; font-weight: 700; }
+    .ucg-stat-arrow { color: var(--muted); font-size: 0.7rem; font-weight: 400; }
+    .ucg-stat-excl { color: var(--green); }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -198,6 +210,8 @@
       .day-label { font-size: 0.73rem; }
       .day-total { font-size: 0.76rem; }
       .midnight-row td { padding: 5px 7px; }
+
+      .ucg-stats-grid { grid-template-columns: 1fr; }
 
       .thumb img { width: 44px; height: 25px; }
       .rank { width: 22px; }
@@ -1096,25 +1110,30 @@ function renderUcgHistory() {
   const inclStats = computeUcgStats(allFactors);
   const exclStats = computeUcgStats(cleanFactors);
 
-  const statRow = (label, fn) => `<tr>
-    <td>${label}</td>
-    <td>${inclStats ? fn(inclStats) : '—'}</td>
-    <td>${exclStats ? fn(exclStats) : '—'}</td>
-  </tr>`;
+  // Kaartjes i.p.v. tabelrijen -- moet in één oogopslag als samenvatting
+  // afsteken tegen de datarecords hierboven, niet als "nog meer rijen" ogen.
+  // Incl. -> excl. in één kaartje (pijl), excl.-waarde in groen (zelfde taal
+  // als de "Incl. UCG"-kolom hierboven: groen = het bijgestelde cijfer).
+  const statCard = (label, fn) => `<div class="ucg-stat-card">
+    <div class="ucg-stat-label">${label}</div>
+    <div class="ucg-stat-values">
+      <span>${inclStats ? fn(inclStats) : '—'}</span>
+      <span class="ucg-stat-arrow">→</span>
+      <span class="ucg-stat-excl">${exclStats ? fn(exclStats) : '—'}</span>
+    </div>
+  </div>`;
 
   el.innerHTML = `<table class="log-table">
     <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
-  <table class="log-table prediction-stats-table">
-    <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+2 dagen)</th></tr></thead>
-    <tbody>
-      ${statRow('Aantal dagen', s => s.n)}
-      ${statRow('Gem. (min–max)', s => `${s.avg.toFixed(2)} (${s.min.toFixed(2)}–${s.max.toFixed(2)})`)}
-      ${statRow('Stdev (CV)', s => `${s.stdev.toFixed(3)} (${s.cv.toFixed(1)}%)`)}
-      ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
-    </tbody>
-  </table>`;
+  <div class="ucg-stats-header">Incl. releasedagen <span class="ucg-stat-arrow">→</span> excl. releasedagen (+2 dagen)</div>
+  <div class="ucg-stats-grid">
+    ${statCard('Aantal dagen', s => s.n)}
+    ${statCard('Gem. (min–max)', s => `${s.avg.toFixed(2)} (${s.min.toFixed(2)}–${s.max.toFixed(2)})`)}
+    ${statCard('Stdev (CV)', s => `${s.stdev.toFixed(3)} (${s.cv.toFixed(1)}%)`)}
+    ${statCard('Interval (±1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
+  </div>`;
 }
 
 function toggleInfoModal(open) {
