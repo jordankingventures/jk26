@@ -234,17 +234,13 @@
 
 <script>
 const fmt = (n) => Number(n).toLocaleString('nl-NL');
-// Daggrens is per 31 augustus 2026 veranderd van (zomertijd-)Pacific Time naar
-// een vaste UTC-8 (zie fetch_views.py -- DAY_BOUNDARY_TZ -- voor de analyse
-// hierachter). Metingen van vóór dat moment zijn door de backend nog met de
-// oude PT-grens opgebouwd (dag-baselines, final_day_total, etc.); die data
-// blijft dus met de oude zone bekeken, zodat bestaande overzichten niet
-// met terugwerkende kracht verschuiven. Alles vanaf het omslagmoment gebruikt
-// de nieuwe vaste UTC-8. zoneFor() kiest per meting de juiste zone.
-const LEGACY_PT_TZ = 'America/Los_Angeles';
-const DAY_TZ        = 'Etc/GMT+8';
-const TZ_CUTOVER_MS = Date.parse('2026-08-31T08:00:00Z'); // = 00:00 UTC-8 op 31 aug 2026
-const zoneFor = (ts) => (new Date(ts).getTime() >= TZ_CUTOVER_MS ? DAY_TZ : LEGACY_PT_TZ);
+// Vaste daggrens UTC-8 (zie fetch_views.py -- DAY_BOUNDARY_TZ -- voor de
+// analyse hierachter). Dagtotalen worden hieronder client-side herberekend
+// uit de ruwe pub_total-reeks op deze grens (zie computeDayInfo), zodat ook
+// dagen van vóór de omschakeling (31 augustus 2026, toen de backend nog
+// Pacific Time gebruikte) hier consistent op UTC-8 getoond worden i.p.v. op
+// de PT-cijfers waarmee ze destijds zijn opgeslagen.
+const DAY_TZ = 'Etc/GMT+8';
 
 function dHtml(d) {
   if (d === null || d === undefined) return '<span class="neu">—</span>';
@@ -333,7 +329,7 @@ async function loadData() {
     // Toon tijdstip van meest recente server-run
     const lastTs = appData.log?.[0]?.ts;
     b.textContent = lastTs
-      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: zoneFor(lastTs) }) + ' (UTC-8)'
+      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ }) + ' (UTC-8)'
       : 'Geladen';
     b.className = 'badge ok';
   } catch (err) {
@@ -355,10 +351,75 @@ function renderLog() {
   const el  = document.getElementById('log-body');
   if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
 
-  const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: zoneFor(ts) }); // YYYY-MM-DD, sorteerbaar
-  const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: zoneFor(ts) });
-  const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: zoneFor(ts) });
+  const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: DAY_TZ }); // YYYY-MM-DD, sorteerbaar
+  const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: DAY_TZ });
+  const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ });
   const todayKey     = new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ });
+
+  // ---- Dagtotalen client-side herberekenen op de vaste UTC-8-grens ----
+  // De backend sloeg vóór 31 augustus 2026 final_day_total/views_today nog
+  // op basis van Pacific Time op. In plaats van die (deels PT-, deels
+  // UTC-8-gebaseerde) velden te tonen, interpoleren we hier zelf de
+  // cumulatieve pub_total-reeks op elke UTC-8-middernacht -- exact dezelfde
+  // aanpak als fetch_views.py's eigen middernacht-interpolatie, maar dan
+  // uniform toegepast op het hele log, ook met terugwerkende kracht.
+  const pts = log.map(e => ({ ms: new Date(e.ts).getTime(), pub: e.pub_total, vc: e.video_count }))
+                 .sort((a, b) => a.ms - b.ms);
+
+  // Interpoleert de cumulatieve pub_total op een exact UTC-tijdstip. Retourneert
+  // null als de grens buiten het gemeten bereik valt, of als het video-aantal
+  // net op de omliggende metingen verschilt (catalogus-sprong -- zie eerdere
+  // analyse: dan zou "groei" eigenlijk een nieuw/verdwenen video zijn).
+  const interpAt = (boundaryMs) => {
+    let prev = null;
+    for (const p of pts) {
+      if (p.ms <= boundaryMs) { prev = p; continue; }
+      if (prev === null) return null;
+      if (prev.vc !== p.vc) return null;
+      if (p.ms === prev.ms) return prev.pub;
+      const frac = (boundaryMs - prev.ms) / (p.ms - prev.ms);
+      return prev.pub + frac * (p.pub - prev.pub);
+    }
+    return null; // grens ligt na de laatste meting (dag loopt nog)
+  };
+  const vcConstantBetween = (loMs, hiMs) => {
+    const seen = new Set(pts.filter(p => p.ms >= loMs && p.ms <= hiMs).map(p => p.vc));
+    return seen.size <= 1;
+  };
+
+  // Per UTC-8-kalenderdag: begin- en (indien al voorbij) eindtotaal, plus of
+  // de catalogus in dat venster stabiel bleef (anders niet betrouwbaar).
+  const dayInfo = {};
+  for (const key of new Set(log.map(e => ptDateKey(e.ts)))) {
+    const [y, m, d] = key.split('-').map(Number);
+    const startMs = Date.UTC(y, m - 1, d) + 8 * 3600 * 1000; // 00:00 UTC-8
+    const endMs   = startMs + 24 * 3600 * 1000;
+    const lastMs  = pts[pts.length - 1].ms;
+    dayInfo[key] = {
+      startTotal: interpAt(startMs),
+      endTotal:   endMs <= lastMs ? interpAt(endMs) : null, // null = dag loopt nog
+      valid:      vcConstantBetween(startMs, Math.min(endMs, lastMs)),
+      videoCount: log.find(e => ptDateKey(e.ts) === key)?.video_count,
+    };
+  }
+  const latestPub = pts[pts.length - 1].pub;
+
+  // Dagtotaal: herberekend eindtotaal min begintotaal (lopende dag: t/m de
+  // laatste meting). Valt terug op het oude, backend-opgeslagen cijfer als de
+  // herberekening niet betrouwbaar is (catalogus-wijziging exact op de grens).
+  const dayTotalFor = (key, fallback) => {
+    const info = dayInfo[key];
+    if (!info || info.startTotal == null || !info.valid) return fallback;
+    const end = info.endTotal != null ? info.endTotal : latestPub;
+    return Math.round(end - info.startTotal);
+  };
+  // "Views vandaag" per meting: die meting se pub_total min de UTC-8-daggrens
+  // van díé dag -- i.p.v. het (deels PT-gebaseerde) views_today-veld.
+  const viewsTodayFor = (e) => {
+    const info = dayInfo[ptDateKey(e.ts)];
+    if (!info || info.startTotal == null || !info.valid) return e.views_today;
+    return Math.round(e.pub_total - info.startTotal);
+  };
 
   // ISO-8601-weeksleutel (bv. "2026-W34") voor een PT-datumsleutel, voor het
   // groeperen van de oudere-dan-7-dagen sectie per week.
@@ -382,16 +443,20 @@ function renderLog() {
     collapsedWeeks = new Set(log.map(e => isoWeekKey(ptDateKey(e.ts))));
   }
 
-  // 00:00-baseline van een afgeronde groep: teruggerekend uit wat al gelogd staat
-  // (pub_total - views_today van de laatste/meest recente meting van die dag).
+  // 00:00-baseline van een groep: het herberekende begintotaal van die
+  // UTC-8-dag (zie dayInfo hierboven). Valt terug op het oude, per-meting
+  // opgeslagen begintotaal als de herberekening niet betrouwbaar is.
   const openingBaseline = (key, entry) => {
+    const info = dayInfo[key];
+    if (info && info.startTotal != null && info.valid) {
+      return { baseTotal: Math.round(info.startTotal), videoCount: info.videoCount, interpolated: true, gapMinutes: null };
+    }
     if (!Number.isFinite(entry.views_today)) return null;
-    const baseline = appData.day_baseline;
     return {
       baseTotal:    entry.pub_total - entry.views_today,
       videoCount:   entry.video_count,
-      interpolated: key === todayKey && baseline?.date === key && baseline?.interpolated,
-      gapMinutes:   baseline?.gap_minutes,
+      interpolated: false,
+      gapMinutes:   null,
     };
   };
 
@@ -404,7 +469,9 @@ function renderLog() {
   const midnightRowHtml = (baseTotal, videoCount, viewsAtRow, interpolated, gapMinutes, deltaHour) => {
     if (baseTotal === null) return '';
     const title = interpolated
-      ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
+      ? (gapMinutes != null
+          ? `Geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht (meetgat ${gapMinutes} min)`
+          : 'Geïnterpoleerd op de UTC-8-daggrens uit de omliggende metingen')
       : 'Teruggerekend uit de eerst gemeten waarde van die dag (geen interpolatie beschikbaar)';
     return `<tr class="midnight-row" title="${title}">
       <td>00:00 <span class="est-tag">geschat</span></td>
@@ -416,13 +483,22 @@ function renderLog() {
     </tr>`;
   };
 
-  // Sluitings-00:00 van een afgeronde dag: de backend berekent dit bij de
-  // dagwissel zelf (final_day_*) en telt daarbij uitsluitend de video's mee die
-  // díé dag al zelf volgde -- dus niet vervuild door de (grotere of kleinere)
-  // videoset van de eropvolgende dag. De "+/- vorige meting" van deze regel is
-  // het stukje groei tussen de laatste échte meting van de dag en dit geschatte
-  // 00:00-eindpunt -- beide op dezelfde videoset, dus een schone vergelijking.
-  const closingTotal = (entry) => {
+  // Sluitings-00:00 van een afgeronde dag: het herberekende eindtotaal van
+  // die UTC-8-dag (dayInfo). Valt terug op het oude, backend-opgeslagen
+  // final_day_total als de herberekening niet betrouwbaar is.
+  const closingTotal = (entry, key) => {
+    const info = dayInfo[key];
+    if (info && info.startTotal != null && info.endTotal != null && info.valid) {
+      const total = Math.round(info.endTotal - info.startTotal);
+      return {
+        baseTotal:    Math.round(info.endTotal),
+        videoCount:   info.videoCount,
+        viewsAtRow:   total,
+        interpolated: true,
+        gapMinutes:   null,
+        deltaHour:    Math.round(info.endTotal - entry.pub_total),
+      };
+    }
     if (!Number.isFinite(entry.final_day_total) || !Number.isFinite(entry.final_day_pub_total)) return null;
     return {
       baseTotal:    entry.final_day_pub_total,
@@ -456,13 +532,10 @@ function renderLog() {
         const isToday = key === todayKey;
         const isCollapsed = collapsedDays.has(key);
 
-        // Dagtotaal: de backend berekent bij elke dagwissel een gecorrigeerd
-        // "final_day_total" voor de zojuist afgesloten dag (inclusief het stukje
-        // groei tot middernacht, maar zonder vervuiling door nieuw ontdekte of
-        // verdwenen video's -- zie fetch_views.py). Gebruik dat zodra het er is;
-        // val anders terug op de laatst gemeten "views vandaag" van die dag zelf
-        // (bv. voor oudere dagen van vóór deze fix, of de nog lopende huidige dag).
-        const dayTotal = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
+        // Dagtotaal: herberekend op de UTC-8-daggrens (zie dayInfo hierboven),
+        // met terugvalwaarde het oude, backend-opgeslagen cijfer.
+        const fallback = (!isToday && Number.isFinite(e.final_day_total)) ? e.final_day_total : e.views_today;
+        const dayTotal = dayTotalFor(key, fallback);
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
           <div class="day-row-inner">
@@ -476,20 +549,20 @@ function renderLog() {
         // Gebruikt de eigen final_day_*-velden van deze dag (zie hierboven), niet
         // de baseline van de volgende dag.
         if (!isCollapsed && !isToday) {
-          const closing = closingTotal(e);
+          const closing = closingTotal(e, key);
           if (closing) {
             rows += midnightRowHtml(closing.baseTotal, closing.videoCount, closing.viewsAtRow, closing.interpolated, closing.gapMinutes, closing.deltaHour);
           }
         }
       }
       if (!collapsedDays.has(groupKey)) {
-        const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: zoneFor(e.ts) });
+        const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ });
         rows += `<tr class="${e === log[0] ? 'new-row' : ''}">
           <td>${ts}</td>
           <td>${fmt(e.official_total ?? 0)}</td>
           <td>${fmt(e.pub_total)}</td>
           <td>${e.video_count ?? '—'}</td>
-          <td>${dHtml(e.views_today)}</td>
+          <td>${dHtml(viewsTodayFor(e))}</td>
           <td>${dHtml(e.delta_hour)}</td>
         </tr>`;
       }
@@ -606,7 +679,7 @@ function renderTable() {
 
   const rowHtml = (v, i) => {
     const pubDate = v.published_at
-      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: zoneFor(v.published_at) })
+      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: DAY_TZ })
       : '';
     return `<tr>
       <td class="rank">${i + 1}</td>
