@@ -175,6 +175,8 @@
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .prediction-sum-row td { font-weight: 700; border-top: 1px solid var(--border); }
+    .prediction-max-row td { background: #7c5cfc1f; font-weight: 700; }
+    #prediction-days, #ucg-history, #weekday-stats { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
     @media (max-width: 640px) {
@@ -299,13 +301,6 @@
 <div id="prediction-view" style="display:none">
   <div class="log-wrap">
     <div class="log-header">
-      <h2>Laatste 6 afgesloten dagen (UTC-8)</h2>
-    </div>
-    <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
-  </div>
-
-  <div class="log-wrap">
-    <div class="log-header">
       <h2>UCG-factor</h2>
     </div>
     <div class="prediction-controls">
@@ -313,9 +308,30 @@
       <input type="number" id="ucg-number" min="1" max="5" step="0.001" value="1" oninput="onUcgNumberInput()">
     </div>
     <div class="prediction-result-box">
-      <span class="prediction-result-label">Verwacht totaal (incl. UCG)</span>
+      <span class="prediction-result-label" id="prediction-result-label">Hoogste verwachte dag (incl. UCG)</span>
       <span class="prediction-result-value" id="prediction-result">—</span>
     </div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Laatste 6 afgesloten dagen (UTC-8)</h2>
+    </div>
+    <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>UCG-factor: spreiding &amp; historie</h2>
+    </div>
+    <div id="ucg-history"><div class="log-empty">Data ophalen...</div></div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Gemiddelde views per weekdag</h2>
+    </div>
+    <div id="weekday-stats"><div class="log-empty">Data ophalen...</div></div>
   </div>
 </div>
 
@@ -420,6 +436,29 @@ function rawFallbackTotal(log, key) {
   return withTotal.final_day_total;
 }
 
+// Releasedagen markeren: published_at komt rechtstreeks van YouTube (niet van
+// onze eigen ontdekking), dus dit is immuun voor het "catalogus-inhaalslag"-
+// probleem (oude video's die onze tracker toevallig pas later ontdekt).
+// Alleen de exacte publicatiedag wordt gemarkeerd. Shorts (<=60s) tellen niet
+// mee -- die trekken geen releasedag-piek en zorgden bij artiesten met veel
+// korte content (bv. Ariana) voor te veel fout-positieven. duration_seconds
+// ontbreekt op oudere, nog niet opnieuw opgehaalde video's; die worden dan
+// (net als voorheen) gewoon meegeteld totdat de backend ze aanvult. Gebruikt
+// door zowel het Refresh log als de Voorspelling-tab (daar: om te waarschuwen
+// dat de UCG-factor op zo'n dag waarschijnlijk lager uitvalt).
+const SHORTS_MAX_SECONDS = 60;
+function computeReleaseDays(videos) {
+  const releaseDays = new Set();
+  for (const v of videos || []) {
+    if (!v.published_at) continue;
+    if (v.duration_seconds != null && v.duration_seconds <= SHORTS_MAX_SECONDS) continue;
+    releaseDays.add(ptDateKey(v.published_at));
+  }
+  return releaseDays;
+}
+
+const floor1000 = (n) => Math.floor(n / 1000) * 1000;
+
 function dHtml(d) {
   if (d === null || d === undefined) return '<span class="neu">—</span>';
   const cls = d > 0 ? 'pos' : d < 0 ? 'neg' : 'neu';
@@ -439,6 +478,7 @@ let activeArtist = 'taylor';
 const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays, collapsedChannels } bij tab-wissel
 
 let appData = null;
+let analysisData = null; // eenmalig geimporteerde referentiedata (UCG-factor-historie, weekdag-gemiddelden) -- zie analysis_data.json
 let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedWeeks = null; // Set van ISO-weeksleutels (binnen de oudere-sectie) die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedOlder = true; // of de "oudere data"-sectie (alles voorbij de laatste 7 dagen) ingeklapt is
@@ -534,24 +574,7 @@ function renderLog() {
   if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
 
   const todayKey = todayKeyNow();
-
-  // ---- Releasedagen markeren ----
-  // published_at komt rechtstreeks van YouTube (niet van onze eigen ontdekking),
-  // dus dit is immuun voor het "catalogus-inhaalslag"-probleem (oude video's die
-  // onze tracker toevallig pas later ontdekt). Alleen de exacte publicatiedag
-  // wordt gemarkeerd -- puur als visuele trigger, geen verdere logica eraan.
-  // Shorts (<=60s) tellen niet mee -- die trekken geen releasedag-piek en
-  // zorgden bij artiesten met veel korte content (bv. Ariana) voor te veel
-  // fout-positieven. duration_seconds ontbreekt op oudere, nog niet
-  // opnieuw opgehaalde video's; die worden dan (net als voorheen) gewoon
-  // meegeteld totdat de backend ze bij de eerstvolgende run aanvult.
-  const SHORTS_MAX_SECONDS = 60;
-  const releaseDays = new Set();
-  for (const v of appData.videos || []) {
-    if (!v.published_at) continue;
-    if (v.duration_seconds != null && v.duration_seconds <= SHORTS_MAX_SECONDS) continue;
-    releaseDays.add(ptDateKey(v.published_at));
-  }
+  const releaseDays = computeReleaseDays(appData.videos);
 
   // ---- Dagtotalen client-side herberekenen op de vaste UTC-8-grens ----
   // De backend sloeg vóór 31 augustus 2026 final_day_total/views_today nog
@@ -928,12 +951,16 @@ function getClosedDayTotals(log, count) {
 function ucgStorageKey(artistKey) { return `ytTracker.ucgFactor.${artistKey}`; }
 
 // Startwaarde bij eerste gebruik (nog geen opgeslagen factor voor deze
-// artiest): de verhouding officieel/eigen totaal van de meest recente
-// meting -- een redelijk vertrekpunt dat de gebruiker vervolgens zelf
-// verfijnt. Wordt daarna per artiest onthouden in localStorage.
+// artiest): het gemiddelde van de echte, historisch gemeten UCG-factor
+// (analysis_data.json -- zie ucg-history hieronder). Bestaat die nog niet
+// voor deze artiest, dan de verhouding officieel/eigen-totaal van de meest
+// recente meting als noodgreep. Wordt daarna per artiest onthouden in
+// localStorage, ongeacht welke bron de startwaarde leverde.
 function loadUcgFactor(artistKey) {
   const saved = localStorage.getItem(ucgStorageKey(artistKey));
   if (saved !== null && Number.isFinite(Number(saved)) && Number(saved) > 0) return Number(saved);
+  const hist = analysisData?.ucg_factor?.[artistKey];
+  if (hist) return hist.avg;
   const latest = appData?.log?.[0];
   if (latest && latest.official_total && latest.pub_total) {
     return Math.round((latest.official_total / latest.pub_total) * 1000) / 1000;
@@ -945,40 +972,29 @@ function saveUcgFactor(artistKey, value) {
   localStorage.setItem(ucgStorageKey(artistKey), String(value));
 }
 
-let predictionSum = 0; // som van de dagtotalen (ongeafrond), voor live herberekening tijdens het schuiven
+let predictionDays = [];               // laatste berekende 6-dagenlijst (met .total), hergebruikt bij live UCG-aanpassingen
+let predictionReleaseDays = new Set(); // dagsleutels met een nieuwe video, voor de waarschuwing bij het schuiven
 
 function renderPrediction() {
-  const daysEl = document.getElementById('prediction-days');
   const log = appData?.log || [];
-  if (!log.length) { daysEl.innerHTML = '<div class="log-empty">Nog geen data.</div>'; return; }
+  if (!log.length) {
+    document.getElementById('prediction-days').innerHTML = '<div class="log-empty">Nog geen data.</div>';
+    predictionDays = [];
+    return;
+  }
 
-  const days = getClosedDayTotals(log, 6);
-  predictionSum = days.reduce((s, d) => s + (d.total ?? 0), 0);
-  const missing = days.some(d => d.total == null);
+  predictionReleaseDays = computeReleaseDays(appData.videos);
+  predictionDays = getClosedDayTotals(log, 6);
 
-  const dayRows = days.map(d => `<tr>
-      <td>${d.label}</td>
-      <td>${d.total == null ? '<span class="neu">—</span>' : fmt(Math.round(d.total / 1000) * 1000)}</td>
-    </tr>`).join('');
+  const factor   = loadUcgFactor(activeArtist);
+  const sliderEl = document.getElementById('ucg-slider');
+  const numberEl = document.getElementById('ucg-number');
+  sliderEl.value = Math.min(Math.max(factor, Number(sliderEl.min)), Number(sliderEl.max));
+  numberEl.value = factor;
 
-  daysEl.innerHTML = `<table class="log-table">
-    <thead><tr><th>Dag (UTC-8)</th><th>Views eigen counter (afgerond op 1.000)</th></tr></thead>
-    <tbody>
-      ${dayRows}
-      <tr class="prediction-sum-row">
-        <td>Som (${days.length} dagen)</td>
-        <td>${fmt(Math.round(predictionSum / 1000) * 1000)}</td>
-      </tr>
-    </tbody>
-  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar (telt mee als 0 in de som).</div>' : ''}`;
-
-  const factor    = loadUcgFactor(activeArtist);
-  const sliderEl  = document.getElementById('ucg-slider');
-  const numberEl  = document.getElementById('ucg-number');
-  sliderEl.value  = Math.min(Math.max(factor, Number(sliderEl.min)), Number(sliderEl.max));
-  numberEl.value  = factor;
-
-  updatePredictionResult();
+  renderPredictionDays();
+  renderUcgHistory();
+  renderWeekdayStats();
 }
 
 function currentUcgFactor() {
@@ -986,16 +1002,65 @@ function currentUcgFactor() {
   return Number.isFinite(v) && v > 0 ? v : 1;
 }
 
-function updatePredictionResult() {
-  const total = predictionSum * currentUcgFactor();
-  document.getElementById('prediction-result').textContent = fmt(Math.round(total / 1000) * 1000) + ' views';
+// De UCG-factor wordt PER DAG op de eigen-counter-total van die dag toegepast
+// (niet op de vooraf opgetelde som -- bij een uniforme factor komt dat
+// wiskundig op hetzelfde neer, maar zo is per dag te zien wat de geschatte
+// officiele stand wordt, en welke dag daarmee de hoogste van de week is).
+// Wordt zowel bij de eerste render als bij elke schuif-/typbeweging van de
+// UCG-factor opnieuw aangeroepen (goedkoop: geen dagtotalen-herberekening).
+function renderPredictionDays() {
+  const daysEl = document.getElementById('prediction-days');
+  const factor = currentUcgFactor();
+  const sum = predictionDays.reduce((s, d) => s + (d.total ?? 0), 0);
+  const missing = predictionDays.some(d => d.total == null);
+
+  let maxIdx = -1, maxVal = -Infinity;
+  predictionDays.forEach((d, i) => {
+    const projected = d.total == null ? null : d.total * factor;
+    if (projected != null && projected > maxVal) { maxVal = projected; maxIdx = i; }
+  });
+
+  const rows = predictionDays.map((d, i) => {
+    const projected = d.total == null ? null : d.total * factor;
+    const isMax = i === maxIdx;
+    const releaseBadge = predictionReleaseDays.has(d.key)
+      ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
+      : '';
+    return `<tr class="${isMax ? 'prediction-max-row' : ''}">
+      <td>${d.label}${releaseBadge}</td>
+      <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
+      <td>${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}${isMax ? ' <span class="badge ok day-badge">hoogste</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  daysEl.innerHTML = `<table class="log-table">
+    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter (afgekapt op 1.000)</th><th>Geschat officieel (incl. UCG)</th></tr></thead>
+    <tbody>
+      ${rows}
+      <tr class="prediction-sum-row">
+        <td>Som (${predictionDays.length} dagen, eigen counter)</td>
+        <td>${fmt(floor1000(sum))}</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
+
+  const labelEl = document.getElementById('prediction-result-label');
+  const valueEl = document.getElementById('prediction-result');
+  if (maxIdx === -1) {
+    labelEl.textContent = 'Hoogste verwachte dag (incl. UCG)';
+    valueEl.textContent = '—';
+  } else {
+    labelEl.textContent = 'Hoogste verwachte dag (incl. UCG): ' + predictionDays[maxIdx].label;
+    valueEl.textContent = fmt(floor1000(maxVal)) + ' views';
+  }
 }
 
 function onUcgSliderInput() {
   const v = Number(document.getElementById('ucg-slider').value);
   document.getElementById('ucg-number').value = v;
   saveUcgFactor(activeArtist, v);
-  updatePredictionResult();
+  renderPredictionDays();
 }
 
 function onUcgNumberInput() {
@@ -1004,7 +1069,61 @@ function onUcgNumberInput() {
   const sliderEl = document.getElementById('ucg-slider');
   sliderEl.value = Math.min(Math.max(v, Number(sliderEl.min)), Number(sliderEl.max));
   saveUcgFactor(activeArtist, v);
-  updatePredictionResult();
+  renderPredictionDays();
+}
+
+// ---- UCG-factor spreiding & historie (eenmalig geimporteerd uit
+// youtube_charts_daily_views.xlsx, zie analysis_data.json) ----
+function renderUcgHistory() {
+  const el = document.getElementById('ucg-history');
+  const hist = analysisData?.ucg_factor?.[activeArtist];
+  if (!hist) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
+
+  const rows = hist.points.map(p => `<tr>
+    <td>${ptDateLabel(p.date + 'T12:00:00Z')}</td>
+    <td>${fmt(p.own_counter)}</td>
+    <td>${fmt(p.global_charts)}</td>
+    <td>${p.factor.toFixed(4)}</td>
+  </tr>`).join('');
+
+  el.innerHTML = `<table class="log-table">
+    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="prediction-result-box">
+    <span class="prediction-result-label">Spreiding (min – gem. – max)</span>
+    <span class="prediction-result-value">${hist.min.toFixed(4)} – ${hist.avg.toFixed(4)} – ${hist.max.toFixed(4)}</span>
+  </div>`;
+}
+
+// ---- Gemiddelde views per weekdag + Ma-&gt;Vr-stijging (zelfde bron) ----
+const WEEKDAY_ORDER  = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+const WEEKDAY_LABELS = { Ma: 'Maandag', Di: 'Dinsdag', Wo: 'Woensdag', Do: 'Donderdag', Vr: 'Vrijdag', Za: 'Zaterdag', Zo: 'Zondag' };
+
+function renderWeekdayStats() {
+  const el = document.getElementById('weekday-stats');
+  const avgByDay  = analysisData?.weekday_avg?.[activeArtist];
+  const monFriPct = analysisData?.mon_fri_increase_pct?.[activeArtist];
+  if (!avgByDay) { el.innerHTML = '<div class="log-empty">Nog geen weekdag-data voor deze artiest.</div>'; return; }
+
+  const monVal = avgByDay['Ma'];
+  const rows = WEEKDAY_ORDER.map(d => {
+    const v = avgByDay[d];
+    const pct = monVal ? (v / monVal - 1) * 100 : null;
+    return `<tr class="${d === 'Vr' ? 'prediction-max-row' : ''}">
+      <td>${WEEKDAY_LABELS[d]}</td>
+      <td>${fmt(v)}</td>
+      <td>${pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(1) + '% t.o.v. ma'}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `<table class="log-table">
+    <thead><tr><th>Weekdag</th><th>Gem. Global Charts views</th><th>T.o.v. maandag</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>${monFriPct != null ? `<div class="prediction-result-box">
+    <span class="prediction-result-label">Gem. stijging maandag → vrijdag</span>
+    <span class="prediction-result-value">+${(monFriPct * 100).toFixed(1)}%</span>
+  </div>` : ''}`;
 }
 
 function toggleInfoModal(open) {
@@ -1014,7 +1133,19 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') toggleInfoModal(false);
 });
 
+// Statische referentiedata (analysis_data.json) verandert zelden -- 1x per
+// paginabezoek ophalen volstaat, i.p.v. mee te liften op elke 5-minuten-
+// auto-refresh van de artiestdata.
+async function loadAnalysisData() {
+  try {
+    const resp = await fetch('analysis_data.json?t=' + Date.now());
+    if (resp.ok) analysisData = await resp.json();
+  } catch (err) { /* niet kritiek voor de rest van de pagina -- stil negeren */ }
+  if (activeView === 'prediction') renderPrediction();
+}
+
 loadData();
+loadAnalysisData();
 </script>
 </body>
 </html>
