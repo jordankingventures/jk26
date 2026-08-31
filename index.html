@@ -933,17 +933,18 @@ function getClosedDayTotals(log, count) {
 
 function ucgStorageKey(artistKey) { return `ytTracker.ucgFactor.${artistKey}`; }
 
-// Startwaarde bij eerste gebruik (nog geen opgeslagen factor voor deze
-// artiest): het gemiddelde van de echte, historisch gemeten UCG-factor
-// (analysis_data.json -- zie ucg-history hieronder). Bestaat die nog niet
-// voor deze artiest, dan de verhouding officieel/eigen-totaal van de meest
-// recente meting als noodgreep. Wordt daarna per artiest onthouden in
-// localStorage, ongeacht welke bron de startwaarde leverde.
+// Startwaarde: altijd het gemiddelde van de echte, historisch gemeten
+// UCG-factor (analysis_data.json -- zie ucg-history hieronder), zodat je bij
+// elk bezoek/artiestwissel vanaf dat referentiepunt begint te schuiven i.p.v.
+// vanaf waar je de vorige keer toevallig gebleven was. Bestaat er nog geen
+// historische data voor deze artiest, dan valt hij terug op een eerder
+// handmatig opgeslagen waarde, en anders op de verhouding officieel/eigen-
+// totaal van de meest recente meting als laatste noodgreep.
 function loadUcgFactor(artistKey) {
-  const saved = localStorage.getItem(ucgStorageKey(artistKey));
-  if (saved !== null && Number.isFinite(Number(saved)) && Number(saved) > 0) return Number(saved);
   const hist = analysisData?.ucg_factor?.[artistKey];
   if (hist) return hist.avg;
+  const saved = localStorage.getItem(ucgStorageKey(artistKey));
+  if (saved !== null && Number.isFinite(Number(saved)) && Number(saved) > 0) return Number(saved);
   const latest = appData?.log?.[0];
   if (latest && latest.official_total && latest.pub_total) {
     return Math.round((latest.official_total / latest.pub_total) * 1000) / 1000;
