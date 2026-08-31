@@ -1110,7 +1110,7 @@ function renderUcgHistory() {
     <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+2 dagen)</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
-      ${statRow('Gem. (min–max)', s => `${s.avg.toFixed(2)} (${s.min.toFixed(2)}–${s.max.toFixed(2)})`)}
+      ${statRow('Gem. (min–max)', s => `<b>${s.avg.toFixed(2)}</b> <span class="neu">(${s.min.toFixed(2)}–${s.max.toFixed(2)})</span>`)}
       ${statRow('Variatiecoëfficiënt', s => s.cv.toFixed(1) + '%')}
       ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
     </tbody>
