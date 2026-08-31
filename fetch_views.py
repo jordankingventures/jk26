@@ -189,6 +189,14 @@ def get_video_details(ids):
     return videos
 
 
+def is_short(video):
+    """Shorts (<=60s) tellen niet mee in de totalen -- geen los 'is dit een
+    Short'-veld beschikbaar via de API, dus de duur is het enige betrouwbare
+    onderscheid. Onbekende duur (None) wordt niet als Short behandeld."""
+    d = video.get("duration_seconds")
+    return d is not None and d <= 60
+
+
 def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
     """
     Schat de views per video op exact 00:00 (DAY_BOUNDARY_TZ) van `today`.
@@ -252,16 +260,22 @@ def save_snapshot(videos, official_total):
         except:
             pass
 
-    pub_total  = sum(v["views"] for v in videos)
+    # Shorts (<=60s) tellen niet mee in de totalen -- geen "echte" kijkpiek,
+    # zouden de cijfers vervuilen. Blijven wel gewoon zichtbaar in de
+    # videolijst (data["videos"] hieronder gebruikt nog altijd de volledige,
+    # ongefilterde `videos`-lijst).
+    counted = [v for v in videos if not is_short(v)]
+
+    pub_total  = sum(v["views"] for v in counted)
     now_utc    = datetime.now(timezone.utc)
     ts         = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
     today      = now_utc.astimezone(DAY_BOUNDARY_TZ).strftime("%Y-%m-%d")  # matcht (naar schatting) charts.youtube.com se daggrens
-    curr_views = {v["id"]: v["views"] for v in videos}
+    curr_views = {v["id"]: v["views"] for v in counted}
 
     # Dag-baseline: reset elke dag op middernacht Pacific Time, geschat via interpolatie.
     if not data["day_baseline"] or data["day_baseline"].get("date") != today:
         old_baseline = data["day_baseline"]
-        new_baseline = estimate_midnight_baseline(videos, data.get("last_snapshot"), today, now_utc)
+        new_baseline = estimate_midnight_baseline(counted, data.get("last_snapshot"), today, now_utc)
 
         # De zojuist afgesloten dag krijgt met terugwerkende kracht zijn echte,
         # complete dagtotaal op de laatste logregel: inclusief het stukje groei
@@ -316,7 +330,7 @@ def save_snapshot(videos, official_total):
         "ts":             ts,
         "official_total": official_total,
         "pub_total":      pub_total,
-        "video_count":    len(videos),
+        "video_count":    len(counted),
         "views_today":    views_today,
         "delta_hour":     delta_hour,
     })
@@ -325,7 +339,7 @@ def save_snapshot(videos, official_total):
     # Laatste snapshot bewaren
     data["last_snapshot"] = {
         "ts":    ts,
-        "views": {v["id"]: v["views"] for v in videos},
+        "views": {v["id"]: v["views"] for v in counted},
     }
 
     # Video lijst opslaan (gesorteerd op views)

@@ -46,6 +46,34 @@
     button.refresh:hover { opacity: .85; }
     button.refresh:disabled { opacity: .4; cursor: not-allowed; }
 
+    button.info-btn {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--muted); cursor: pointer; font-size: 0.85rem; font-weight: 700;
+      width: 30px; height: 30px; line-height: 1; transition: color .15s, border-color .15s;
+    }
+    button.info-btn:hover { color: var(--text); border-color: var(--accent); }
+
+    /* Info-modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(5,5,8,.72);
+      z-index: 100; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-card {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; max-width: 460px; width: 100%; max-height: 82vh; overflow-y: auto;
+      padding: 22px 24px;
+    }
+    .modal-card h2 { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+    .modal-card ol { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .modal-card li { font-size: 0.8rem; line-height: 1.55; color: var(--text); }
+    .modal-card li b { color: var(--accent); font-weight: 700; }
+    .modal-close {
+      position: absolute; top: 12px; right: 12px; background: none; border: none;
+      color: var(--muted); font-size: 1.1rem; cursor: pointer; line-height: 1; padding: 4px;
+    }
+    .modal-close:hover { color: var(--text); }
+
     /* Log */
     .log-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
     .log-header {
@@ -171,9 +199,24 @@
   <h1><span id="artist-name">Taylor Swift</span><span class="subtitle">View Tracker</span></h1>
   <div class="header-right">
     <span class="badge" id="badge-updated">Laden...</span>
+    <button class="info-btn" onclick="toggleInfoModal(true)" title="Hoe werkt deze tracker?">ℹ</button>
     <button class="refresh" id="btn-refresh" onclick="loadData()">↻ Ververs</button>
   </div>
 </header>
+
+<div class="modal-overlay" id="info-modal" onclick="if (event.target === this) toggleInfoModal(false)">
+  <div class="modal-card">
+    <button class="modal-close" onclick="toggleInfoModal(false)">✕</button>
+    <h2>Hoe deze tracker werkt</h2>
+    <ol>
+      <li><b>Elk uur</b> haalt een geautomatiseerd script (GitHub Actions, getriggerd door cron-job.org) de actuele viewcounts op.</li>
+      <li><b>Twee kanalen samen:</b> het hoofdkanaal én het door YouTube automatisch gegenereerde "Topic"-kanaal (officiële audio) tellen samen als één artiestentotaal.</li>
+      <li><b>Shorts (≤60 sec) tellen niet mee</b> in de totalen -- die trekken geen "echte" kijkpiek en zouden de cijfers vervuilen. Ze blijven wel gewoon zichtbaar in de videolijst.</li>
+      <li><b>Nieuwe video's</b> (net uitgebracht, of voor het eerst ontdekt) krijgen hun huidige viewcount als startpunt ("baseline"). Alleen de groei ná ontdekking telt mee als "views vandaag" -- niet de volledige bestaande viewcount in één keer.</li>
+      <li><b>Middernacht (00:00, vaste UTC-8) is de daggrens.</b> Omdat metingen niet precies om 00:00 binnenkomen, wordt het exacte middernacht-totaal lineair geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht.</li>
+    </ol>
+  </div>
+</div>
 
 <div class="tabs" id="artist-tabs">
   <button class="tab active" data-artist="taylor" onclick="switchArtist('taylor')">Taylor Swift</button>
@@ -765,6 +808,13 @@ function renderTable() {
 
 function setSortAndRender(val) { document.getElementById('sort-select').value = val; renderTable(); }
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toggleInfoModal(open) {
+  document.getElementById('info-modal').classList.toggle('open', open);
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') toggleInfoModal(false);
+});
 
 loadData();
 </script>
