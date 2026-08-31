@@ -206,7 +206,7 @@
         <option value="views-desc">Meeste views</option>
         <option value="views-asc">Minste views</option>
         <option value="delta-desc">Meeste groei dit uur</option>
-        <option value="delta-day-desc">Meeste groei vandaag (UTC-8)</option>
+        <option value="delta-day-desc">Meeste groei vandaag (PT)</option>
         <option value="date-desc">Nieuwste eerst</option>
         <option value="title-asc">Titel A–Z</option>
       </select>
@@ -222,7 +222,7 @@
           <th>Titel</th>
           <th onclick="setSortAndRender('views-desc')">Views</th>
           <th onclick="setSortAndRender('delta-desc')">+/− dit uur</th>
-          <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (UTC-8)</th>
+          <th onclick="setSortAndRender('delta-day-desc')">+/− vandaag (PT)</th>
         </tr>
       </thead>
       <tbody id="video-tbody">
@@ -234,9 +234,7 @@
 
 <script>
 const fmt = (n) => Number(n).toLocaleString('nl-NL');
-// Vaste UTC-8 (geen zomertijd), i.p.v. "echte" Pacific Time -- zie fetch_views.py
-// (DAY_BOUNDARY_TZ) voor de analyse die hieraan ten grondslag ligt.
-const DAY_TZ = 'Etc/GMT+8';
+const PT_TZ = 'America/Los_Angeles'; // YouTube Charts / Kalshi-resolver hanteert deze daggrens
 
 function dHtml(d) {
   if (d === null || d === undefined) return '<span class="neu">—</span>';
@@ -325,7 +323,7 @@ async function loadData() {
     // Toon tijdstip van meest recente server-run
     const lastTs = appData.log?.[0]?.ts;
     b.textContent = lastTs
-      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ }) + ' (UTC-8)'
+      ? 'Server: ' + new Date(lastTs).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ }) + ' PT'
       : 'Geladen';
     b.className = 'badge ok';
   } catch (err) {
@@ -347,10 +345,10 @@ function renderLog() {
   const el  = document.getElementById('log-body');
   if (!log.length) { el.innerHTML = '<div class="log-empty">Nog geen data. Draai fetch_views.php eerst handmatig.</div>'; return; }
 
-  const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: DAY_TZ }); // YYYY-MM-DD, sorteerbaar
-  const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: DAY_TZ });
-  const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ });
-  const todayKey     = new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ });
+  const ptDateKey    = (ts) => new Date(ts).toLocaleDateString('en-CA', { timeZone: PT_TZ }); // YYYY-MM-DD, sorteerbaar
+  const ptDateLabel  = (ts) => new Date(ts).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: PT_TZ });
+  const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: PT_TZ });
+  const todayKey     = new Date().toLocaleDateString('en-CA', { timeZone: PT_TZ });
 
   // ISO-8601-weeksleutel (bv. "2026-W34") voor een PT-datumsleutel, voor het
   // groeperen van de oudere-dan-7-dagen sectie per week.
@@ -475,7 +473,7 @@ function renderLog() {
         }
       }
       if (!collapsedDays.has(groupKey)) {
-        const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: DAY_TZ });
+        const ts = new Date(e.ts).toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit', timeZone: PT_TZ });
         rows += `<tr class="${e === log[0] ? 'new-row' : ''}">
           <td>${ts}</td>
           <td>${fmt(e.official_total ?? 0)}</td>
@@ -542,11 +540,11 @@ function renderLog() {
 
   el.innerHTML = `<table class="log-table">
     <thead><tr>
-      <th>Tijdstip (UTC-8)</th>
+      <th>Tijdstip (PT)</th>
       <th>Officieel totaal</th>
       <th>Som publieke video's</th>
       <th>Aantal video's</th>
-      <th>Views vandaag (UTC-8)</th>
+      <th>Views vandaag (PT)</th>
       <th>+/− vorige meting</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -598,7 +596,7 @@ function renderTable() {
 
   const rowHtml = (v, i) => {
     const pubDate = v.published_at
-      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: DAY_TZ })
+      ? new Date(v.published_at).toLocaleDateString('nl-NL', { year:'numeric', month:'short', day:'numeric', timeZone: PT_TZ })
       : '';
     return `<tr>
       <td class="rank">${i + 1}</td>
