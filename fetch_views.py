@@ -15,12 +15,19 @@ import os
 import sys
 import urllib.request
 import urllib.parse
-from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
 
 API_KEY = os.environ["YOUTUBE_API_KEY"]
-# YouTube Charts (de Kalshi-resolver) hanteert Pacific Time als daggrens, niet UTC.
-PT = ZoneInfo("America/Los_Angeles")
+# Daggrens voor "vandaag"/dagtotalen. Per 31 augustus 2026 (00:00 UTC-8, dus
+# 2026-08-31T08:00:00Z) omgezet van "echte" (met zomertijd meebewegende)
+# Amerikaanse Pacific Time naar een VASTE UTC-8, het hele jaar door. Een
+# analyse van de UCG-factor-spreiding over alle 7 artiesten liet zien dat een
+# vaste UTC-8 de factor consistent constanter maakt dan PT/PDT (UTC-7 in de
+# zomer) -- vermoedelijk gebruikt YouTube's eigen backend intern ook een
+# vaste UTC-8. Data van vóór het omslagmoment is nog met de oude PT-grens
+# opgebouwd en blijft ongewijzigd staan (zie ook index.html: zoneFor()/
+# TZ_CUTOVER_MS, die op hetzelfde moment overschakelt bij het weergeven).
+DAY_BOUNDARY_TZ = timezone(timedelta(hours=-8))
 
 # Eén set fetch-logica voor alle artiesten; alleen kanalen en bestandsnamen
 # verschillen per artiest, zodat een bugfix maar op één plek hoeft.
@@ -112,8 +119,8 @@ def get_channels_info(channel_ids):
 
 
 def get_video_ids(channel_id, uploads_playlist_id, cache):
-    """Video-ID's van de uploads-playlist van één kanaal, per kanaal 1x per PT-dag gecachet."""
-    today = datetime.now(PT).strftime("%Y-%m-%d")
+    """Video-ID's van de uploads-playlist van één kanaal, per kanaal 1x per dag (DAY_BOUNDARY_TZ) gecachet."""
+    today = datetime.now(DAY_BOUNDARY_TZ).strftime("%Y-%m-%d")
 
     cached = cache.get(channel_id)
     if cached and cached.get("date") == today:
@@ -169,7 +176,7 @@ def get_video_details(ids):
 
 def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
     """
-    Schat de views per video op exact 00:00 Pacific Time van `today`.
+    Schat de views per video op exact 00:00 (DAY_BOUNDARY_TZ) van `today`.
     Metingen komen onregelmatig binnen (elke ~1-2 uur, soms mislukt een run), dus de
     eerste meting na middernacht ligt meestal al wat na 00:00 en bevat dan groei die
     anders ten onrechte bij 'gisteren' zou horen. We interpoleren lineair tussen de
@@ -194,7 +201,7 @@ def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
     except (KeyError, ValueError):
         return {"date": today, "views": curr_views, "interpolated": False, "prev_day_end_total": None}
 
-    midnight_utc = datetime.strptime(today, "%Y-%m-%d").replace(tzinfo=PT).astimezone(timezone.utc)
+    midnight_utc = datetime.strptime(today, "%Y-%m-%d").replace(tzinfo=DAY_BOUNDARY_TZ).astimezone(timezone.utc)
     span_seconds = (now_utc - prev_ts_utc).total_seconds()
 
     if span_seconds <= 0:
@@ -233,7 +240,7 @@ def save_snapshot(videos, official_total):
     pub_total  = sum(v["views"] for v in videos)
     now_utc    = datetime.now(timezone.utc)
     ts         = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-    today      = now_utc.astimezone(PT).strftime("%Y-%m-%d")  # PT-dag, matcht charts.youtube.com
+    today      = now_utc.astimezone(DAY_BOUNDARY_TZ).strftime("%Y-%m-%d")  # matcht (naar schatting) charts.youtube.com se daggrens
     curr_views = {v["id"]: v["views"] for v in videos}
 
     # Dag-baseline: reset elke dag op middernacht Pacific Time, geschat via interpolatie.
