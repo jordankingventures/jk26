@@ -12,6 +12,7 @@ Gebruik: python fetch_views.py <artiest>   (bv. "taylor" of "drake")
 
 import json
 import os
+import re
 import sys
 import urllib.request
 import urllib.parse
@@ -158,18 +159,32 @@ def get_recent_video_ids(uploads_playlist_id, count=10):
     return [item["contentDetails"]["videoId"] for item in data.get("items", [])]
 
 
+ISO8601_DURATION_RE = re.compile(r"^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$")
+
+
+def parse_duration_seconds(iso_duration):
+    """Zet een ISO 8601-duur (bv. 'PT1M23S') om naar totaal aantal seconden.
+    Gebruikt om Shorts (<=60s) te kunnen onderscheiden van echte video's."""
+    m = ISO8601_DURATION_RE.match(iso_duration or "")
+    if not m:
+        return None
+    h, mnt, s = (int(x) if x else 0 for x in m.groups())
+    return h * 3600 + mnt * 60 + s
+
+
 def get_video_details(ids):
     videos = []
     for i in range(0, len(ids), 50):
         chunk = ids[i:i+50]
-        data = yt_get("videos", {"id": ",".join(chunk), "part": "snippet,statistics"})
+        data = yt_get("videos", {"id": ",".join(chunk), "part": "snippet,statistics,contentDetails"})
         for item in data.get("items", []):
             videos.append({
-                "id":           item["id"],
-                "title":        item["snippet"]["title"],
-                "thumbnail":    item["snippet"].get("thumbnails", {}).get("default", {}).get("url", ""),
-                "published_at": item["snippet"].get("publishedAt", ""),
-                "views":        int(item["statistics"].get("viewCount", 0)),
+                "id":               item["id"],
+                "title":            item["snippet"]["title"],
+                "thumbnail":        item["snippet"].get("thumbnails", {}).get("default", {}).get("url", ""),
+                "published_at":     item["snippet"].get("publishedAt", ""),
+                "views":            int(item["statistics"].get("viewCount", 0)),
+                "duration_seconds": parse_duration_seconds(item.get("contentDetails", {}).get("duration")),
             })
     return videos
 

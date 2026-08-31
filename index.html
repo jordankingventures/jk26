@@ -365,9 +365,16 @@ function renderLog() {
   // dus dit is immuun voor het "catalogus-inhaalslag"-probleem (oude video's die
   // onze tracker toevallig pas later ontdekt). Alleen de exacte publicatiedag
   // wordt gemarkeerd -- puur als visuele trigger, geen verdere logica eraan.
+  // Shorts (<=60s) tellen niet mee -- die trekken geen releasedag-piek en
+  // zorgden bij artiesten met veel korte content (bv. Ariana) voor te veel
+  // fout-positieven. duration_seconds ontbreekt op oudere, nog niet
+  // opnieuw opgehaalde video's; die worden dan (net als voorheen) gewoon
+  // meegeteld totdat de backend ze bij de eerstvolgende run aanvult.
+  const SHORTS_MAX_SECONDS = 60;
   const releaseDays = new Set();
   for (const v of appData.videos || []) {
     if (!v.published_at) continue;
+    if (v.duration_seconds != null && v.duration_seconds <= SHORTS_MAX_SECONDS) continue;
     releaseDays.add(ptDateKey(v.published_at));
   }
 
