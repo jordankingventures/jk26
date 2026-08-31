@@ -209,11 +209,16 @@
     <button class="modal-close" onclick="toggleInfoModal(false)">✕</button>
     <h2>Hoe deze tracker werkt</h2>
     <ol>
-      <li><b>Elk uur</b> haalt een geautomatiseerd script (GitHub Actions, getriggerd door cron-job.org) de actuele viewcounts op.</li>
-      <li><b>Twee kanalen samen:</b> het hoofdkanaal én het door YouTube automatisch gegenereerde "Topic"-kanaal (officiële audio) tellen samen als één artiestentotaal.</li>
+      <li><b>Elk uur</b> haalt een geautomatiseerd script (GitHub Actions, getriggerd door cron-job.org) de actuele viewcounts op van alle video's.</li>
+      <li><b>Twee kanalen samen:</b> het hoofdkanaal én het door YouTube automatisch gegenereerde "Topic"-kanaal (officiële audio, remixen, alternatieve versies) tellen samen als één artiestentotaal.</li>
+      <li><b>Nieuwe video's opsporen</b> gebeurt op twee snelheden: 1x per dag wordt de volledige videocatalogus van elk kanaal ververst, en daarnaast checkt élke uurlijkse run ook meteen de 10 nieuwste uploads. Zo wordt een net-verschenen video (bv. vrijdagochtend-release) al binnen het uur ontdekt, in plaats van pas bij de eerstvolgende dagelijkse scan.</li>
       <li><b>Shorts (≤60 sec) tellen niet mee</b> in de totalen -- die trekken geen "echte" kijkpiek en zouden de cijfers vervuilen. Ze blijven wel gewoon zichtbaar in de videolijst.</li>
-      <li><b>Nieuwe video's</b> (net uitgebracht, of voor het eerst ontdekt) krijgen hun huidige viewcount als startpunt ("baseline"). Alleen de groei ná ontdekking telt mee als "views vandaag" -- niet de volledige bestaande viewcount in één keer.</li>
+      <li><b>Nieuwe video's krijgen een baseline:</b> zodra een video ontdekt wordt (net uitgebracht, of voor het eerst opgemerkt) telt zijn volledige bestaande viewcount niet in één klap mee als groei. Hij start op zijn huidige stand ("baseline") en alleen de groei daarna telt mee bij "views vandaag" en het uurtotaal.</li>
+      <li><b>Verdwenen video's</b> (tijdelijk niet in de scan, bv. een API-hikje of verwijderde video) worden ook uit de baseline gehaald zodra ze weer wél of blijvend niet meer meetellen -- anders zou het totaal onterecht vals-negatief kunnen worden.</li>
       <li><b>Middernacht (00:00, vaste UTC-8) is de daggrens.</b> Omdat metingen niet precies om 00:00 binnenkomen, wordt het exacte middernacht-totaal lineair geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht.</li>
+      <li><b>Dagafsluiting met terugwerkende kracht:</b> zodra de nieuwe dag begint, krijgt de zojuist afgesloten dag zijn definitieve, complete dagtotaal geschreven op de laatste logregel -- inclusief het laatste stukje groei tot precies middernacht, maar zonder vervuiling door video's die pas de volgende dag ontdekt worden (of verdwijnen).</li>
+      <li><b>Officieel totaal vs. eigen totaal:</b> naast de som van alle losse video's wordt ook YouTube's eigen "officiële" kanaaltotaal opgehaald. Dat officiële cijfer ligt structureel wat hoger, omdat YouTube's Global Charts ook UGC (fancontent met Content ID-matching) meetelt die via de API niet per video te achterhalen is.</li>
+      <li><b>Geschiedenis:</b> per artiest worden de laatste ~450 uurlijkse metingen bewaard (ruim 18 dagen), zodat er altijd genoeg terugkijkdata is voor trends en dagtotalen.</li>
     </ol>
   </div>
 </div>
