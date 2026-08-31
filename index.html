@@ -77,7 +77,7 @@
     .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.77rem; text-transform: capitalize; color: var(--text); }
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
-    .badge.release { color: var(--accent); border-color: var(--accent); cursor: help; }
+    .badge.release { color: var(--accent); border-color: var(--accent); }
     .week-row .day-label { padding-left: 16px; text-transform: none; }
     .older-row .day-label { text-transform: none; }
     .day-total { flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.8rem; white-space: nowrap; }
@@ -357,24 +357,15 @@ function renderLog() {
   const ptShortLabel = (ts) => new Date(ts).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: DAY_TZ });
   const todayKey     = new Date().toLocaleDateString('en-CA', { timeZone: DAY_TZ });
 
-  const addDaysToKey = (key, n) => {
-    const [y, m, d] = key.split('-').map(Number);
-    return new Date(Date.UTC(y, m - 1, d + n)).toLocaleDateString('en-CA', { timeZone: 'UTC' });
-  };
-
   // ---- Releasedagen markeren ----
   // published_at komt rechtstreeks van YouTube (niet van onze eigen ontdekking),
   // dus dit is immuun voor het "catalogus-inhaalslag"-probleem (oude video's die
-  // onze tracker toevallig pas later ontdekt). Een release trekt vaak pas de
-  // volgende dag zijn grootste kijkpiek (zie analyse in het gesprek), dus een
-  // dag wordt gemarkeerd als er ÓF die dag ÓF de dag ervoor een video uitkwam.
-  const releaseInfo = {};
+  // onze tracker toevallig pas later ontdekt). Alleen de exacte publicatiedag
+  // wordt gemarkeerd -- puur als visuele trigger, geen verdere logica eraan.
+  const releaseDays = new Set();
   for (const v of appData.videos || []) {
     if (!v.published_at) continue;
-    const pubKey = ptDateKey(v.published_at);
-    for (const key of [pubKey, addDaysToKey(pubKey, 1)]) {
-      (releaseInfo[key] ??= []).push(v.title);
-    }
+    releaseDays.add(ptDateKey(v.published_at));
   }
 
   // ---- Dagtotalen client-side herberekenen op de vaste UTC-8-grens ----
@@ -589,7 +580,7 @@ function renderLog() {
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
           <div class="day-row-inner">
-            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}${releaseInfo[key] ? `<span class="badge release day-badge" title="Nieuwe video: ${esc(releaseInfo[key].join(', '))}">🎵 nieuwe video</span>` : ''}</span>
+            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}${releaseDays.has(key) ? '<span class="badge release day-badge">🎵 nieuwe video</span>' : ''}</span>
             <span class="day-total">${dHtml(dayTotal)} views</span>
           </div>
         </td></tr>`;
