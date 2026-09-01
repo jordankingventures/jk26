@@ -992,6 +992,19 @@ function renderPrediction() {
   const factor   = Math.round(loadUcgFactor(activeArtist) * 100) / 100; // 2 decimalen -- 3 was te exact om nog wat aan te kunnen
   const sliderEl = document.getElementById('ucg-slider');
   const numberEl = document.getElementById('ucg-number');
+
+  // Slider-bereik dynamisch centreren op het gemiddelde van deze artiest --
+  // elke artiest heeft een heel andere UCG-factor-schaal (bv. YoungBoy
+  // ~1,07 vs Bad Bunny ~1,61); met een vast bereik (1-1,5) stond de slider
+  // bij Bad Bunny daardoor helemaal rechts tegen de rand. Ondergrens blijft
+  // 1,0 (de factor kan niet lager: Global Charts bevat altijd minstens de
+  // eigen counter), bovengrens is het spiegelbeeld daarvan zodat het
+  // gemiddelde precies in het midden van de slider staat.
+  const center    = analysisData?.ucg_factor?.[activeArtist]?.avg ?? factor;
+  const halfRange = Math.max(center - 1, 0.05);
+  sliderEl.min = 1;
+  sliderEl.max = Math.round((1 + 2 * halfRange) * 100) / 100;
+
   sliderEl.value = Math.min(Math.max(factor, Number(sliderEl.min)), Number(sliderEl.max));
   numberEl.value = factor.toFixed(2); // altijd 2 decimalen tonen, ook bv. "1.10" i.p.v. "1.1"
 
