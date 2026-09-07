@@ -9,6 +9,15 @@ on:
 permissions:
   contents: write
 
+# Alle fetch-workflows delen deze groep, zodat ze na elkaar pushen i.p.v.
+# gelijktijdig te racen om dezelfde main-branch. Bij 16 artiesten liep de
+# 5x-retry-met-rebase hieronder anders af en toe leeg ("Kon na 5 pogingen
+# niet pushen naar main") -- wachten in de wachtrij is betrouwbaarder dan
+# vaker opnieuw proberen.
+concurrency:
+  group: fetch-views-push
+  cancel-in-progress: false
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
