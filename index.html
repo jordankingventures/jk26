@@ -1180,11 +1180,7 @@ function renderUcgHistory() {
     <td>${exclStats ? fn(exclStats) : '—'}</td>
   </tr>`;
 
-  el.innerHTML = `<table class="log-table">
-    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <table class="log-table prediction-stats-table">
+  el.innerHTML = `<table class="log-table prediction-stats-table">
     <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+2 dagen)</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
@@ -1192,6 +1188,10 @@ function renderUcgHistory() {
       ${statRow('Variatiecoëfficiënt', s => s.cv.toFixed(1) + '%')}
       ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
     </tbody>
+  </table>
+  <table class="log-table">
+    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
+    <tbody>${rows}</tbody>
   </table>`;
 }
 
