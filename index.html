@@ -27,6 +27,12 @@
 
     /* Artiest-tabs */
     .tabs { display: flex; gap: 5px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tabs-group { margin-bottom: 4px; }
+    .tabs-group .tabs { margin-bottom: 8px; }
+    .tabs-group-label {
+      font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); margin-bottom: 6px;
+    }
     .tab {
       background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
       color: var(--muted); font-size: 0.76rem; font-weight: 600; padding: 5px 12px; cursor: pointer;
@@ -234,14 +240,33 @@
   </div>
 </div>
 
-<div class="tabs" id="artist-tabs">
-  <button class="tab active" data-artist="taylor" onclick="switchArtist('taylor')">Taylor Swift</button>
-  <button class="tab" data-artist="drake" onclick="switchArtist('drake')">Drake</button>
-  <button class="tab" data-artist="wallen" onclick="switchArtist('wallen')">Morgan Wallen</button>
-  <button class="tab" data-artist="badbunny" onclick="switchArtist('badbunny')">Bad Bunny</button>
-  <button class="tab" data-artist="ariana" onclick="switchArtist('ariana')">Ariana Grande</button>
-  <button class="tab" data-artist="youngboy" onclick="switchArtist('youngboy')">YoungBoy NBA</button>
-  <button class="tab" data-artist="bieber" onclick="switchArtist('bieber')">Justin Bieber</button>
+<div id="artist-tabs">
+  <div class="tabs-group">
+    <div class="tabs-group-label">Fase 1</div>
+    <div class="tabs">
+      <button class="tab active" data-artist="taylor" onclick="switchArtist('taylor')">Taylor Swift</button>
+      <button class="tab" data-artist="drake" onclick="switchArtist('drake')">Drake</button>
+      <button class="tab" data-artist="wallen" onclick="switchArtist('wallen')">Morgan Wallen</button>
+      <button class="tab" data-artist="badbunny" onclick="switchArtist('badbunny')">Bad Bunny</button>
+      <button class="tab" data-artist="ariana" onclick="switchArtist('ariana')">Ariana Grande</button>
+      <button class="tab" data-artist="youngboy" onclick="switchArtist('youngboy')">YoungBoy NBA</button>
+      <button class="tab" data-artist="bieber" onclick="switchArtist('bieber')">Justin Bieber</button>
+    </div>
+  </div>
+  <div class="tabs-group">
+    <div class="tabs-group-label">Fase 2</div>
+    <div class="tabs">
+      <button class="tab" data-artist="fuerzaregida" onclick="switchArtist('fuerzaregida')">Fuerza Regida</button>
+      <button class="tab" data-artist="future" onclick="switchArtist('future')">Future</button>
+      <button class="tab" data-artist="kanye" onclick="switchArtist('kanye')">Kanye West</button>
+      <button class="tab" data-artist="katseye" onclick="switchArtist('katseye')">KATSEYE</button>
+      <button class="tab" data-artist="kendrick" onclick="switchArtist('kendrick')">Kendrick Lamar</button>
+      <button class="tab" data-artist="olivia" onclick="switchArtist('olivia')">Olivia Rodrigo</button>
+      <button class="tab" data-artist="postmalone" onclick="switchArtist('postmalone')">Post Malone</button>
+      <button class="tab" data-artist="tatemcrae" onclick="switchArtist('tatemcrae')">Tate McRae</button>
+      <button class="tab" data-artist="weeknd" onclick="switchArtist('weeknd')">The Weeknd</button>
+    </div>
+  </div>
 </div>
 
 <div class="tabs" id="view-tabs">
@@ -461,13 +486,24 @@ function dHtml(d) {
 }
 
 const ARTISTS = {
-  taylor:   { label: 'Taylor Swift',              dataFile: 'yt_data.json' },
-  drake:    { label: 'Drake',                     dataFile: 'drake_data.json' },
-  wallen:   { label: 'Morgan Wallen',              dataFile: 'wallen_data.json' },
-  badbunny: { label: 'Bad Bunny',                  dataFile: 'badbunny_data.json' },
-  ariana:   { label: 'Ariana Grande',              dataFile: 'ariana_data.json' },
-  youngboy: { label: 'YoungBoy Never Broke Again',  dataFile: 'youngboy_data.json' },
-  bieber:   { label: 'Justin Bieber',              dataFile: 'bieber_data.json' },
+  // Fase 1
+  taylor:       { label: 'Taylor Swift',              dataFile: 'yt_data.json' },
+  drake:        { label: 'Drake',                     dataFile: 'drake_data.json' },
+  wallen:       { label: 'Morgan Wallen',              dataFile: 'wallen_data.json' },
+  badbunny:     { label: 'Bad Bunny',                  dataFile: 'badbunny_data.json' },
+  ariana:       { label: 'Ariana Grande',              dataFile: 'ariana_data.json' },
+  youngboy:     { label: 'YoungBoy Never Broke Again',  dataFile: 'youngboy_data.json' },
+  bieber:       { label: 'Justin Bieber',              dataFile: 'bieber_data.json' },
+  // Fase 2
+  fuerzaregida: { label: 'Fuerza Regida',              dataFile: 'fuerzaregida_data.json' },
+  future:       { label: 'Future',                     dataFile: 'future_data.json' },
+  kanye:        { label: 'Kanye West',                 dataFile: 'kanye_data.json' },
+  katseye:      { label: 'KATSEYE',                    dataFile: 'katseye_data.json' },
+  kendrick:     { label: 'Kendrick Lamar',              dataFile: 'kendrick_data.json' },
+  olivia:       { label: 'Olivia Rodrigo',              dataFile: 'olivia_data.json' },
+  postmalone:   { label: 'Post Malone',                 dataFile: 'postmalone_data.json' },
+  tatemcrae:    { label: 'Tate McRae',                  dataFile: 'tatemcrae_data.json' },
+  weeknd:       { label: 'The Weeknd',                  dataFile: 'weeknd_data.json' },
 };
 let activeArtist = 'taylor';
 const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays, collapsedChannels } bij tab-wissel

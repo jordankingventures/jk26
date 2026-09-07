@@ -89,6 +89,82 @@ ARTISTS = {
         "data_file":  "bieber_data.json",
         "cache_file": "bieber_video_ids.json",
     },
+    # Fase 2 -- toegevoegd 2026-09-07. Draaien op een lagere frequentie dan
+    # Fase 1 (via het interval in cron-job.org, niet in dit bestand), om
+    # binnen de gedeelde YouTube-API-daglimiet te blijven -- zie de
+    # quota-analyse in het gesprek dat tot deze uitbreiding leidde.
+    "fuerzaregida": {
+        "channels": [
+            {"id": "UCFLI6KAjrKRtydD7KqiYvAw", "label": "Hoofdkanaal"},
+            {"id": "UC0kxNxFQCK6d2spPz5Sme7Q", "label": "Topic"},
+        ],
+        "data_file":  "fuerzaregida_data.json",
+        "cache_file": "fuerzaregida_video_ids.json",
+    },
+    "future": {
+        "channels": [
+            {"id": "UCSDvKdIQOwTfcyOimSi9oYA", "label": "Hoofdkanaal"},
+            {"id": "UC1_liDR4fRFJgH4HoJeV8cw", "label": "Topic"},
+        ],
+        "data_file":  "future_data.json",
+        "cache_file": "future_video_ids.json",
+    },
+    "kanye": {
+        "channels": [
+            {"id": "UCs6eXM7s8Vl5WcECcRHc2qQ", "label": "Hoofdkanaal"},
+            {"id": "UCRY5dYsbIN5TylSbd7gVnZg", "label": "Topic"},
+        ],
+        "data_file":  "kanye_data.json",
+        "cache_file": "kanye_video_ids.json",
+    },
+    "katseye": {
+        "channels": [
+            {"id": "UCA61H4fWOMHikLcUFKyQUog", "label": "Hoofdkanaal"},
+            {"id": "UCX9kfYB9t0tnd6DYUC2iuKg", "label": "Topic"},
+        ],
+        "data_file":  "katseye_data.json",
+        "cache_file": "katseye_video_ids.json",
+    },
+    "kendrick": {
+        "channels": [
+            {"id": "UC3lBXcrKFnFAFkfVk5WuKcQ", "label": "Hoofdkanaal"},
+            {"id": "UCprAFmT0C6O4X0ToEXpeFTQ", "label": "Topic"},
+        ],
+        "data_file":  "kendrick_data.json",
+        "cache_file": "kendrick_video_ids.json",
+    },
+    "olivia": {
+        "channels": [
+            {"id": "UCy3zgWom-5AGypGX_FVTKpg", "label": "Hoofdkanaal"},
+            {"id": "UCE5XNpliPM-SmyFEp61tL_g", "label": "Topic"},
+        ],
+        "data_file":  "olivia_data.json",
+        "cache_file": "olivia_video_ids.json",
+    },
+    "postmalone": {
+        "channels": [
+            {"id": "UCeLHszkByNZtPKcaVXOCOQQ", "label": "Hoofdkanaal"},
+            {"id": "UCyD3XWRK9ko-izf2nBSFitw", "label": "Topic"},
+        ],
+        "data_file":  "postmalone_data.json",
+        "cache_file": "postmalone_video_ids.json",
+    },
+    "tatemcrae": {
+        "channels": [
+            {"id": "UCQh6LB206jF3JxpCDD-fp5Q", "label": "Hoofdkanaal"},
+            {"id": "UCz86IA7ooUetFnUGa_YlsVw", "label": "Topic"},
+        ],
+        "data_file":  "tatemcrae_data.json",
+        "cache_file": "tatemcrae_video_ids.json",
+    },
+    "weeknd": {
+        "channels": [
+            {"id": "UC0WP5P-ufpRfjbNrmOWwLBQ", "label": "Hoofdkanaal"},
+            {"id": "UClYV6hHlupm_S_ObS1W-DYw", "label": "Topic"},
+        ],
+        "data_file":  "weeknd_data.json",
+        "cache_file": "weeknd_video_ids.json",
+    },
 }
 
 # Worden in __main__ gezet op basis van het artiest-argument.
