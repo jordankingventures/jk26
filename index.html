@@ -383,23 +383,33 @@ function computeDayInfo(log) {
     const startMs = Date.UTC(y, m - 1, d) + 8 * 3600 * 1000; // 00:00 UTC-8
     const endMs   = startMs + 24 * 3600 * 1000;
     const lastMs  = pts[pts.length - 1].ms;
+    const dayOver = endMs <= lastMs; // hebben we uberhaupt al metingen voorbij deze dag se eigen einde?
     dayInfo[key] = {
       startTotal: interpAt(startMs),
-      endTotal:   endMs <= lastMs ? interpAt(endMs) : null, // null = dag loopt nog
+      endTotal:   dayOver ? interpAt(endMs) : null, // kan ook null zijn TERWIJL dayOver=true (zie dayOver hieronder)
+      dayOver,
       valid:      vcConstantBetween(startMs, Math.min(endMs, lastMs)),
       videoCount: log.find(e => ptDateKey(e.ts) === key)?.video_count,
     };
   }
   const latestPub = pts[pts.length - 1].pub;
 
-  // Dagtotaal: herberekend eindtotaal min begintotaal (lopende dag: t/m de
-  // laatste meting). Valt terug op het meegegeven cijfer als de herberekening
-  // niet betrouwbaar is (catalogus-wijziging exact op de grens).
+  // Dagtotaal: herberekend eindtotaal min begintotaal. Voor een dag die nog
+  // loopt (dayOver=false) wordt de laatste meting als voorlopig eindpunt
+  // gebruikt. Een AFGESLOTEN dag waarvan de sluitingsgrens zelf niet
+  // betrouwbaar interpoleerbaar was (endTotal null terwijl dayOver=true --
+  // bv. omdat het video-aantal net op de daggrens veranderde, zie
+  // vcConstantBetween hierboven, die alleen bínnen de dag zelf checkt, niet
+  // op de grens) moet NIET stilzwijgend latestPub gebruiken: dat zou het
+  // dagtotaal van een allang afgesloten dag elk uur laten doorgroeien met de
+  // huidige (veel latere) stand. Val in dat geval terug op het meegegeven
+  // cijfer, net als bij een ongeldige dag.
   const dayTotalFor = (key, fallback) => {
     const info = dayInfo[key];
     if (!info || info.startTotal == null || !info.valid) return fallback;
-    const end = info.endTotal != null ? info.endTotal : latestPub;
-    return Math.round(end - info.startTotal);
+    if (!info.dayOver) return Math.round(latestPub - info.startTotal);
+    if (info.endTotal == null) return fallback;
+    return Math.round(info.endTotal - info.startTotal);
   };
   // "Views vandaag" per meting: die meting se pub_total min de UTC-8-daggrens
   // van díé dag -- i.p.v. het (deels PT-gebaseerde) views_today-veld.
