@@ -40,6 +40,7 @@
     }
     .tab:hover { color: var(--text); }
     .tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .view-tab.active { background: var(--green); border-color: var(--green); }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .badge { font-size: 0.75rem; color: var(--muted); padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
     .badge.ok { color: var(--green); border-color: var(--green); }
@@ -102,7 +103,7 @@
     .day-row-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; }
     .day-label { flex: 1 1 auto; white-space: nowrap; font-weight: 700; font-size: 0.77rem; text-transform: capitalize; color: var(--text); }
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
-    .day-badge { margin-left: 8px; padding: 2px 8px; font-size: 0.65rem; vertical-align: 1px; }
+    .day-badge { margin-left: 8px; padding: 1px 6px; font-size: 0.58rem; vertical-align: 1px; }
     .badge.release { color: var(--accent); border-color: var(--accent); }
     .week-row .day-label { padding-left: 16px; text-transform: none; color: #7c7b8a; font-style: italic; }
     .older-row .day-label { text-transform: none; color: #7c7b8a; font-style: italic; }
@@ -275,9 +276,12 @@
   </div>
 </div>
 
-<div class="tabs" id="view-tabs">
-  <button class="tab active" data-view="log" onclick="switchView('log')">Log</button>
-  <button class="tab" data-view="prediction" onclick="switchView('prediction')">Voorspelling</button>
+<div class="tabs-group">
+  <div class="tabs-group-label">Weergave</div>
+  <div class="tabs" id="view-tabs">
+    <button class="tab view-tab active" data-view="log" onclick="switchView('log')">Log</button>
+    <button class="tab view-tab" data-view="prediction" onclick="switchView('prediction')">Voorspelling</button>
+  </div>
 </div>
 
 <div id="log-view">
