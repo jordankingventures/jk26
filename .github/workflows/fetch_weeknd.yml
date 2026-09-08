@@ -9,15 +9,6 @@ on:
 permissions:
   contents: write
 
-# Alle fetch-workflows delen deze groep, zodat ze na elkaar pushen i.p.v.
-# gelijktijdig te racen om dezelfde main-branch. Bij 16 artiesten liep de
-# 5x-retry-met-rebase hieronder anders af en toe leeg ("Kon na 5 pogingen
-# niet pushen naar main") -- wachten in de wachtrij is betrouwbaarder dan
-# vaker opnieuw proberen.
-concurrency:
-  group: fetch-views-push
-  cancel-in-progress: false
-
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -48,19 +39,28 @@ jobs:
           # gelijktijdige runs van DEZELFDE workflow die allebei verse data
           # pushen), heeft remote main al recente data van de andere run; dan
           # laten we onze eigen update varen in plaats van te blijven vechten.
-          for i in 1 2 3 4 5; do
+          #
+          # 20 pogingen met 3-14s spreiding (i.p.v. eerder 5x, 1-4s) -- bij 16
+          # artiesten die allemaal naar dezelfde branch pushen was 5 pogingen
+          # soms niet genoeg. Een concurrency-groep leek de logische fix, maar
+          # GitHub Actions annuleert stilzwijgend elke wachtende run zodra er
+          # een nieuwere bijkomt (max. 1 in de wachtrij) -- dat verloor juist
+          # meer data dan het oploste. Vaker en breder gespreid retry'en werkt
+          # betrouwbaarder: elke run voert zijn eigen fetch gewoon uit, en
+          # wacht zelf zijn beurt af om te pushen i.p.v. geannuleerd te worden.
+          for i in $(seq 1 20); do
             if git push; then
               exit 0
             fi
-            echo "Push mislukt (poging $i/5), main is intussen gewijzigd -- rebasen en opnieuw proberen..."
+            echo "Push mislukt (poging $i/20), main is intussen gewijzigd -- rebasen en opnieuw proberen..."
             git fetch origin main
             if git rebase origin/main; then
-              sleep $((RANDOM % 4 + 1))
+              sleep $((RANDOM % 12 + 3))
               continue
             fi
             git rebase --abort
             echo "Rebase-conflict (waarschijnlijk een gelijktijdige dubbele run) -- eigen update overgeslagen, remote main heeft al recente data."
             exit 0
           done
-          echo "::error::Kon na 5 pogingen niet pushen naar main"
+          echo "::error::Kon na 20 pogingen niet pushen naar main"
           exit 1
