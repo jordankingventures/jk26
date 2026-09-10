@@ -187,10 +187,13 @@
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .prediction-week-range { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 14px; }
-    .prediction-week-range .prediction-result-box {
-      flex: 1 1 160px; flex-direction: column; align-items: flex-start; gap: 4px;
-      border: 1px solid var(--border); border-top: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    .prediction-week-box {
+      flex: 1 1 140px; display: flex; flex-direction: column; gap: 2px;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
     }
+    .prediction-week-label { font-size: 0.64rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+    .prediction-week-value { font-size: 0.84rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+    .prediction-week-meta { font-size: 0.64rem; color: var(--muted); font-variant-numeric: tabular-nums; }
     .prediction-ucg-col { color: var(--green); }
     .prediction-min-col, .prediction-max-col { color: var(--muted); }
     .prediction-today-row td { color: #7c7b8a; font-style: italic; }
@@ -351,13 +354,15 @@
       <input type="number" id="ucg-number" min="1" max="5" step="0.01" value="1" oninput="onUcgNumberInput()">
     </div>
     <div class="prediction-week-range" id="prediction-week-range">
-      <div class="prediction-result-box">
-        <span class="prediction-result-label">Min. deze week</span>
-        <span class="prediction-result-value" id="prediction-week-min">—</span>
+      <div class="prediction-week-box">
+        <span class="prediction-week-label">Min. deze week</span>
+        <span class="prediction-week-value" id="prediction-week-min">—</span>
+        <span class="prediction-week-meta" id="prediction-week-min-meta"></span>
       </div>
-      <div class="prediction-result-box">
-        <span class="prediction-result-label">Max. deze week</span>
-        <span class="prediction-result-value" id="prediction-week-max">—</span>
+      <div class="prediction-week-box">
+        <span class="prediction-week-label">Max. deze week</span>
+        <span class="prediction-week-value" id="prediction-week-max">—</span>
+        <span class="prediction-week-meta" id="prediction-week-max-meta"></span>
       </div>
     </div>
     <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
@@ -1125,20 +1130,33 @@ function renderPredictionDays() {
   daysEl.innerHTML = `<table class="log-table">
     <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG</th><th>Incl. UCG</th><th>Max UCG</th></tr></thead>
     <tbody>${rows}</tbody>
-  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar (min./max. deze week daardoor niet getoond).</div>' : ''}`;
+  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
 
-  // Min./max. van de hele week -- boven de tabel, direct onder de slider: de
-  // twee uitersten waar het weektotaal (volgens de historische UCG-spreiding)
-  // altijd tussen zal vallen.
-  const minEl = document.getElementById('prediction-week-min');
-  const maxEl = document.getElementById('prediction-week-max');
-  if (hist && !missing && predictionDays.length) {
-    const sumOwn = predictionDays.reduce((s, d) => s + d.total, 0);
-    minEl.textContent = fmt(floor1000(sumOwn * minFactor)) + ` views (×${minFactor.toFixed(2)})`;
-    maxEl.textContent = fmt(floor1000(sumOwn * maxFactor)) + ` views (×${maxFactor.toFixed(2)})`;
+  // Min./max. deze week -- direct onder de slider: NIET de som van de week,
+  // maar de laagste losse dag uit de Min UCG-kolom en de hoogste losse dag
+  // uit de Max UCG-kolom. Voorspellingen gaan per dag (bv. "hoogste
+  // dagtotaal deze week"), dus een weektotaal voegt niets toe -- dit laat
+  // in één oogopslag zien tussen welke twee uitersten een los dagtotaal
+  // deze week kan vallen. Gebruikt wat er wél is; één ontbrekende dag
+  // (bv. door een cron-gat) blokkeert de andere dagen niet.
+  const minEl     = document.getElementById('prediction-week-min');
+  const maxEl     = document.getElementById('prediction-week-max');
+  const minMetaEl = document.getElementById('prediction-week-min-meta');
+  const maxMetaEl = document.getElementById('prediction-week-max-meta');
+  const withValues = hist ? predictionDays
+    .filter(d => d.total != null)
+    .map(d => ({ shortLabel: ptShortLabel(d.key + 'T12:00:00Z'), minVal: d.total * minFactor, maxVal: d.total * maxFactor }))
+    : [];
+  if (withValues.length) {
+    const lowest  = withValues.reduce((a, b) => (b.minVal < a.minVal ? b : a));
+    const highest = withValues.reduce((a, b) => (b.maxVal > a.maxVal ? b : a));
+    minEl.textContent = fmt(floor1000(lowest.minVal)) + ' views';
+    minMetaEl.textContent = `${lowest.shortLabel} · ×${minFactor.toFixed(2)}`;
+    maxEl.textContent = fmt(floor1000(highest.maxVal)) + ' views';
+    maxMetaEl.textContent = `${highest.shortLabel} · ×${maxFactor.toFixed(2)}`;
   } else {
-    minEl.textContent = '—';
-    maxEl.textContent = '—';
+    minEl.textContent = '—'; minMetaEl.textContent = '';
+    maxEl.textContent = '—'; maxMetaEl.textContent = '';
   }
 }
 
