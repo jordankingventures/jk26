@@ -194,7 +194,7 @@
     .prediction-week-label { font-size: 0.64rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
     .prediction-week-value { font-size: 0.84rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
     .prediction-week-meta { font-size: 0.64rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-    .prediction-week-factor { color: var(--accent); font-weight: 600; }
+    .prediction-week-factor { color: var(--text); font-weight: 600; }
     .prediction-ucg-col { color: var(--green); }
     .prediction-min-col, .prediction-max-col { color: var(--muted); }
     .prediction-today-row td { color: #7c7b8a; font-style: italic; }
@@ -1156,9 +1156,9 @@ function renderPredictionDays() {
     const lowest  = withValues.reduce((a, b) => (b.minVal < a.minVal ? b : a));
     const highest = withValues.reduce((a, b) => (b.maxVal > a.maxVal ? b : a));
     minEl.textContent = fmt(floor1000(lowest.minVal)) + ' views';
-    minMetaEl.innerHTML = `${lowest.shortLabel} · <span class="prediction-week-factor">Min UCG-factor: ${minFactor.toFixed(2)}</span>`;
+    minMetaEl.innerHTML = `${lowest.shortLabel} · <span class="prediction-week-factor">Min UCG: ${minFactor.toFixed(2)}</span>`;
     maxEl.textContent = fmt(floor1000(highest.maxVal)) + ' views';
-    maxMetaEl.innerHTML = `${highest.shortLabel} · <span class="prediction-week-factor">Max UCG-factor: ${maxFactor.toFixed(2)}</span>`;
+    maxMetaEl.innerHTML = `${highest.shortLabel} · <span class="prediction-week-factor">Max UCG: ${maxFactor.toFixed(2)}</span>`;
   } else {
     minEl.textContent = '—'; minMetaEl.textContent = '';
     maxEl.textContent = '—'; maxMetaEl.textContent = '';
