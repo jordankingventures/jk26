@@ -186,18 +186,10 @@
     }
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
-    .prediction-week-range { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 14px; }
-    .prediction-week-box {
-      flex: 1 1 140px; display: flex; flex-direction: column; gap: 2px;
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
-    }
-    .prediction-week-label { font-size: 0.64rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
-    .prediction-week-value { font-size: 0.84rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
-    .prediction-week-meta { font-size: 0.64rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-    .prediction-week-factor { color: var(--muted); font-style: italic; font-weight: 400; }
     .prediction-ucg-col { color: var(--green); }
     .prediction-min-col, .prediction-max-col { color: var(--muted); }
     .prediction-today-row td { color: #7c7b8a; font-style: italic; }
+    td.prediction-highest-value { font-weight: 700; color: var(--accent); }
     .prediction-stats-table th, .prediction-stats-table td,
     .prediction-history-table th, .prediction-history-table td { padding: 4px 12px; font-size: 0.72rem; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -353,18 +345,6 @@
       <span class="prediction-result-label">UCG-factor</span>
       <input type="range" id="ucg-slider" min="1" max="1.5" step="0.01" value="1" oninput="onUcgSliderInput()">
       <input type="number" id="ucg-number" min="1" max="5" step="0.01" value="1" oninput="onUcgNumberInput()">
-    </div>
-    <div class="prediction-week-range" id="prediction-week-range">
-      <div class="prediction-week-box">
-        <span class="prediction-week-label">Min. deze week</span>
-        <span class="prediction-week-value" id="prediction-week-min">—</span>
-        <span class="prediction-week-meta" id="prediction-week-min-meta"></span>
-      </div>
-      <div class="prediction-week-box">
-        <span class="prediction-week-label">Max. deze week</span>
-        <span class="prediction-week-value" id="prediction-week-max">—</span>
-        <span class="prediction-week-meta" id="prediction-week-max-meta"></span>
-      </div>
     </div>
     <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
   </div>
@@ -1111,17 +1091,25 @@ function renderPredictionDays() {
   const minFactor = hist ? hist.min : null;
   const maxFactor = hist ? hist.max : null;
 
+  // Welke dag heeft de hoogste EIGEN counter (niet incl. UCG) -- dat is de
+  // dag die bepalend is voor een "hoogste dagtotaal deze week"-inschatting,
+  // dus die wordt visueel gemarkeerd zodat 'ie in één oogopslag opvalt.
+  const withTotal = predictionDays.filter(d => d.total != null);
+  const highestDay = withTotal.length ? withTotal.reduce((a, b) => (b.total > a.total ? b : a)) : null;
+
   const rows = [...predictionDays].reverse().map((d) => {
     const projected    = d.total == null ? null : d.total * factor;
     const minProjected = (d.total == null || minFactor == null) ? null : d.total * minFactor;
     const maxProjected = (d.total == null || maxFactor == null) ? null : d.total * maxFactor;
+    const isHighest = highestDay && d.key === highestDay.key;
     const todayBadge = d.isToday ? ' <span class="badge ok day-badge">vandaag</span>' : '';
+    const highestBadge = isHighest ? ' <span class="badge release day-badge" title="Hoogste eigen counter van deze week">🏆 hoogste</span>' : '';
     const releaseBadge = predictionReleaseDays.has(d.key)
       ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
       : '';
     return `<tr class="${d.isToday ? 'prediction-today-row' : ''}">
-      <td>${d.label}${todayBadge}${releaseBadge}</td>
-      <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
+      <td>${d.label}${todayBadge}${highestBadge}${releaseBadge}</td>
+      <td${isHighest ? ' class="prediction-highest-value"' : ''}>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
       <td class="prediction-min-col">${minProjected == null ? '<span class="neu">—</span>' : fmt(floor1000(minProjected))}</td>
       <td class="prediction-ucg-col">${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
       <td class="prediction-max-col">${maxProjected == null ? '<span class="neu">—</span>' : fmt(floor1000(maxProjected))}</td>
@@ -1132,37 +1120,6 @@ function renderPredictionDays() {
     <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG</th><th>Incl. UCG</th><th>Max UCG</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
-
-  // Min./max. deze week -- direct onder de slider: NIET de som van de week,
-  // maar de laagste losse dag uit de Min UCG-kolom en de hoogste losse dag
-  // uit de Max UCG-kolom. Voorspellingen gaan per dag (bv. "hoogste
-  // dagtotaal deze week"), dus een weektotaal voegt niets toe -- dit laat
-  // in één oogopslag zien tussen welke twee uitersten een los dagtotaal
-  // deze week kan vallen. Gebruikt wat er wél is; één ontbrekende dag
-  // (bv. door een cron-gat) blokkeert de andere dagen niet. Vandaag zelf
-  // telt nooit mee: die dag is nog niet afgelopen en heeft dus nog niet
-  // zijn volledige aantal views, wat 'm anders altijd tot de "laagste" dag
-  // zou maken -- niet omdat het echt de laagste dag is, maar puur omdat
-  // die nog loopt.
-  const minEl     = document.getElementById('prediction-week-min');
-  const maxEl     = document.getElementById('prediction-week-max');
-  const minMetaEl = document.getElementById('prediction-week-min-meta');
-  const maxMetaEl = document.getElementById('prediction-week-max-meta');
-  const withValues = hist ? predictionDays
-    .filter(d => d.total != null && !d.isToday)
-    .map(d => ({ shortLabel: ptShortLabel(d.key + 'T12:00:00Z'), minVal: d.total * minFactor, maxVal: d.total * maxFactor }))
-    : [];
-  if (withValues.length) {
-    const lowest  = withValues.reduce((a, b) => (b.minVal < a.minVal ? b : a));
-    const highest = withValues.reduce((a, b) => (b.maxVal > a.maxVal ? b : a));
-    minEl.textContent = fmt(floor1000(lowest.minVal)) + ' views';
-    minMetaEl.innerHTML = `${lowest.shortLabel} · <span class="prediction-week-factor">Min UCG: ${minFactor.toFixed(2)}</span>`;
-    maxEl.textContent = fmt(floor1000(highest.maxVal)) + ' views';
-    maxMetaEl.innerHTML = `${highest.shortLabel} · <span class="prediction-week-factor">Max UCG: ${maxFactor.toFixed(2)}</span>`;
-  } else {
-    minEl.textContent = '—'; minMetaEl.textContent = '';
-    maxEl.textContent = '—'; maxMetaEl.textContent = '';
-  }
 }
 
 function onUcgSliderInput() {
