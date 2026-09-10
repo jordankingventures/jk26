@@ -189,7 +189,7 @@
     .prediction-ucg-col { color: var(--green); }
     .prediction-min-col, .prediction-max-col { color: var(--muted); }
     .prediction-today-row td { color: #7c7b8a; font-style: italic; }
-    td.prediction-highest-value { font-weight: 700; color: var(--accent); }
+    .prediction-th-factor { display: block; font-size: 0.6rem; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: normal; }
     .prediction-stats-table th, .prediction-stats-table td,
     .prediction-history-table th, .prediction-history-table td { padding: 4px 12px; font-size: 0.72rem; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1109,15 +1109,17 @@ function renderPredictionDays() {
       : '';
     return `<tr class="${d.isToday ? 'prediction-today-row' : ''}">
       <td>${d.label}${todayBadge}${highestBadge}${releaseBadge}</td>
-      <td${isHighest ? ' class="prediction-highest-value"' : ''}>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
+      <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
       <td class="prediction-min-col">${minProjected == null ? '<span class="neu">—</span>' : fmt(floor1000(minProjected))}</td>
       <td class="prediction-ucg-col">${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
       <td class="prediction-max-col">${maxProjected == null ? '<span class="neu">—</span>' : fmt(floor1000(maxProjected))}</td>
     </tr>`;
   }).join('');
 
+  const minFactorTh = minFactor != null ? `<span class="prediction-th-factor">(${minFactor.toFixed(2)})</span>` : '';
+  const maxFactorTh = maxFactor != null ? `<span class="prediction-th-factor">(${maxFactor.toFixed(2)})</span>` : '';
   daysEl.innerHTML = `<table class="log-table">
-    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG</th><th>Incl. UCG</th><th>Max UCG</th></tr></thead>
+    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG${minFactorTh}</th><th>Incl. UCG</th><th>Max UCG${maxFactorTh}</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
 }
