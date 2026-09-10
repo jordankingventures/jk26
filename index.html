@@ -186,11 +186,16 @@
     }
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .prediction-week-range { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 14px; }
+    .prediction-week-range .prediction-result-box {
+      flex: 1 1 160px; flex-direction: column; align-items: flex-start; gap: 4px;
+      border: 1px solid var(--border); border-top: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    }
     .prediction-ucg-col { color: var(--green); }
     .prediction-min-col, .prediction-max-col { color: var(--muted); }
-    .prediction-sum-row td { font-weight: 700; border-top: 1px solid var(--border); }
     .prediction-today-row td { color: #7c7b8a; font-style: italic; }
-    .prediction-stats-table th, .prediction-stats-table td { padding: 4px 12px; font-size: 0.72rem; }
+    .prediction-stats-table th, .prediction-stats-table td,
+    .prediction-history-table th, .prediction-history-table td { padding: 4px 12px; font-size: 0.72rem; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -344,6 +349,16 @@
       <span class="prediction-result-label">UCG-factor</span>
       <input type="range" id="ucg-slider" min="1" max="1.5" step="0.01" value="1" oninput="onUcgSliderInput()">
       <input type="number" id="ucg-number" min="1" max="5" step="0.01" value="1" oninput="onUcgNumberInput()">
+    </div>
+    <div class="prediction-week-range" id="prediction-week-range">
+      <div class="prediction-result-box">
+        <span class="prediction-result-label">Min. deze week</span>
+        <span class="prediction-result-value" id="prediction-week-min">—</span>
+      </div>
+      <div class="prediction-result-box">
+        <span class="prediction-result-label">Max. deze week</span>
+        <span class="prediction-result-value" id="prediction-week-max">—</span>
+      </div>
     </div>
     <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
   </div>
@@ -1034,6 +1049,7 @@ function saveUcgFactor(artistKey, value) {
 
 let predictionDays = [];               // laatste berekende week-tot-nu-lijst (chronologisch, met .total), hergebruikt bij live UCG-aanpassingen
 let predictionReleaseDays = new Set(); // dagsleutels met een nieuwe video, voor de waarschuwing bij het schuiven
+let collapsedUcgOlder = true; // of de "oudere data" (>7 dagen terug) in de UCG-historietabel ingeklapt is
 
 function renderPrediction() {
   const log = appData?.log || [];
@@ -1106,28 +1122,24 @@ function renderPredictionDays() {
     </tr>`;
   }).join('');
 
-  // Weekrij: som van alle dagen, per kolom met dezelfde factor als die kolom
-  // hierboven gebruikt -- geeft in één oogopslag het minimale/verwachte/
-  // maximale totaal van de hele week, met de gebruikte factor erbij.
-  let weekRow = '';
-  if (hist && !missing && predictionDays.length) {
-    const sumOwn  = predictionDays.reduce((s, d) => s + d.total, 0);
-    const sumMin  = predictionDays.reduce((s, d) => s + d.total * minFactor, 0);
-    const sumIncl = predictionDays.reduce((s, d) => s + d.total * factor, 0);
-    const sumMax  = predictionDays.reduce((s, d) => s + d.total * maxFactor, 0);
-    weekRow = `<tr class="prediction-sum-row">
-      <td>Week (som)</td>
-      <td>${fmt(floor1000(sumOwn))}</td>
-      <td class="prediction-min-col">${fmt(floor1000(sumMin))} <span class="neu">(×${minFactor.toFixed(2)})</span></td>
-      <td class="prediction-ucg-col">${fmt(floor1000(sumIncl))} <span class="neu">(×${factor.toFixed(2)})</span></td>
-      <td class="prediction-max-col">${fmt(floor1000(sumMax))} <span class="neu">(×${maxFactor.toFixed(2)})</span></td>
-    </tr>`;
-  }
-
   daysEl.innerHTML = `<table class="log-table">
     <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG</th><th>Incl. UCG</th><th>Max UCG</th></tr></thead>
-    <tbody>${rows}${weekRow}</tbody>
-  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar (weekrij daardoor niet getoond).</div>' : ''}`;
+    <tbody>${rows}</tbody>
+  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar (min./max. deze week daardoor niet getoond).</div>' : ''}`;
+
+  // Min./max. van de hele week -- boven de tabel, direct onder de slider: de
+  // twee uitersten waar het weektotaal (volgens de historische UCG-spreiding)
+  // altijd tussen zal vallen.
+  const minEl = document.getElementById('prediction-week-min');
+  const maxEl = document.getElementById('prediction-week-max');
+  if (hist && !missing && predictionDays.length) {
+    const sumOwn = predictionDays.reduce((s, d) => s + d.total, 0);
+    minEl.textContent = fmt(floor1000(sumOwn * minFactor)) + ` views (×${minFactor.toFixed(2)})`;
+    maxEl.textContent = fmt(floor1000(sumOwn * maxFactor)) + ` views (×${maxFactor.toFixed(2)})`;
+  } else {
+    minEl.textContent = '—';
+    maxEl.textContent = '—';
+  }
 }
 
 function onUcgSliderInput() {
@@ -1192,7 +1204,7 @@ function renderUcgHistory() {
     excludedDates.add(addDaysToDateKey(d, 2));
   }
 
-  const rows = [...hist.points].reverse().map(p => {
+  const pointRow = (p) => {
     const isRelease = predictionReleaseDays.has(p.date);
     const isDayAfter = !isRelease && excludedDates.has(p.date);
     const tag = isRelease
@@ -1206,7 +1218,25 @@ function renderUcgHistory() {
     <td>${fmt(floor1000(p.global_charts))}</td>
     <td>${p.factor.toFixed(2)}</td>
   </tr>`;
-  }).join('');
+  };
+
+  // Laatste 7 dagen los tonen, de rest onder een inklapbare "Oudere data"-rij
+  // -- zelfde patroon als het Refresh log, en scheelt flink wat ruimte bij
+  // een paar weken historie.
+  const pointsDesc = [...hist.points].reverse();
+  const recentPoints = pointsDesc.slice(0, 7);
+  const olderPoints  = pointsDesc.slice(7);
+
+  let rows = recentPoints.map(pointRow).join('');
+  if (olderPoints.length) {
+    rows += `<tr class="day-row older-row" onclick="toggleUcgOlder()"><td colspan="4">
+      <div class="day-row-inner">
+        <span class="day-label"><span class="day-chevron">${collapsedUcgOlder ? '▸' : '▾'}</span>Oudere data</span>
+        <span class="day-total">${olderPoints.length} ${olderPoints.length === 1 ? 'dag' : 'dagen'}</span>
+      </div>
+    </td></tr>`;
+    if (!collapsedUcgOlder) rows += olderPoints.map(pointRow).join('');
+  }
 
   const allFactors   = hist.points.map(p => p.factor);
   const cleanFactors = hist.points.filter(p => !excludedDates.has(p.date)).map(p => p.factor);
@@ -1228,10 +1258,15 @@ function renderUcgHistory() {
       ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
     </tbody>
   </table>
-  <table class="log-table">
+  <table class="log-table prediction-history-table">
     <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
+}
+
+function toggleUcgOlder() {
+  collapsedUcgOlder = !collapsedUcgOlder;
+  renderUcgHistory();
 }
 
 function toggleInfoModal(open) {
