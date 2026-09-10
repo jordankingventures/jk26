@@ -187,6 +187,8 @@
     .prediction-result-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
     .prediction-result-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .prediction-ucg-col { color: var(--green); }
+    .prediction-min-col, .prediction-max-col { color: var(--muted); }
+    .prediction-sum-row td { font-weight: 700; border-top: 1px solid var(--border); }
     .prediction-today-row td { color: #7c7b8a; font-style: italic; }
     .prediction-stats-table th, .prediction-stats-table td { padding: 4px 12px; font-size: 0.72rem; }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1076,13 +1078,21 @@ function currentUcgFactor() {
 // (niet op een vooraf opgetelde som). Wordt zowel bij de eerste render als
 // bij elke schuif-/typbeweging van de UCG-factor opnieuw aangeroepen
 // (goedkoop: geen dagtotalen-herberekening).
+// Min/max UCG kolommen + weekrij gebruiken de min/max uit de volledige
+// (incl. releasedagen) historische spreiding -- zelfde bron als waarmee de
+// slider zijn startwaarde (gemiddelde) bepaalt, zie loadUcgFactor().
 function renderPredictionDays() {
   const daysEl = document.getElementById('prediction-days');
   const factor = currentUcgFactor();
   const missing = predictionDays.some(d => d.total == null);
+  const hist = analysisData?.ucg_factor?.[activeArtist];
+  const minFactor = hist ? hist.min : null;
+  const maxFactor = hist ? hist.max : null;
 
   const rows = [...predictionDays].reverse().map((d) => {
-    const projected = d.total == null ? null : d.total * factor;
+    const projected    = d.total == null ? null : d.total * factor;
+    const minProjected = (d.total == null || minFactor == null) ? null : d.total * minFactor;
+    const maxProjected = (d.total == null || maxFactor == null) ? null : d.total * maxFactor;
     const todayBadge = d.isToday ? ' <span class="badge ok day-badge">vandaag</span>' : '';
     const releaseBadge = predictionReleaseDays.has(d.key)
       ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
@@ -1090,14 +1100,34 @@ function renderPredictionDays() {
     return `<tr class="${d.isToday ? 'prediction-today-row' : ''}">
       <td>${d.label}${todayBadge}${releaseBadge}</td>
       <td>${d.total == null ? '<span class="neu">—</span>' : fmt(floor1000(d.total))}</td>
+      <td class="prediction-min-col">${minProjected == null ? '<span class="neu">—</span>' : fmt(floor1000(minProjected))}</td>
       <td class="prediction-ucg-col">${projected == null ? '<span class="neu">—</span>' : fmt(floor1000(projected))}</td>
+      <td class="prediction-max-col">${maxProjected == null ? '<span class="neu">—</span>' : fmt(floor1000(maxProjected))}</td>
     </tr>`;
   }).join('');
 
+  // Weekrij: som van alle dagen, per kolom met dezelfde factor als die kolom
+  // hierboven gebruikt -- geeft in één oogopslag het minimale/verwachte/
+  // maximale totaal van de hele week, met de gebruikte factor erbij.
+  let weekRow = '';
+  if (hist && !missing && predictionDays.length) {
+    const sumOwn  = predictionDays.reduce((s, d) => s + d.total, 0);
+    const sumMin  = predictionDays.reduce((s, d) => s + d.total * minFactor, 0);
+    const sumIncl = predictionDays.reduce((s, d) => s + d.total * factor, 0);
+    const sumMax  = predictionDays.reduce((s, d) => s + d.total * maxFactor, 0);
+    weekRow = `<tr class="prediction-sum-row">
+      <td>Week (som)</td>
+      <td>${fmt(floor1000(sumOwn))}</td>
+      <td class="prediction-min-col">${fmt(floor1000(sumMin))} <span class="neu">(×${minFactor.toFixed(2)})</span></td>
+      <td class="prediction-ucg-col">${fmt(floor1000(sumIncl))} <span class="neu">(×${factor.toFixed(2)})</span></td>
+      <td class="prediction-max-col">${fmt(floor1000(sumMax))} <span class="neu">(×${maxFactor.toFixed(2)})</span></td>
+    </tr>`;
+  }
+
   daysEl.innerHTML = `<table class="log-table">
-    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Incl. UCG</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
+    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG</th><th>Incl. UCG</th><th>Max UCG</th></tr></thead>
+    <tbody>${rows}${weekRow}</tbody>
+  </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar (weekrij daardoor niet getoond).</div>' : ''}`;
 }
 
 function onUcgSliderInput() {
