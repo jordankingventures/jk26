@@ -192,6 +192,10 @@ def main():
                     print(f"  FOUT {item['ticker']} {o['side']} @ {o['price']:.2f} -> {e}")
                     results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "error": str(e)})
 
+        if not any(r.get("order_id") for r in results):
+            print("Geen enkele order is gelukt -- deze dag NIET als afgehandeld vastleggen, zodat een volgende run het opnieuw probeert.")
+            return
+
         artist_state[target_date] = {
             "quoted_at": datetime.now(timezone.utc).isoformat(),
             "day_total": day_total,
