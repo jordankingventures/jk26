@@ -35,10 +35,11 @@ DATA_FILE = "yt_data.json"
 ANALYSIS_FILE = "analysis_data.json"
 STATE_FILE = "kalshi_state.json"
 
-CONTRACTS = 5
+CONTRACTS = 1
 TAIL_PRICE = 0.97
 SPREAD = 0.04
-EXPIRE_HOURS = 20
+# Orders blijven gewoon open staan tot de markt resolved (good_till_canceled
+# zonder expiration_time) -- geen automatische vervaltijd.
 
 DAY_TZ_OFFSET_HOURS = 8  # UTC-8, zie DAY_TZ in index.html / DAY_BOUNDARY_TZ in fetch_views.py
 
@@ -181,11 +182,10 @@ def main():
 
     results = []
     if not dry_run:
-        expiration_time = int((datetime.now(timezone.utc) + timedelta(hours=EXPIRE_HOURS)).timestamp())
         for item in plan:
             for o in item["orders"]:
                 try:
-                    r = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time)
+                    r = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time=None)
                     print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} -> order_id={r.get('order_id')}")
                     results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "order_id": r.get("order_id")})
                 except Exception as e:
