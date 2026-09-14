@@ -5,9 +5,10 @@ Draait via GitHub Actions (getriggerd door cron-job.org, zelfde patroon als
 fetch_views.py). Bepaalt zelf, uit yt_data.json, of de meest recent
 afgesloten dag (gisteren, UTC-8) betrouwbaar berekend kan worden -- dezelfde
 dag-afsluitlogica als computeDayInfo() in index.html -- en zo ja, plaatst
-het via kalshi_daily_mm.py dezelfde tweezijdige limiet-orders als de
-handmatige versie, met MIN/MAX automatisch berekend uit de UCG-factor-
-historie i.p.v. handmatig ingevoerd.
+het via kalshi_daily_mm.py dezelfde eenzijdige limiet-orders als de
+handmatige versie (één order per strike, op de kant die met de bandbreedte
+overeenkomt, tegen een vaste prijs), met MIN/MAX automatisch berekend uit
+de UCG-factor-historie i.p.v. handmatig ingevoerd.
 
 Houdt bij welke datum al gequote is in kalshi_state.json (door de workflow
 gecommit, zelfde patroon als de databestanden), zodat een herhaalde trigger
@@ -36,8 +37,7 @@ ANALYSIS_FILE = "analysis_data.json"
 STATE_FILE = "kalshi_state.json"
 
 CONTRACTS = 1
-TAIL_PRICE = 0.97
-SPREAD = 0.04
+PRICE = 0.60  # prijs die je betaalt voor de kant die met de bandbreedte overeenkomt
 # Orders blijven gewoon open staan tot de markt resolved (good_till_canceled
 # zonder expiration_time) -- geen automatische vervaltijd.
 
@@ -177,7 +177,7 @@ def main():
         print(f"Geen open markten gevonden voor {event_ticker} -- niets te doen.")
         return
 
-    plan = plan_orders(markets, min_views, max_views, TAIL_PRICE, SPREAD / 2, CONTRACTS)
+    plan = plan_orders(markets, min_views, max_views, PRICE, CONTRACTS)
     print(f"{len(plan)} strikes buiten [{min_views:,}, {max_views:,}] views.")
 
     results = []

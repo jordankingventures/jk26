@@ -1,16 +1,14 @@
 """
-Kalshi daily view count -- simpele two-sided market-making bot (v1, Taylor Swift).
+Kalshi daily view count -- eenzijdige limiet-orders buiten je bandbreedte (Taylor Swift).
 
 Idee: op de Kalshi 'daily view count' markt (serie KXYTVIEWSD) bestaat per
 artiest per dag een ladder van strikes ("Above 13.0M", "Above 13.1M", ...).
 Voor strikes ONDER je MIN UCG-schatting is YES vrijwel zeker; voor strikes
-BOVEN je MAX UCG-schatting is NO vrijwel zeker. Dit script plaatst op elk
-van die strikes buiten je bandbreedte een tweezijdige limiet-quote (een
-bied op de zeer waarschijnlijke kant tegen een kleine korting op de "zekere"
-prijs, en een bied op de onwaarschijnlijke kant tegen een kleine korting op
-de "vrijwel-nul" prijs) -- de klassieke manier om als market maker de
-spread te verdienen in plaats van als market taker de brede spread te
-moeten oversteken.
+BOVEN je MAX UCG-schatting is NO vrijwel zeker. Dit script plaatst op elke
+strike buiten je bandbreedte één limiet-order op de kant die met je
+inschatting overeenkomt (YES onder MIN, NO boven MAX), tegen een vaste,
+zelf ingestelde prijs (--price, standaard 0.60) -- geen tegenorder op de
+andere kant.
 
 Bewust simpel gehouden voor deze eerste test: de MIN/MAX (in views) geef je
 zelf mee als argument -- dezelfde getallen die je al op het Voorspelling-
@@ -161,8 +159,9 @@ def clip_price(p: float) -> float:
     return round(min(max(p, 0.01), 0.99), 2)
 
 
-def plan_orders(markets: list, min_views: float, max_views: float, tail_price: float, half_spread: float, contracts: float):
-    """Bepaalt per strike buiten [min_views, max_views] de twee orders (yes-bid + no-bid)."""
+def plan_orders(markets: list, min_views: float, max_views: float, price: float, contracts: float):
+    """Bepaalt per strike buiten [min_views, max_views] de order op de kant die met de
+    bandbreedte overeenkomt, tegen een vaste prijs (eenzijdig -- geen bod op de andere kant)."""
     plan = []
     for m in markets:
         strike_type = m.get("strike_type")
@@ -172,12 +171,10 @@ def plan_orders(markets: list, min_views: float, max_views: float, tail_price: f
 
         if floor_strike < min_views:
             bucket = "confident_yes"
-            yes_price = clip_price(tail_price - half_spread)
-            no_price = clip_price((1 - tail_price) - half_spread)
+            order = {"side": "bid", "price": clip_price(price), "count": contracts, "label": f"YES-bid @ {price:.2f}"}
         elif floor_strike > max_views:
             bucket = "confident_no"
-            no_price = clip_price(tail_price - half_spread)
-            yes_price = clip_price((1 - tail_price) - half_spread)
+            order = {"side": "ask", "price": clip_price(1 - price), "count": contracts, "label": f"NO-bid @ {price:.2f}"}
         else:
             continue  # binnen de bandbreedte -- geen quote, te onzeker
 
@@ -187,23 +184,19 @@ def plan_orders(markets: list, min_views: float, max_views: float, tail_price: f
             "bucket": bucket,
             "cur_yes_ask": m.get("yes_ask_dollars"),
             "cur_no_bid": m.get("no_bid_dollars"),
-            "orders": [
-                {"side": "bid", "price": yes_price, "count": contracts, "label": "YES-bid"},
-                {"side": "ask", "price": clip_price(1 - no_price), "count": contracts, "label": f"NO-bid @ {no_price:.2f}"},
-            ],
+            "orders": [order],
         })
     plan.sort(key=lambda x: x["floor_strike"])
     return plan
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Tweezijdige limit-orders buiten de UCG-bandbreedte op de Kalshi daily view count markt.")
+    parser = argparse.ArgumentParser(description="Eenzijdige limit-orders buiten de UCG-bandbreedte op de Kalshi daily view count markt.")
     parser.add_argument("--date", required=True, help="Datum van de Kalshi-markt, YYYY-MM-DD (bv. 2026-09-17)")
     parser.add_argument("--min", type=float, required=True, help="MIN UCG-projectie in views (zoals op het Voorspelling-tabblad)")
     parser.add_argument("--max", type=float, required=True, help="MAX UCG-projectie in views (zoals op het Voorspelling-tabblad)")
     parser.add_argument("--contracts", type=float, default=5, help="Aantal contracten per order (default: 5)")
-    parser.add_argument("--tail-price", type=float, default=0.97, help="Prijs voor de 'vrijwel zekere' kant (default: 0.97)")
-    parser.add_argument("--spread", type=float, default=0.04, help="Totale spread tussen de twee kanten (default: 0.04)")
+    parser.add_argument("--price", type=float, default=0.60, help="Prijs die je betaalt voor de kant die met de bandbreedte overeenkomt (default: 0.60)")
     parser.add_argument("--expire-hours", type=float, default=6, help="Orders automatisch laten vervallen na N uur (default: 6, 0 = nooit)")
     parser.add_argument("--dry-run", action="store_true", help="Alleen tonen wat er geplaatst zou worden, niets versturen")
     args = parser.parse_args()
@@ -226,7 +219,7 @@ def main():
     if not markets:
         sys.exit(f"Geen open markten gevonden voor {event_ticker}. Klopt de datum, en bestaat deze markt al/nog?")
 
-    plan = plan_orders(markets, args.min, args.max, args.tail_price, args.spread / 2, args.contracts)
+    plan = plan_orders(markets, args.min, args.max, args.price, args.contracts)
     if not plan:
         print("Geen strikes buiten de bandbreedte gevonden -- niets te doen.")
         return
