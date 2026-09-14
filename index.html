@@ -175,12 +175,11 @@
     .orders-ok { color: var(--green); }
     .orders-err { color: var(--accent2); }
     .orders-day { padding: 14px 16px; border-top: 1px solid var(--border); }
-    .orders-day-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 10px; }
-    .orders-day-meta { font-size: 0.72rem; color: var(--muted); }
-    .orders-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .orders-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; min-width: 88px; }
-    .orders-stat-label { display: block; font-size: 0.6rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 1px; }
-    .orders-stat-value { display: block; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+    .orders-day-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; font-size: 0.76rem; }
+    .orders-day-totals { color: var(--muted); }
+    .orders-day-totals b { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .orders-day-total-accent { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .orders-day-meta { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
 
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
@@ -1343,12 +1342,8 @@ function renderOrders() {
     return `<div class="day-row-inner orders-day">
       <div class="orders-day-header">
         <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
+        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-accent">${fmt(day.day_total)}</span> &middot; Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b></span>
         <span class="orders-day-meta">${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
-      </div>
-      <div class="orders-stats">
-        <div class="orders-stat"><span class="orders-stat-label">Dagtotaal</span><span class="orders-stat-value">${fmt(day.day_total)}</span></div>
-        <div class="orders-stat"><span class="orders-stat-label">Min UCG</span><span class="orders-stat-value orders-stat-min">${fmt(day.min_views)}</span></div>
-        <div class="orders-stat"><span class="orders-stat-label">Max UCG</span><span class="orders-stat-value orders-stat-max">${fmt(day.max_views)}</span></div>
       </div>
       <table class="log-table">
         <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Resultaat</th></tr></thead>
