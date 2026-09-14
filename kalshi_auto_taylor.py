@@ -187,10 +187,10 @@ def main():
                 try:
                     r = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time)
                     print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} -> order_id={r.get('order_id')}")
-                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "order_id": r.get("order_id")})
+                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "order_id": r.get("order_id")})
                 except Exception as e:
                     print(f"  FOUT {item['ticker']} {o['side']} @ {o['price']:.2f} -> {e}")
-                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "error": str(e)})
+                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "error": str(e)})
 
         artist_state[target_date] = {
             "quoted_at": datetime.now(timezone.utc).isoformat(),

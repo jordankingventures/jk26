@@ -1330,10 +1330,12 @@ function renderOrders() {
       const resultaat = o.order_id
         ? `<span class="orders-ok">${esc(o.order_id)}</span>`
         : `<span class="orders-err">${esc(o.error || 'onbekende fout')}</span>`;
+      const aantal = o.count == null ? '<span class="neu">—</span>' : Number(o.count).toFixed(0);
       return `<tr>
         <td>${esc(o.ticker)}</td>
         <td>${kant}</td>
         <td>${weergavePrijs.toFixed(2)}</td>
+        <td>${aantal}</td>
         <td>${resultaat}</td>
       </tr>`;
     }).join('');
@@ -1345,7 +1347,7 @@ function renderOrders() {
         <span class="orders-day-meta">${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
       </div>
       <table class="log-table">
-        <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Resultaat</th></tr></thead>
+        <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Aantal</th><th>Resultaat</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
