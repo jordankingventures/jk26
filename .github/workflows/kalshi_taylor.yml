@@ -1,0 +1,72 @@
+name: Kalshi Market Making (Taylor Swift daily)
+
+on:
+  # Alleen handmatig/via API te starten -- cron-job.org triggert deze workflow
+  # net als de fetch_*.yml workflows, GitHub's eigen schedule-trigger wordt
+  # bewust niet gebruikt (zie fetch.yml).
+  #
+  # VEILIGHEID: dit script (kalshi_auto_taylor.py) draait standaard in DRY
+  # RUN en verstuurt dus niets naar Kalshi, ook niet als deze workflow wel
+  # getriggerd wordt. Pas als de secret KALSHI_DRY_RUN op "false" staat
+  # worden er echte orders geplaatst -- dat zet je zelf aan wanneer je
+  # daadwerkelijk live wilt gaan (Settings -> Secrets and variables ->
+  # Actions).
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  quote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements-kalshi.txt
+
+      - name: Write Kalshi private key
+        run: printf '%s' "${{ secrets.KALSHI_PRIVATE_KEY }}" > kalshi_key.pem
+
+      - name: Run market maker (Taylor Swift)
+        env:
+          KALSHI_KEY_ID: ${{ secrets.KALSHI_KEY_ID }}
+          KALSHI_KEY_FILE: kalshi_key.pem
+          KALSHI_ENV: ${{ secrets.KALSHI_ENV }}
+          KALSHI_DRY_RUN: ${{ secrets.KALSHI_DRY_RUN }}
+        run: python kalshi_auto_taylor.py
+
+      - name: Commit & push state
+        run: |
+          rm -f kalshi_key.pem
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add kalshi_state.json
+          if git diff --staged --quiet; then
+            echo "Geen wijzigingen om te committen"
+            exit 0
+          fi
+          git commit -m "Kalshi: Taylor Swift dagmarkt gequote $(date -u '+%Y-%m-%d %H:%M') UTC"
+
+          for i in $(seq 1 20); do
+            if git push; then
+              exit 0
+            fi
+            echo "Push mislukt (poging $i/20) -- rebasen en opnieuw proberen..."
+            git fetch origin main
+            if git rebase origin/main; then
+              sleep $((RANDOM % 12 + 3))
+              continue
+            fi
+            git rebase --abort
+            echo "Rebase-conflict -- eigen update overgeslagen."
+            exit 0
+          done
+          echo "::error::Kon na 20 pogingen niet pushen naar main"
+          exit 1

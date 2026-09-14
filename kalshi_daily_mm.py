@@ -196,7 +196,7 @@ def main():
         sys.exit(f"Fout: --min ({args.min:,.0f}) moet kleiner zijn dan --max ({args.max:,.0f})")
 
     load_dotenv()
-    env = Environment(os.getenv("KALSHI_ENV", "demo"))
+    env = Environment(os.getenv("KALSHI_ENV") or "demo")
     key_id = os.getenv("KALSHI_KEY_ID")
     key_file = os.getenv("KALSHI_KEY_FILE")
     if not key_id or not key_file:
