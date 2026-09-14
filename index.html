@@ -174,6 +174,14 @@
     /* Orders-tab */
     .orders-ok { color: var(--green); }
     .orders-err { color: var(--accent2); }
+    .orders-day { padding: 14px 16px; border-top: 1px solid var(--border); }
+    .orders-day-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 10px; }
+    .orders-day-meta { font-size: 0.72rem; color: var(--muted); }
+    .orders-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .orders-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; min-width: 110px; }
+    .orders-stat-label { display: block; font-size: 0.66rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+    .orders-stat-value { display: block; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .orders-stat-min, .orders-stat-max { color: var(--muted); font-weight: 600; }
 
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
@@ -1333,10 +1341,15 @@ function renderOrders() {
       </tr>`;
     }).join('');
 
-    return `<div class="day-row-inner" style="padding:10px 16px;border-top:1px solid var(--border)">
-      <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
-      <div style="color:var(--muted);font-size:0.78rem;margin:2px 0 8px">
-        Dagtotaal: ${fmt(day.day_total)} &middot; MIN: ${fmt(day.min_views)} &middot; MAX: ${fmt(day.max_views)} &middot; ${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)
+    return `<div class="day-row-inner orders-day">
+      <div class="orders-day-header">
+        <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
+        <span class="orders-day-meta">${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
+      </div>
+      <div class="orders-stats">
+        <div class="orders-stat"><span class="orders-stat-label">Dagtotaal</span><span class="orders-stat-value">${fmt(day.day_total)}</span></div>
+        <div class="orders-stat"><span class="orders-stat-label">Min UCG</span><span class="orders-stat-value orders-stat-min">${fmt(day.min_views)}</span></div>
+        <div class="orders-stat"><span class="orders-stat-label">Max UCG</span><span class="orders-stat-value orders-stat-max">${fmt(day.max_views)}</span></div>
       </div>
       <table class="log-table">
         <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Resultaat</th></tr></thead>
