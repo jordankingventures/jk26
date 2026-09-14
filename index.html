@@ -171,6 +171,10 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .err-txt { color: var(--accent2); font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
 
+    /* Orders-tab */
+    .orders-ok { color: var(--green); }
+    .orders-err { color: var(--accent2); }
+
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
     .prediction-controls input[type=range] { flex: 1 1 220px; accent-color: var(--accent); }
@@ -284,6 +288,7 @@
   <div class="tabs" id="view-tabs">
     <button class="tab view-tab active" data-view="log" onclick="switchView('log')">Log</button>
     <button class="tab view-tab" data-view="prediction" onclick="switchView('prediction')">Voorspelling</button>
+    <button class="tab view-tab" data-view="orders" onclick="switchView('orders')">Orders</button>
   </div>
 </div>
 
@@ -355,6 +360,15 @@
       <h2>UCG-factor: spreiding &amp; historie</h2>
     </div>
     <div id="ucg-history"><div class="log-empty">Data ophalen...</div></div>
+  </div>
+</div>
+
+<div id="orders-view" style="display:none">
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Kalshi-orders</h2>
+    </div>
+    <div id="orders-body"><div class="log-empty">Data ophalen...</div></div>
   </div>
 </div>
 
@@ -523,6 +537,7 @@ const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays,
 
 let appData = null;
 let analysisData = null; // eenmalig geimporteerde referentiedata (UCG-factor-historie, weekdag-gemiddelden) -- zie analysis_data.json
+let kalshiState = null; // geplaatste Kalshi-orders per artiest/datum, door de kalshi_taylor.yml workflow gecommit -- zie kalshi_state.json
 let collapsedDays = null; // Set van PT-datumsleutels die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedWeeks = null; // Set van ISO-weeksleutels (binnen de oudere-sectie) die ingeklapt zijn; null = nog niet geinitialiseerd
 let collapsedOlder = true; // of de "oudere data"-sectie (alles voorbij de laatste 7 dagen) ingeklapt is
@@ -561,6 +576,7 @@ function switchArtist(key) {
 
   document.querySelectorAll('#artist-tabs .tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
   document.getElementById('artist-name').textContent = ARTISTS[key].label;
+  if (activeView === 'orders') renderOrders();
 
   const cached = artistCache[key];
   if (cached) {
@@ -974,7 +990,9 @@ function switchView(view) {
   document.querySelectorAll('#view-tabs .tab').forEach(btn => btn.classList.toggle('active', btn.dataset.view === view));
   document.getElementById('log-view').style.display = view === 'log' ? '' : 'none';
   document.getElementById('prediction-view').style.display = view === 'prediction' ? '' : 'none';
+  document.getElementById('orders-view').style.display = view === 'orders' ? '' : 'none';
   if (view === 'prediction' && appData) renderPrediction();
+  if (view === 'orders') renderOrders();
 }
 
 // Alle dagen van de lopende week (maandag t/m vandaag, UTC-8), chronologisch.
@@ -1271,8 +1289,62 @@ async function loadAnalysisData() {
   if (activeView === 'prediction') renderPrediction();
 }
 
+// kalshi_state.json bestaat pas zodra de kalshi_taylor.yml workflow voor het
+// eerst een niet-dry-run quote heeft geplaatst -- tot die tijd geeft de
+// fetch gewoon een 404, wat renderOrders() als "nog geen orders" toont.
+async function loadKalshiState() {
+  try {
+    const resp = await fetch('kalshi_state.json?t=' + Date.now());
+    if (resp.ok) kalshiState = await resp.json();
+  } catch (err) { /* niet kritiek voor de rest van de pagina -- stil negeren */ }
+  if (activeView === 'orders') renderOrders();
+}
+
+// Read-only overzicht van wat kalshi_auto_taylor.py daadwerkelijk heeft
+// ingelegd -- geen live orderstatus (gevuld/open/geannuleerd): dat zou een
+// live Kalshi-verbinding met de trading-key vanuit de browser vereisen, en
+// die hoort nooit in client-side JavaScript.
+function renderOrders() {
+  const el = document.getElementById('orders-body');
+  const perDate = kalshiState?.[activeArtist];
+  if (!perDate || !Object.keys(perDate).length) {
+    el.innerHTML = `<div class="log-empty">Nog geen Kalshi-orders geplaatst voor ${esc(ARTISTS[activeArtist].label)}.</div>`;
+    return;
+  }
+
+  const dates = Object.keys(perDate).sort().reverse();
+  el.innerHTML = dates.map(date => {
+    const day = perDate[date];
+    const orders = day.orders || [];
+    const rows = orders.map(o => {
+      const kant = o.side === 'bid' ? 'YES' : 'NO';
+      const resultaat = o.order_id
+        ? `<span class="orders-ok">${esc(o.order_id)}</span>`
+        : `<span class="orders-err">${esc(o.error || 'onbekende fout')}</span>`;
+      return `<tr>
+        <td>${esc(o.ticker)}</td>
+        <td>${kant}</td>
+        <td>${Number(o.price).toFixed(2)}</td>
+        <td>${resultaat}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="day-row-inner" style="padding:10px 16px;border-top:1px solid var(--border)">
+      <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
+      <div style="color:var(--muted);font-size:0.78rem;margin:2px 0 8px">
+        Dagtotaal: ${fmt(day.day_total)} &middot; MIN: ${fmt(day.min_views)} &middot; MAX: ${fmt(day.max_views)} &middot; ${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)
+      </div>
+      <table class="log-table">
+        <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Resultaat</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
 loadData();
 loadAnalysisData();
+loadKalshiState();
 </script>
 </body>
 </html>
