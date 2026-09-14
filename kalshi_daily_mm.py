@@ -204,7 +204,7 @@ def main():
     if args.min >= args.max:
         sys.exit(f"Fout: --min ({args.min:,.0f}) moet kleiner zijn dan --max ({args.max:,.0f})")
 
-    load_dotenv()
+    load_dotenv(override=True)  # .env is leidend, ook als een terminal-sessie zelf al een KALSHI_*-variabele had gezet
     env = Environment(os.getenv("KALSHI_ENV") or "demo")
     key_id = os.getenv("KALSHI_KEY_ID")
     if not key_id:

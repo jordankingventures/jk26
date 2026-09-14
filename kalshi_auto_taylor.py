@@ -127,6 +127,8 @@ def save_state(state: dict) -> None:
 
 
 def main():
+    load_dotenv(override=True)  # .env is leidend, ook als een terminal-sessie zelf al een KALSHI_*-variabele had gezet -- moet als eerste, voor elke os.getenv("KALSHI_...") hieronder
+
     with open(DATA_FILE) as f:
         log = json.load(f)["log"]
     with open(ANALYSIS_FILE) as f:
@@ -157,7 +159,6 @@ def main():
     dry_run = (os.getenv("KALSHI_DRY_RUN", "true").strip().lower() != "false")
     print(f"Modus: {'DRY RUN (niets wordt verstuurd)' if dry_run else 'LIVE'}")
 
-    load_dotenv()
     env = Environment(os.getenv("KALSHI_ENV") or "demo")
     key_id = os.getenv("KALSHI_KEY_ID")
     if not key_id:
