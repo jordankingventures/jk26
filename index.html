@@ -176,8 +176,9 @@
     .orders-err { color: var(--accent2); }
     .orders-day { padding: 14px 16px; border-top: 1px solid var(--border); }
     .orders-day-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; font-size: 0.76rem; }
-    .orders-day-totals { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .orders-day-totals { color: var(--muted); font-variant-numeric: tabular-nums; border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px; background: var(--surface); }
     .orders-day-totals b { color: var(--text); font-weight: 700; }
+    .orders-day-total-value { font-weight: 700; }
     .orders-day-meta { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
 
     /* Voorspelling-tab */
@@ -1343,7 +1344,7 @@ function renderOrders() {
     return `<div class="day-row-inner orders-day">
       <div class="orders-day-header">
         <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
-        <span class="orders-day-totals">Dagtotaal ${fmt(day.day_total)} &middot; Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b></span>
+        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> &middot; Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b></span>
         <span class="orders-day-meta">${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
       </div>
       <table class="log-table">
