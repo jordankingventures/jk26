@@ -1318,13 +1318,17 @@ function renderOrders() {
     const orders = day.orders || [];
     const rows = orders.map(o => {
       const kant = o.side === 'bid' ? 'YES' : 'NO';
+      // o.price is altijd de ruwe, door Kalshi gehanteerde YES-schaal-prijs
+      // (zie kalshi_daily_mm.py) -- voor een NO-order is de prijs die je er
+      // zelf voor betaalt het spiegelbeeld daarvan (1 - price).
+      const weergavePrijs = o.side === 'bid' ? Number(o.price) : 1 - Number(o.price);
       const resultaat = o.order_id
         ? `<span class="orders-ok">${esc(o.order_id)}</span>`
         : `<span class="orders-err">${esc(o.error || 'onbekende fout')}</span>`;
       return `<tr>
         <td>${esc(o.ticker)}</td>
         <td>${kant}</td>
-        <td>${Number(o.price).toFixed(2)}</td>
+        <td>${weergavePrijs.toFixed(2)}</td>
         <td>${resultaat}</td>
       </tr>`;
     }).join('');

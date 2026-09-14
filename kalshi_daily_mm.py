@@ -72,9 +72,9 @@ class KalshiClient:
         self.environment = environment
         self._last_call = datetime.now()
         if environment == Environment.DEMO:
-            self.base_url = "https://demo-api.kalshi.co/trade-api/v2"
+            self.base_url = "https://external-api.demo.kalshi.co/trade-api/v2"
         else:
-            self.base_url = "https://api.elections.kalshi.com/trade-api/v2"
+            self.base_url = "https://external-api.kalshi.com/trade-api/v2"
 
     def _sign(self, text: str) -> str:
         try:
