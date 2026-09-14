@@ -26,10 +26,9 @@ import sys
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from cryptography.hazmat.primitives import serialization
 from dotenv import load_dotenv
 
-from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, plan_orders
+from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, load_private_key, plan_orders
 
 ARTIST_KEY = "taylor"
 DATA_FILE = "yt_data.json"
@@ -160,12 +159,9 @@ def main():
     load_dotenv()
     env = Environment(os.getenv("KALSHI_ENV") or "demo")
     key_id = os.getenv("KALSHI_KEY_ID")
-    key_file = os.getenv("KALSHI_KEY_FILE")
-    if not key_id or not key_file:
-        sys.exit("Fout: KALSHI_KEY_ID en/of KALSHI_KEY_FILE ontbreken (env/secrets).")
-
-    with open(key_file, "rb") as f:
-        private_key = serialization.load_pem_private_key(f.read(), password=None)
+    if not key_id:
+        sys.exit("Fout: KALSHI_KEY_ID ontbreekt (env/secrets).")
+    private_key = load_private_key()
     client = KalshiClient(key_id, private_key, env)
 
     event_ticker = build_event_ticker(target_date)

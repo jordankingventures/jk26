@@ -31,20 +31,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-kalshi.txt
 
-      - name: Write Kalshi private key
-        run: printf '%s' "${{ secrets.KALSHI_PRIVATE_KEY }}" > kalshi_key.pem
-
       - name: Run market maker (Taylor Swift)
         env:
           KALSHI_KEY_ID: ${{ secrets.KALSHI_KEY_ID }}
-          KALSHI_KEY_FILE: kalshi_key.pem
+          KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
           KALSHI_ENV: ${{ secrets.KALSHI_ENV }}
           KALSHI_DRY_RUN: ${{ secrets.KALSHI_DRY_RUN }}
         run: python kalshi_auto_taylor.py
 
       - name: Commit & push state
         run: |
-          rm -f kalshi_key.pem
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 

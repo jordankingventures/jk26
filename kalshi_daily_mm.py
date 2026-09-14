@@ -23,9 +23,12 @@ Vereist:
     pip install requests cryptography python-dotenv
 
 Env variabelen (zet in een lokaal .env bestand, NOOIT in dit script of in git):
-    KALSHI_KEY_ID    - je Kalshi API key ID
-    KALSHI_KEY_FILE  - pad naar je RSA private key (.pem/.key bestand)
-    KALSHI_ENV       - "prod" of "demo" (default: demo)
+    KALSHI_KEY_ID      - je Kalshi API key ID
+    KALSHI_PRIVATE_KEY - de volledige inhoud van je RSA private key (incl.
+                         -----BEGIN/END----- regels), OF:
+    KALSHI_KEY_FILE    - pad naar een los .pem/.key bestand met die key
+                         (alleen nodig als je KALSHI_PRIVATE_KEY niet gebruikt)
+    KALSHI_ENV         - "prod" of "demo" (default: demo)
 
 Gebruik:
     # Eerst altijd even dry-run om te zien wat het zou doen:
@@ -141,6 +144,19 @@ def build_event_ticker(date_str: str) -> str:
     return f"{SERIES_TICKER}-{ARTIST_CODE}{d.strftime('%y%b%d').upper()}"
 
 
+def load_private_key() -> rsa.RSAPrivateKey:
+    """Laadt de RSA private key uit env -- ofwel de hele inhoud inline (KALSHI_PRIVATE_KEY,
+    zoals in .env of als GitHub Actions secret), ofwel een los bestand (KALSHI_KEY_FILE)."""
+    inline = os.getenv("KALSHI_PRIVATE_KEY")
+    if inline:
+        return serialization.load_pem_private_key(inline.encode("utf-8"), password=None)
+    key_file = os.getenv("KALSHI_KEY_FILE")
+    if key_file:
+        with open(key_file, "rb") as f:
+            return serialization.load_pem_private_key(f.read(), password=None)
+    sys.exit("Fout: zet KALSHI_PRIVATE_KEY (de hele key-inhoud) of KALSHI_KEY_FILE (pad naar een .pem-bestand) in je .env.")
+
+
 def clip_price(p: float) -> float:
     return round(min(max(p, 0.01), 0.99), 2)
 
@@ -198,12 +214,9 @@ def main():
     load_dotenv()
     env = Environment(os.getenv("KALSHI_ENV") or "demo")
     key_id = os.getenv("KALSHI_KEY_ID")
-    key_file = os.getenv("KALSHI_KEY_FILE")
-    if not key_id or not key_file:
-        sys.exit("Fout: zet KALSHI_KEY_ID en KALSHI_KEY_FILE in je .env bestand (zie de docstring bovenin dit script).")
-
-    with open(key_file, "rb") as f:
-        private_key = serialization.load_pem_private_key(f.read(), password=None)
+    if not key_id:
+        sys.exit("Fout: zet KALSHI_KEY_ID in je .env bestand (zie de docstring bovenin dit script).")
+    private_key = load_private_key()
 
     client = KalshiClient(key_id, private_key, env)
     event_ticker = build_event_ticker(args.date)
