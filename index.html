@@ -520,23 +520,23 @@ function dHtml(d) {
 
 const ARTISTS = {
   // Fase 1
-  taylor:       { label: 'Taylor Swift',              dataFile: 'yt_data.json' },
-  drake:        { label: 'Drake',                     dataFile: 'drake_data.json' },
-  wallen:       { label: 'Morgan Wallen',              dataFile: 'wallen_data.json' },
-  badbunny:     { label: 'Bad Bunny',                  dataFile: 'badbunny_data.json' },
-  ariana:       { label: 'Ariana Grande',              dataFile: 'ariana_data.json' },
-  youngboy:     { label: 'YoungBoy Never Broke Again',  dataFile: 'youngboy_data.json' },
-  bieber:       { label: 'Justin Bieber',              dataFile: 'bieber_data.json' },
+  taylor:       { label: 'Taylor Swift',              dataFile: 'data/yt_data.json' },
+  drake:        { label: 'Drake',                     dataFile: 'data/drake_data.json' },
+  wallen:       { label: 'Morgan Wallen',              dataFile: 'data/wallen_data.json' },
+  badbunny:     { label: 'Bad Bunny',                  dataFile: 'data/badbunny_data.json' },
+  ariana:       { label: 'Ariana Grande',              dataFile: 'data/ariana_data.json' },
+  youngboy:     { label: 'YoungBoy Never Broke Again',  dataFile: 'data/youngboy_data.json' },
+  bieber:       { label: 'Justin Bieber',              dataFile: 'data/bieber_data.json' },
   // Fase 2
-  fuerzaregida: { label: 'Fuerza Regida',              dataFile: 'fuerzaregida_data.json' },
-  future:       { label: 'Future',                     dataFile: 'future_data.json' },
-  kanye:        { label: 'Kanye West',                 dataFile: 'kanye_data.json' },
-  katseye:      { label: 'KATSEYE',                    dataFile: 'katseye_data.json' },
-  kendrick:     { label: 'Kendrick Lamar',              dataFile: 'kendrick_data.json' },
-  olivia:       { label: 'Olivia Rodrigo',              dataFile: 'olivia_data.json' },
-  postmalone:   { label: 'Post Malone',                 dataFile: 'postmalone_data.json' },
-  tatemcrae:    { label: 'Tate McRae',                  dataFile: 'tatemcrae_data.json' },
-  weeknd:       { label: 'The Weeknd',                  dataFile: 'weeknd_data.json' },
+  fuerzaregida: { label: 'Fuerza Regida',              dataFile: 'data/fuerzaregida_data.json' },
+  future:       { label: 'Future',                     dataFile: 'data/future_data.json' },
+  kanye:        { label: 'Kanye West',                 dataFile: 'data/kanye_data.json' },
+  katseye:      { label: 'KATSEYE',                    dataFile: 'data/katseye_data.json' },
+  kendrick:     { label: 'Kendrick Lamar',              dataFile: 'data/kendrick_data.json' },
+  olivia:       { label: 'Olivia Rodrigo',              dataFile: 'data/olivia_data.json' },
+  postmalone:   { label: 'Post Malone',                 dataFile: 'data/postmalone_data.json' },
+  tatemcrae:    { label: 'Tate McRae',                  dataFile: 'data/tatemcrae_data.json' },
+  weeknd:       { label: 'The Weeknd',                  dataFile: 'data/weeknd_data.json' },
 };
 let activeArtist = 'taylor';
 const artistCache = {}; // artiest-sleutel -> bewaarde { appData, collapsedDays, collapsedChannels } bij tab-wissel
@@ -1289,7 +1289,7 @@ document.addEventListener('keydown', (e) => {
 // auto-refresh van de artiestdata.
 async function loadAnalysisData() {
   try {
-    const resp = await fetch('analysis_data.json?t=' + Date.now());
+    const resp = await fetch('data/analysis_data.json?t=' + Date.now());
     if (resp.ok) analysisData = await resp.json();
   } catch (err) { /* niet kritiek voor de rest van de pagina -- stil negeren */ }
   if (activeView === 'prediction') renderPrediction();
@@ -1300,7 +1300,7 @@ async function loadAnalysisData() {
 // fetch gewoon een 404, wat renderOrders() als "nog geen orders" toont.
 async function loadKalshiState() {
   try {
-    const resp = await fetch('kalshi_state.json?t=' + Date.now());
+    const resp = await fetch('data/kalshi_state.json?t=' + Date.now());
     if (resp.ok) kalshiState = await resp.json();
   } catch (err) { /* niet kritiek voor de rest van de pagina -- stil negeren */ }
   if (activeView === 'orders') renderOrders();

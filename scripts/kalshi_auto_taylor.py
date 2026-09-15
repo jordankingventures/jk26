@@ -32,9 +32,9 @@ from dotenv import load_dotenv
 from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, load_private_key, plan_orders
 
 ARTIST_KEY = "taylor"
-DATA_FILE = "yt_data.json"
-ANALYSIS_FILE = "analysis_data.json"
-STATE_FILE = "kalshi_state.json"
+DATA_FILE = "data/yt_data.json"
+ANALYSIS_FILE = "data/analysis_data.json"
+STATE_FILE = "data/kalshi_state.json"
 
 CONTRACTS = 1
 PRICE = 0.60  # prijs die je betaalt voor de kant die met de bandbreedte overeenkomt

@@ -29,7 +29,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -r requirements-kalshi.txt
+        run: pip install -r scripts/requirements-kalshi.txt
 
       - name: Run market maker (Taylor Swift)
         env:
@@ -37,18 +37,18 @@ jobs:
           KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
           KALSHI_ENV: ${{ secrets.KALSHI_ENV }}
           KALSHI_DRY_RUN: ${{ secrets.KALSHI_DRY_RUN }}
-        run: python kalshi_auto_taylor.py
+        run: python scripts/kalshi_auto_taylor.py
 
       - name: Commit & push state
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if [ ! -f kalshi_state.json ]; then
+          if [ ! -f data/kalshi_state.json ]; then
             echo "Geen kalshi_state.json geschreven (dry-run of vroegtijdig gestopt) -- niets te committen"
             exit 0
           fi
-          git add kalshi_state.json
+          git add data/kalshi_state.json
           if git diff --staged --quiet; then
             echo "Geen wijzigingen om te committen"
             exit 0

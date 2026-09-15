@@ -38,56 +38,56 @@ ARTISTS = {
             {"id": "UCqECaJ8Gagnn7YCbPEzWH6g", "label": "Hoofdkanaal"},
             {"id": "UCPC0L1d253x-KuMNwa05TpA", "label": "Topic"},
         ],
-        "data_file":  "yt_data.json",
-        "cache_file": "yt_video_ids.json",
+        "data_file":  "data/yt_data.json",
+        "cache_file": "data/yt_video_ids.json",
     },
     "drake": {
         "channels": [
             {"id": "UCByOQJjav0CUDwxCk-jVNRQ", "label": "Hoofdkanaal"},
             {"id": "UCU6cE7pdJPc6DU2jSrKEsdQ", "label": "Topic"},
         ],
-        "data_file":  "drake_data.json",
-        "cache_file": "drake_video_ids.json",
+        "data_file":  "data/drake_data.json",
+        "cache_file": "data/drake_video_ids.json",
     },
     "wallen": {
         "channels": [
             {"id": "UCzIyoPv6j1MAZpDHKLGP_eA", "label": "Hoofdkanaal"},
             {"id": "UC5xaQ6_dP7EGDmGLzVGZ1Ow", "label": "Topic"},
         ],
-        "data_file":  "wallen_data.json",
-        "cache_file": "wallen_video_ids.json",
+        "data_file":  "data/wallen_data.json",
+        "cache_file": "data/wallen_video_ids.json",
     },
     "badbunny": {
         "channels": [
             {"id": "UCmBA_wu8xGg1OfOkfW13Q0Q", "label": "Hoofdkanaal"},
             {"id": "UCiY3z8HAGD6BlSNKVn2kSvQ", "label": "Topic"},
         ],
-        "data_file":  "badbunny_data.json",
-        "cache_file": "badbunny_video_ids.json",
+        "data_file":  "data/badbunny_data.json",
+        "cache_file": "data/badbunny_video_ids.json",
     },
     "ariana": {
         "channels": [
             {"id": "UC9CoOnJkIBMdeijd9qYoT_g", "label": "Hoofdkanaal"},
             {"id": "UC0076UMUgEng8HORUw_MYHA", "label": "Topic"},
         ],
-        "data_file":  "ariana_data.json",
-        "cache_file": "ariana_video_ids.json",
+        "data_file":  "data/ariana_data.json",
+        "cache_file": "data/ariana_video_ids.json",
     },
     "youngboy": {
         "channels": [
             {"id": "UClW4jraMKz6Qj69lJf-tODA", "label": "Hoofdkanaal"},
             {"id": "UCR28YDxjDE3ogQROaNdnRbQ", "label": "Topic"},
         ],
-        "data_file":  "youngboy_data.json",
-        "cache_file": "youngboy_video_ids.json",
+        "data_file":  "data/youngboy_data.json",
+        "cache_file": "data/youngboy_video_ids.json",
     },
     "bieber": {
         "channels": [
             {"id": "UCIwFjwMjI0y7PDBVEO9-bkQ", "label": "Hoofdkanaal"},
             {"id": "UCGvj8kfUV5Q6lzECIrGY19g", "label": "Topic"},
         ],
-        "data_file":  "bieber_data.json",
-        "cache_file": "bieber_video_ids.json",
+        "data_file":  "data/bieber_data.json",
+        "cache_file": "data/bieber_video_ids.json",
     },
     # Fase 2 -- toegevoegd 2026-09-07. Draaien op een lagere frequentie dan
     # Fase 1 (via het interval in cron-job.org, niet in dit bestand), om
@@ -98,72 +98,72 @@ ARTISTS = {
             {"id": "UCFLI6KAjrKRtydD7KqiYvAw", "label": "Hoofdkanaal"},
             {"id": "UC0kxNxFQCK6d2spPz5Sme7Q", "label": "Topic"},
         ],
-        "data_file":  "fuerzaregida_data.json",
-        "cache_file": "fuerzaregida_video_ids.json",
+        "data_file":  "data/fuerzaregida_data.json",
+        "cache_file": "data/fuerzaregida_video_ids.json",
     },
     "future": {
         "channels": [
             {"id": "UCSDvKdIQOwTfcyOimSi9oYA", "label": "Hoofdkanaal"},
             {"id": "UC1_liDR4fRFJgH4HoJeV8cw", "label": "Topic"},
         ],
-        "data_file":  "future_data.json",
-        "cache_file": "future_video_ids.json",
+        "data_file":  "data/future_data.json",
+        "cache_file": "data/future_video_ids.json",
     },
     "kanye": {
         "channels": [
             {"id": "UCs6eXM7s8Vl5WcECcRHc2qQ", "label": "Hoofdkanaal"},
             {"id": "UCRY5dYsbIN5TylSbd7gVnZg", "label": "Topic"},
         ],
-        "data_file":  "kanye_data.json",
-        "cache_file": "kanye_video_ids.json",
+        "data_file":  "data/kanye_data.json",
+        "cache_file": "data/kanye_video_ids.json",
     },
     "katseye": {
         "channels": [
             {"id": "UCA61H4fWOMHikLcUFKyQUog", "label": "Hoofdkanaal"},
             {"id": "UCX9kfYB9t0tnd6DYUC2iuKg", "label": "Topic"},
         ],
-        "data_file":  "katseye_data.json",
-        "cache_file": "katseye_video_ids.json",
+        "data_file":  "data/katseye_data.json",
+        "cache_file": "data/katseye_video_ids.json",
     },
     "kendrick": {
         "channels": [
             {"id": "UC3lBXcrKFnFAFkfVk5WuKcQ", "label": "Hoofdkanaal"},
             {"id": "UCprAFmT0C6O4X0ToEXpeFTQ", "label": "Topic"},
         ],
-        "data_file":  "kendrick_data.json",
-        "cache_file": "kendrick_video_ids.json",
+        "data_file":  "data/kendrick_data.json",
+        "cache_file": "data/kendrick_video_ids.json",
     },
     "olivia": {
         "channels": [
             {"id": "UCy3zgWom-5AGypGX_FVTKpg", "label": "Hoofdkanaal"},
             {"id": "UCE5XNpliPM-SmyFEp61tL_g", "label": "Topic"},
         ],
-        "data_file":  "olivia_data.json",
-        "cache_file": "olivia_video_ids.json",
+        "data_file":  "data/olivia_data.json",
+        "cache_file": "data/olivia_video_ids.json",
     },
     "postmalone": {
         "channels": [
             {"id": "UCeLHszkByNZtPKcaVXOCOQQ", "label": "Hoofdkanaal"},
             {"id": "UCyD3XWRK9ko-izf2nBSFitw", "label": "Topic"},
         ],
-        "data_file":  "postmalone_data.json",
-        "cache_file": "postmalone_video_ids.json",
+        "data_file":  "data/postmalone_data.json",
+        "cache_file": "data/postmalone_video_ids.json",
     },
     "tatemcrae": {
         "channels": [
             {"id": "UCQh6LB206jF3JxpCDD-fp5Q", "label": "Hoofdkanaal"},
             {"id": "UCz86IA7ooUetFnUGa_YlsVw", "label": "Topic"},
         ],
-        "data_file":  "tatemcrae_data.json",
-        "cache_file": "tatemcrae_video_ids.json",
+        "data_file":  "data/tatemcrae_data.json",
+        "cache_file": "data/tatemcrae_video_ids.json",
     },
     "weeknd": {
         "channels": [
             {"id": "UC0WP5P-ufpRfjbNrmOWwLBQ", "label": "Hoofdkanaal"},
             {"id": "UClYV6hHlupm_S_ObS1W-DYw", "label": "Topic"},
         ],
-        "data_file":  "weeknd_data.json",
-        "cache_file": "weeknd_video_ids.json",
+        "data_file":  "data/weeknd_data.json",
+        "cache_file": "data/weeknd_video_ids.json",
     },
 }
 

@@ -19,13 +19,13 @@ jobs:
       - name: Run fetch script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python fetch_views.py fuerzaregida
+        run: python scripts/fetch_views.py fuerzaregida
 
       - name: Commit & push data
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add fuerzaregida_data.json fuerzaregida_video_ids.json
+          git add data/fuerzaregida_data.json data/fuerzaregida_video_ids.json
           if git diff --staged --quiet; then
             echo "Geen wijzigingen om te committen"
             exit 0

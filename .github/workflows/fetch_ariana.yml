@@ -19,13 +19,13 @@ jobs:
       - name: Run fetch script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python fetch_views.py ariana
+        run: python scripts/fetch_views.py ariana
 
       - name: Commit & push data
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ariana_data.json ariana_video_ids.json
+          git add data/ariana_data.json data/ariana_video_ids.json
           if git diff --staged --quiet; then
             echo "Geen wijzigingen om te committen"
             exit 0
