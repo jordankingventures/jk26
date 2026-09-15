@@ -40,6 +40,9 @@
     }
     .tab:hover { color: var(--text); }
     .tab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+    .tab[data-view="orders"] { color: var(--accent2); border-color: var(--accent2); }
+    .tab[data-view="orders"]:hover { color: #fff; background: var(--accent2); }
+    .tab[data-view="orders"].active { color: #fff; background: var(--accent2); border-color: var(--accent2); }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .badge { font-size: 0.75rem; color: var(--muted); padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
     .badge.ok { color: var(--green); border-color: var(--green); }
@@ -174,12 +177,15 @@
     /* Orders-tab */
     .orders-ok { color: var(--green); }
     .orders-err { color: var(--accent2); }
-    .orders-day { padding: 14px 16px; border-top: 1px solid var(--border); }
-    .orders-day-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; font-size: 0.76rem; }
-    .orders-day-totals { color: var(--muted); font-variant-numeric: tabular-nums; border: 1px solid var(--border); border-radius: 999px; padding: 4px 14px; background: var(--surface); }
+    .orders-day { border-top: 1px solid var(--border); }
+    .orders-day-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 8px; padding: 7px 16px; font-size: 0.72rem; cursor: pointer; user-select: none; }
+    .orders-day-header:hover { background: var(--surface2); }
+    .orders-day-header strong { font-size: 0.78rem; }
+    .orders-day-totals { color: var(--muted); font-variant-numeric: tabular-nums; border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; background: var(--surface); }
     .orders-day-totals b { color: var(--text); font-weight: 700; }
     .orders-day-total-value { font-weight: 700; }
-    .orders-day-meta { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+    .orders-day-meta { font-size: 0.68rem; color: var(--muted); margin-left: auto; }
+    .orders-table th, .orders-table td { padding: 4px 12px; font-size: 0.72rem; }
 
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
@@ -582,6 +588,7 @@ function switchArtist(key) {
 
   document.querySelectorAll('#artist-tabs .tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
   document.getElementById('artist-name').textContent = ARTISTS[key].label;
+  collapsedOrderDays = null; // andere artiest kan andere datums hebben -- opnieuw op de default (alleen nieuwste open) laten initialiseren
   if (activeView === 'orders') renderOrders();
 
   const cached = artistCache[key];
@@ -1061,6 +1068,7 @@ function saveUcgFactor(artistKey, value) {
 let predictionDays = [];               // laatste berekende week-tot-nu-lijst (chronologisch, met .total), hergebruikt bij live UCG-aanpassingen
 let predictionReleaseDays = new Set(); // dagsleutels met een nieuwe video, voor de waarschuwing bij het schuiven
 let collapsedUcgOlder = true; // of de "oudere data" (>7 dagen terug) in de UCG-historietabel ingeklapt is
+let collapsedOrderDays = null; // Set van datums die ingeklapt zijn in de Orders-tab; null = nog niet geinitialiseerd (default: alles behalve de nieuwste dag dicht)
 
 function renderPrediction() {
   const log = appData?.log || [];
@@ -1310,6 +1318,11 @@ async function loadKalshiState() {
 // ingelegd -- geen live orderstatus (gevuld/open/geannuleerd): dat zou een
 // live Kalshi-verbinding met de trading-key vanuit de browser vereisen, en
 // die hoort nooit in client-side JavaScript.
+function toggleOrderDay(date) {
+  if (collapsedOrderDays.has(date)) collapsedOrderDays.delete(date); else collapsedOrderDays.add(date);
+  renderOrders();
+}
+
 function renderOrders() {
   const el = document.getElementById('orders-body');
   const perDate = kalshiState?.[activeArtist];
@@ -1319,8 +1332,13 @@ function renderOrders() {
   }
 
   const dates = Object.keys(perDate).sort().reverse();
+  // Standaard: alleen de meest recente dag opengeklapt, de rest dicht -- niet
+  // opnieuw initialiseren bij elke render, anders onthoudt een klik niks.
+  if (collapsedOrderDays === null) collapsedOrderDays = new Set(dates.slice(1));
+
   el.innerHTML = dates.map(date => {
     const day = perDate[date];
+    const isCollapsed = collapsedOrderDays.has(date);
     const orders = day.orders || [];
     const rows = orders.map(o => {
       const kant = o.side === 'bid' ? 'YES' : 'NO';
@@ -1341,16 +1359,19 @@ function renderOrders() {
       </tr>`;
     }).join('');
 
-    return `<div class="day-row-inner orders-day">
-      <div class="orders-day-header">
-        <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
-        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> &middot; Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b></span>
-        <span class="orders-day-meta">${day.strikes_quoted} strikes gequote &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
-      </div>
-      <table class="log-table">
+    const table = isCollapsed ? '' : `<table class="log-table orders-table">
         <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Aantal</th><th>Resultaat</th></tr></thead>
         <tbody>${rows}</tbody>
-      </table>
+      </table>`;
+
+    return `<div class="orders-day">
+      <div class="orders-day-header" onclick="toggleOrderDay('${date}')">
+        <span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>
+        <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
+        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> &middot; Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b></span>
+        <span class="orders-day-meta">${day.strikes_quoted} strikes &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
+      </div>
+      ${table}
     </div>`;
   }).join('');
 }
