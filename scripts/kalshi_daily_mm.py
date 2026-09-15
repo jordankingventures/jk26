@@ -1,48 +1,27 @@
 """
-Kalshi daily view count -- eenzijdige limiet-orders buiten je bandbreedte (Taylor Swift).
+Kalshi daily view count -- gedeelde bouwstenen voor de market-making bot (Taylor Swift).
 
-Idee: op de Kalshi 'daily view count' markt (serie KXYTVIEWSD) bestaat per
-artiest per dag een ladder van strikes ("Above 13.0M", "Above 13.1M", ...).
-Voor strikes ONDER je MIN UCG-schatting is YES vrijwel zeker; voor strikes
-BOVEN je MAX UCG-schatting is NO vrijwel zeker. Dit script plaatst op elke
-strike buiten je bandbreedte één limiet-order op de kant die met je
-inschatting overeenkomt (YES onder MIN, NO boven MAX), tegen een vaste,
-zelf ingestelde prijs (--price, standaard 0.60) -- geen tegenorder op de
-andere kant.
+Geen los te draaien script: dit bevat de Kalshi-API-client (authenticatie,
+markten opvragen, orders plaatsen) en de kansmodel-gebaseerde strike-
+selectie/prijsbepaling (plan_orders_by_probability) die kalshi_auto_taylor.py
+importeert en aanroept. Zie dat bestand voor de daadwerkelijke uitvoering.
 
-Bewust simpel gehouden voor deze eerste test: de MIN/MAX (in views) geef je
-zelf mee als argument -- dezelfde getallen die je al op het Voorspelling-
-tabblad ziet bij "MIN UCG" / "MAX UCG" voor de dag die net is afgesloten.
-Dit script rekent dus niets opnieuw uit op basis van je eigen counter-data;
-het regelt alleen de Kalshi-kant (strikes opzoeken, prijzen bepalen, orders
-plaatsen). Dat kan later verder geautomatiseerd worden.
-
-Vereist:
-    pip install requests cryptography python-dotenv
-
-Env variabelen (zet in een lokaal .env bestand, NOOIT in dit script of in git):
-    KALSHI_KEY_ID      - je Kalshi API key ID
-    KALSHI_PRIVATE_KEY - de volledige inhoud van je RSA private key (incl.
-                         -----BEGIN/END----- regels), OF:
-    KALSHI_KEY_FILE    - pad naar een los .pem/.key bestand met die key
-                         (alleen nodig als je KALSHI_PRIVATE_KEY niet gebruikt)
-    KALSHI_ENV         - "prod" of "demo" (default: demo)
-
-Gebruik:
-    # Eerst altijd even dry-run om te zien wat het zou doen:
-    python kalshi_daily_mm.py --date 2026-09-17 --min 11000000 --max 13000000 --dry-run
-
-    # Daarna echt plaatsen:
-    python kalshi_daily_mm.py --date 2026-09-17 --min 11000000 --max 13000000
+Idee achter het kansmodel: op de Kalshi 'daily view count' markt (serie
+KXYTVIEWSD) bestaat per artiest per dag een ladder van strikes ("Above
+13.0M", "Above 13.1M", ...). Per strike wordt de UCG-factor-drempel
+(strike / dagtotaal) uitgedrukt in standaarddeviaties vanaf je historische
+gemiddelde factor; alleen strikes met een kans op een foute uitkomst onder
+een expliciete drempel worden gequote, tegen een prijs die meeschaalt met
+hoe zeker je bent. Zie strike_price_by_probability() voor de precieze
+formule.
 """
 
-import argparse
 import base64
 import os
 import sys
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from enum import Enum
 from statistics import NormalDist
 from typing import Any, Optional
@@ -51,7 +30,6 @@ import requests
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.exceptions import InvalidSignature
-from dotenv import load_dotenv
 
 SERIES_TICKER = "KXYTVIEWSD"
 ARTIST_CODE = "TAY"  # Taylor Swift; Drake=DRA, Bad Bunny=BAD, Ariana=ARI, Wallen=MOR, Bieber=JUS
@@ -160,37 +138,6 @@ def clip_price(p: float) -> float:
     return round(min(max(p, 0.01), 0.99), 2)
 
 
-def plan_orders(markets: list, min_views: float, max_views: float, price: float, contracts: float):
-    """Bepaalt per strike buiten [min_views, max_views] de order op de kant die met de
-    bandbreedte overeenkomt, tegen een vaste prijs (eenzijdig -- geen bod op de andere kant)."""
-    plan = []
-    for m in markets:
-        strike_type = m.get("strike_type")
-        floor_strike = m.get("floor_strike")
-        if strike_type not in ("greater", "greater_or_equal") or floor_strike is None:
-            continue
-
-        if floor_strike < min_views:
-            bucket = "confident_yes"
-            order = {"side": "bid", "price": clip_price(price), "count": contracts, "label": f"YES-bid @ {price:.2f}"}
-        elif floor_strike > max_views:
-            bucket = "confident_no"
-            order = {"side": "ask", "price": clip_price(1 - price), "count": contracts, "label": f"NO-bid @ {price:.2f}"}
-        else:
-            continue  # binnen de bandbreedte -- geen quote, te onzeker
-
-        plan.append({
-            "ticker": m["ticker"],
-            "floor_strike": floor_strike,
-            "bucket": bucket,
-            "cur_yes_ask": m.get("yes_ask_dollars"),
-            "cur_no_bid": m.get("no_bid_dollars"),
-            "orders": [order],
-        })
-    plan.sort(key=lambda x: x["floor_strike"])
-    return plan
-
-
 def strike_price_by_probability(
     floor_strike: float, day_total: float, mean_factor: float, std_factor: float,
     risk_threshold: float, price_floor: float, price_cap: float, z_range: float,
@@ -269,64 +216,3 @@ def plan_orders_by_probability(
     plan.sort(key=lambda x: x["floor_strike"])
     return plan
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Eenzijdige limit-orders buiten de UCG-bandbreedte op de Kalshi daily view count markt.")
-    parser.add_argument("--date", required=True, help="Datum van de Kalshi-markt, YYYY-MM-DD (bv. 2026-09-17)")
-    parser.add_argument("--min", type=float, required=True, help="MIN UCG-projectie in views (zoals op het Voorspelling-tabblad)")
-    parser.add_argument("--max", type=float, required=True, help="MAX UCG-projectie in views (zoals op het Voorspelling-tabblad)")
-    parser.add_argument("--contracts", type=float, default=5, help="Aantal contracten per order (default: 5)")
-    parser.add_argument("--price", type=float, default=0.60, help="Prijs die je betaalt voor de kant die met de bandbreedte overeenkomt (default: 0.60)")
-    parser.add_argument("--expire-hours", type=float, default=6, help="Orders automatisch laten vervallen na N uur (default: 6, 0 = nooit)")
-    parser.add_argument("--dry-run", action="store_true", help="Alleen tonen wat er geplaatst zou worden, niets versturen")
-    args = parser.parse_args()
-
-    if args.min >= args.max:
-        sys.exit(f"Fout: --min ({args.min:,.0f}) moet kleiner zijn dan --max ({args.max:,.0f})")
-
-    load_dotenv(override=True)  # .env is leidend, ook als een terminal-sessie zelf al een KALSHI_*-variabele had gezet
-    env = Environment(os.getenv("KALSHI_ENV") or "demo")
-    key_id = os.getenv("KALSHI_KEY_ID")
-    if not key_id:
-        sys.exit("Fout: zet KALSHI_KEY_ID in je .env bestand (zie de docstring bovenin dit script).")
-    private_key = load_private_key()
-
-    client = KalshiClient(key_id, private_key, env)
-    event_ticker = build_event_ticker(args.date)
-    print(f"Omgeving: {env.value} | Event: {event_ticker}")
-
-    markets = client.get_markets(event_ticker, status="open")
-    if not markets:
-        sys.exit(f"Geen open markten gevonden voor {event_ticker}. Klopt de datum, en bestaat deze markt al/nog?")
-
-    plan = plan_orders(markets, args.min, args.max, args.price, args.contracts)
-    if not plan:
-        print("Geen strikes buiten de bandbreedte gevonden -- niets te doen.")
-        return
-
-    print(f"\n{len(plan)} strikes buiten [{args.min:,.0f}, {args.max:,.0f}] views:\n")
-    for item in plan:
-        print(f"  {item['ticker']}  (floor {item['floor_strike']:,.0f}, {item['bucket']}, huidig yes_ask={item['cur_yes_ask']} no_bid={item['cur_no_bid']})")
-        for o in item["orders"]:
-            print(f"      -> {o['label']:<16} side={o['side']:<3} price={o['price']:.2f}  count={o['count']:.2f}")
-
-    if args.dry_run:
-        print("\n[DRY RUN] Er is niets naar Kalshi verstuurd.")
-        return
-
-    expiration_time = None
-    if args.expire_hours > 0:
-        expiration_time = int((datetime.now(timezone.utc) + timedelta(hours=args.expire_hours)).timestamp())
-
-    print("\nOrders plaatsen...")
-    for item in plan:
-        for o in item["orders"]:
-            try:
-                result = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time)
-                print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} -> order_id={result.get('order_id')} fill_count={result.get('fill_count')}")
-            except Exception as e:
-                print(f"  FOUT {item['ticker']} {o['side']} @ {o['price']:.2f} -> {e}")
-
-
-if __name__ == "__main__":
-    main()
