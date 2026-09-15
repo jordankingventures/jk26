@@ -38,8 +38,8 @@ ARTISTS = {
             {"id": "UCqECaJ8Gagnn7YCbPEzWH6g", "label": "Hoofdkanaal"},
             {"id": "UCPC0L1d253x-KuMNwa05TpA", "label": "Topic"},
         ],
-        "data_file":  "data/yt_data.json",
-        "cache_file": "data/yt_video_ids.json",
+        "data_file":  "data/taylor_data.json",
+        "cache_file": "data/taylor_video_ids.json",
     },
     "drake": {
         "channels": [

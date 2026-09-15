@@ -2,7 +2,7 @@
 Kalshi daily view count -- geautomatiseerde versie voor Taylor Swift.
 
 Draait via GitHub Actions (getriggerd door cron-job.org, zelfde patroon als
-fetch_views.py). Bepaalt zelf, uit yt_data.json, of de meest recent
+fetch_views.py). Bepaalt zelf, uit taylor_data.json, of de meest recent
 afgesloten dag (gisteren, UTC-8) betrouwbaar berekend kan worden -- dezelfde
 dag-afsluitlogica als computeDayInfo() in index.html -- en zo ja, plaatst
 het via kalshi_daily_mm.py dezelfde eenzijdige limiet-orders als de
@@ -32,7 +32,7 @@ from dotenv import load_dotenv
 from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, load_private_key, plan_orders
 
 ARTIST_KEY = "taylor"
-DATA_FILE = "data/yt_data.json"
+DATA_FILE = "data/taylor_data.json"
 ANALYSIS_FILE = "data/analysis_data.json"
 STATE_FILE = "data/kalshi_state.json"
 
