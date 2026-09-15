@@ -186,6 +186,7 @@
     .orders-day-total-value { font-weight: 700; }
     .orders-day-meta { font-size: 0.68rem; color: var(--muted); margin-left: auto; }
     .orders-table th, .orders-table td { padding: 4px 12px; font-size: 0.72rem; }
+    .orders-taken { color: var(--green); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
 
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
@@ -1341,7 +1342,7 @@ function renderOrders() {
     const isCollapsed = collapsedOrderDays.has(date);
     const orders = day.orders || [];
     const rows = orders.map(o => {
-      const kant = o.side === 'bid' ? 'YES' : 'NO';
+      const kant = (o.side === 'bid' ? 'YES' : 'NO') + (o.taken ? ' <span class="orders-taken" title="Koopje gepakt i.p.v. passief geboden">koopje</span>' : '');
       // o.price is altijd de ruwe, door Kalshi gehanteerde YES-schaal-prijs
       // (zie kalshi_daily_mm.py) -- voor een NO-order is de prijs die je er
       // zelf voor betaalt het spiegelbeeld daarvan (1 - price).

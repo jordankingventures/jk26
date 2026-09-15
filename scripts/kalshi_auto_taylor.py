@@ -16,6 +16,13 @@ van PRICE_FLOOR (net binnen de grens) tot PRICE_CAP (vrijwel zeker). Zie
 strike_price_by_probability() in kalshi_daily_mm.py voor de precieze
 formule.
 
+Voordat er passief geboden wordt, wordt per strike eerst het orderboek
+gecheckt: staat er al een tegenpartij die goedkoper is dan de fair value
+(1 - p_wrong) min een veiligheidsmarge (TAKE_MARGIN), dan wordt die
+meteen gepakt (kruisen, immediate-or-cancel) in plaats van passief te
+bieden -- dat zet onzekere "misschien ooit gevuld"-orders om in directe,
+gegarandeerde winst. Zie find_bargain_price() in kalshi_daily_mm.py.
+
 Houdt bij welke datum al gequote is in kalshi_state.json (door de workflow
 gecommit, zelfde patroon als de databestanden), zodat een herhaalde trigger
 niet nogmaals dezelfde orders plaatst.
@@ -36,7 +43,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, load_private_key, plan_orders_by_probability
+from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, find_bargain_price, load_private_key, plan_orders_by_probability
 
 ARTIST_KEY = "taylor"
 DATA_FILE = "data/taylor_data.json"
@@ -48,6 +55,7 @@ RISK_THRESHOLD = 0.01  # alleen strikes quoten met <1% kans dat je fout zit
 PRICE_FLOOR = 0.55     # prijs vlak binnen de risicogrens (voorzichtig)
 PRICE_CAP = 0.95       # prijs diep in de veilige zone (vrijwel zeker)
 Z_RANGE = 2.0           # aantal extra standaarddeviaties boven de risicogrens tot PRICE_CAP bereikt wordt
+TAKE_MARGIN = 0.03      # alleen een koopje pakken als het minstens dit veel goedkoper is dan fair value
 # Orders blijven gewoon open staan tot de markt resolved (good_till_canceled
 # zonder expiration_time) -- geen automatische vervaltijd.
 
@@ -201,39 +209,67 @@ def main():
     print(f"{len(plan)} strikes veilig genoeg (risico < {RISK_THRESHOLD * 100:.1f}%).")
 
     results = []
-    if not dry_run:
-        for item in plan:
-            for o in item["orders"]:
+    for item in plan:
+        for o in item["orders"]:
+            kant = "yes" if o["side"] == "bid" else "no"
+            fair_value = 1 - o["p_wrong"]
+
+            bargain_price = None
+            try:
+                orderbook = client.get_orderbook(item["ticker"])
+                bargain_price = find_bargain_price(orderbook, kant, fair_value, TAKE_MARGIN)
+            except Exception as e:
+                print(f"  (orderboek ophalen mislukt voor {item['ticker']}, {e})")
+
+            if dry_run:
+                if bargain_price is not None:
+                    print(f"  [DRY RUN] KOOPJE zou gepakt worden: {item['ticker']} {o['side']} @ {bargain_price:.2f} (fair value={fair_value:.3f})")
+                else:
+                    print(f"  [DRY RUN] passief bod: {item['ticker']} {o['side']} @ {o['price']:.2f} (p_fout={o['p_wrong']*100:.3f}%)")
+                continue
+
+            if bargain_price is not None:
                 try:
-                    r = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time=None)
-                    print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} (p_fout={o['p_wrong']*100:.3f}%) -> order_id={r.get('order_id')}")
-                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "p_wrong": o["p_wrong"], "order_id": r.get("order_id")})
+                    r = client.create_order(item["ticker"], o["side"], bargain_price, o["count"], expiration_time=None,
+                                             post_only=False, time_in_force="immediate_or_cancel")
+                    if float(r.get("fill_count", 0)) > 0:
+                        print(f"  KOOPJE GEPAKT {item['ticker']} {o['side']} @ {bargain_price:.2f} "
+                              f"(fair value={fair_value:.3f}) -> order_id={r.get('order_id')} fill_count={r.get('fill_count')}")
+                        results.append({"ticker": item["ticker"], "side": o["side"], "price": bargain_price, "count": o["count"],
+                                         "p_wrong": o["p_wrong"], "order_id": r.get("order_id"), "taken": True})
+                        continue
+                    print(f"  (koopje op {item['ticker']} was al weg toen we kruisten -- val terug op passief bieden)")
                 except Exception as e:
-                    print(f"  FOUT {item['ticker']} {o['side']} @ {o['price']:.2f} -> {e}")
-                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "p_wrong": o["p_wrong"], "error": str(e)})
+                    print(f"  (koopje pakken mislukt voor {item['ticker']}, {e} -- val terug op passief bieden)")
 
-        if not any(r.get("order_id") for r in results):
-            print("Geen enkele order is gelukt -- deze dag NIET als afgehandeld vastleggen, zodat een volgende run het opnieuw probeert.")
-            return
+            try:
+                r = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time=None)
+                print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} (p_fout={o['p_wrong']*100:.3f}%) -> order_id={r.get('order_id')}")
+                results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "p_wrong": o["p_wrong"], "order_id": r.get("order_id")})
+            except Exception as e:
+                print(f"  FOUT {item['ticker']} {o['side']} @ {o['price']:.2f} -> {e}")
+                results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "p_wrong": o["p_wrong"], "error": str(e)})
 
-        artist_state[target_date] = {
-            "quoted_at": datetime.now(timezone.utc).isoformat(),
-            "day_total": day_total,
-            "mean_factor": round(mean_factor, 4),
-            "std_factor": round(std_factor, 4),
-            "risk_threshold": RISK_THRESHOLD,
-            "min_views": min_views,
-            "max_views": max_views,
-            "strikes_quoted": len(plan),
-            "orders": results,
-        }
-        save_state(state)
-    else:
-        print("[DRY RUN] Er is niets verstuurd en de state is niet bijgewerkt.")
-        for item in plan[:5]:
-            print(" ", item["ticker"], item["bucket"], [(o["side"], o["price"]) for o in item["orders"]])
-        if len(plan) > 5:
-            print(f"  ... en nog {len(plan) - 5} strikes")
+    if dry_run:
+        print("\n[DRY RUN] Er is niets verstuurd en de state is niet bijgewerkt.")
+        return
+
+    if not any(r.get("order_id") for r in results):
+        print("Geen enkele order is gelukt -- deze dag NIET als afgehandeld vastleggen, zodat een volgende run het opnieuw probeert.")
+        return
+
+    artist_state[target_date] = {
+        "quoted_at": datetime.now(timezone.utc).isoformat(),
+        "day_total": day_total,
+        "mean_factor": round(mean_factor, 4),
+        "std_factor": round(std_factor, 4),
+        "risk_threshold": RISK_THRESHOLD,
+        "min_views": min_views,
+        "max_views": max_views,
+        "strikes_quoted": len(plan),
+        "orders": results,
+    }
+    save_state(state)
 
 
 if __name__ == "__main__":

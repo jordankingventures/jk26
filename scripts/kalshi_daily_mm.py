@@ -98,7 +98,14 @@ class KalshiClient:
         data = self._request("GET", "/markets", params={"event_ticker": event_ticker, "status": status, "limit": 200})
         return data.get("markets", [])
 
-    def create_order(self, ticker: str, side: str, price: float, count: float, expiration_time: Optional[int]) -> dict:
+    def get_orderbook(self, ticker: str) -> dict:
+        data = self._request("GET", f"/markets/{ticker}/orderbook")
+        return data.get("orderbook_fp", {})
+
+    def create_order(
+        self, ticker: str, side: str, price: float, count: float, expiration_time: Optional[int],
+        post_only: bool = True, time_in_force: str = "good_till_canceled",
+    ) -> dict:
         body = {
             "ticker": ticker,
             "client_order_id": str(uuid.uuid4()),
@@ -106,13 +113,11 @@ class KalshiClient:
             "count": f"{count:.2f}",
             "price": f"{price:.2f}",
             "self_trade_prevention_type": "taker_at_cross",
-            "post_only": True,  # nooit als taker over de spread heen matchen -- puur market-making
+            "post_only": post_only,  # False = mag als taker over de spread heen matchen (een koopje pakken)
+            "time_in_force": time_in_force,
         }
         if expiration_time is not None:
-            body["time_in_force"] = "good_till_canceled"
             body["expiration_time"] = expiration_time
-        else:
-            body["time_in_force"] = "good_till_canceled"
         return self._request("POST", "/portfolio/events/orders", body=body)
 
 
@@ -176,6 +181,31 @@ def strike_price_by_probability(
     frac = min(1.0, (abs(z) - z_min) / z_range) if z_range > 0 else 1.0
     prijs = price_floor + frac * (price_cap - price_floor)
     return kant, round(prijs, 2), round(p_wrong, 5)
+
+
+def find_bargain_price(orderbook: dict, kant: str, fair_value: float, take_margin: float) -> Optional[float]:
+    """Checkt of er al een tegenpartij in het orderboek staat die goedkoper is dan
+    fair_value - take_margin voor de kant waar je toch al vertrouwen in hebt. Zo ja,
+    geeft de prijs terug waartegen je zou moeten kruisen (nemen i.p.v. passief bieden).
+
+    Het orderboek toont alleen bids; de prijs om zelf te KOPEN (kruisen) is het
+    spiegelbeeld van de beste bid aan de andere kant (YES-ask = 1 - beste NO-bid, en
+    omgekeerd) -- zie de Kalshi-orderboekdocumentatie.
+    """
+    yes_bids = orderbook.get("yes_dollars", [])
+    no_bids = orderbook.get("no_dollars", [])
+
+    if kant == "yes":
+        best_no_bid = max((float(p) for p, _ in no_bids), default=0.0)
+        best_yes_ask = round(1 - best_no_bid, 4)
+        if best_yes_ask <= fair_value - take_margin:
+            return best_yes_ask
+    else:
+        best_yes_bid = max((float(p) for p, _ in yes_bids), default=0.0)
+        best_no_ask = round(1 - best_yes_bid, 4)
+        if best_no_ask <= fair_value - take_margin:
+            return best_no_ask
+    return None
 
 
 def plan_orders_by_probability(
