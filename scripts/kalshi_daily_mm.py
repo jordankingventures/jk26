@@ -44,6 +44,7 @@ import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from statistics import NormalDist
 from typing import Any, Optional
 
 import requests
@@ -177,6 +178,85 @@ def plan_orders(markets: list, min_views: float, max_views: float, price: float,
             order = {"side": "ask", "price": clip_price(1 - price), "count": contracts, "label": f"NO-bid @ {price:.2f}"}
         else:
             continue  # binnen de bandbreedte -- geen quote, te onzeker
+
+        plan.append({
+            "ticker": m["ticker"],
+            "floor_strike": floor_strike,
+            "bucket": bucket,
+            "cur_yes_ask": m.get("yes_ask_dollars"),
+            "cur_no_bid": m.get("no_bid_dollars"),
+            "orders": [order],
+        })
+    plan.sort(key=lambda x: x["floor_strike"])
+    return plan
+
+
+def strike_price_by_probability(
+    floor_strike: float, day_total: float, mean_factor: float, std_factor: float,
+    risk_threshold: float, price_floor: float, price_cap: float, z_range: float,
+) -> Optional[tuple]:
+    """Bepaalt voor één strike (kant, prijs) op basis van een kansmodel, of None als de
+    strike niet veilig genoeg is om te quoten.
+
+    De UCG-factor wordt als Normaal(mean_factor, std_factor) verondersteld (zelfde
+    gemiddelde/stdev als de "Interval (gem. +/- 1,5 sigma)"-statistiek op de
+    Voorspelling-tab). Voor een strike wordt de impliciete factor-drempel
+    (floor_strike / day_total) uitgedrukt in aantal standaarddeviaties (z) vanaf het
+    gemiddelde. Alleen strikes met |z| >= z_min (de z-score die bij risk_threshold hoort,
+    bv. z=2.33 voor 1%) worden gequote -- dat is de harde risicogrens.
+
+    De prijs schaalt lineair met |z| tussen z_min (price_floor, net binnen de veilige
+    zone, voorzichtig geprijsd) en z_min + z_range (price_cap, diep in de staart, vrijwel
+    zeker -- daar mag je als enige liquiditeitsverschaffer agressiever vragen).
+    """
+    if std_factor <= 0 or day_total <= 0:
+        return None
+
+    threshold_factor = floor_strike / day_total
+    z = (threshold_factor - mean_factor) / std_factor
+    z_min = NormalDist().inv_cdf(1 - risk_threshold)
+    cdf_val = NormalDist(mean_factor, std_factor).cdf(threshold_factor)  # P(actual <= floor_strike)
+
+    if z <= -z_min:
+        kant = "yes"       # drempel ligt ruim onder het gemiddelde -- vrijwel zeker YES
+        p_wrong = cdf_val  # P(YES fout is) = P(actual <= strike)
+    elif z >= z_min:
+        kant = "no"              # drempel ligt ruim boven het gemiddelde -- vrijwel zeker NO
+        p_wrong = 1 - cdf_val    # P(NO fout is) = P(actual > strike)
+    else:
+        return None  # binnen de onzekere zone -- niet quoten
+
+    frac = min(1.0, (abs(z) - z_min) / z_range) if z_range > 0 else 1.0
+    prijs = price_floor + frac * (price_cap - price_floor)
+    return kant, round(prijs, 2), round(p_wrong, 5)
+
+
+def plan_orders_by_probability(
+    markets: list, day_total: float, mean_factor: float, std_factor: float, contracts: float,
+    risk_threshold: float = 0.01, price_floor: float = 0.55, price_cap: float = 0.95, z_range: float = 2.0,
+):
+    """Zelfde vorm als plan_orders(), maar met kant+prijs per strike bepaald door een
+    kansmodel (strike_price_by_probability) i.p.v. een vaste min/max-bandbreedte en prijs."""
+    plan = []
+    for m in markets:
+        strike_type = m.get("strike_type")
+        floor_strike = m.get("floor_strike")
+        if strike_type not in ("greater", "greater_or_equal") or floor_strike is None:
+            continue
+
+        result = strike_price_by_probability(
+            floor_strike, day_total, mean_factor, std_factor, risk_threshold, price_floor, price_cap, z_range
+        )
+        if result is None:
+            continue
+        kant, prijs, p_wrong = result
+
+        if kant == "yes":
+            bucket = "confident_yes"
+            order = {"side": "bid", "price": clip_price(prijs), "count": contracts, "p_wrong": p_wrong, "label": f"YES-bid @ {prijs:.2f}"}
+        else:
+            bucket = "confident_no"
+            order = {"side": "ask", "price": clip_price(1 - prijs), "count": contracts, "p_wrong": p_wrong, "label": f"NO-bid @ {prijs:.2f}"}
 
         plan.append({
             "ticker": m["ticker"],

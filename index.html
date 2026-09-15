@@ -1350,25 +1350,34 @@ function renderOrders() {
         ? `<span class="orders-ok">${esc(o.order_id)}</span>`
         : `<span class="orders-err">${esc(o.error || 'onbekende fout')}</span>`;
       const aantal = o.count == null ? '<span class="neu">—</span>' : Number(o.count).toFixed(0);
+      // p_wrong bestaat pas sinds het kansmodel -- oudere (vlakke-prijs) records hebben 'm niet.
+      const kansFout = o.p_wrong == null ? '<span class="neu">—</span>' : (o.p_wrong * 100).toFixed(3) + '%';
       return `<tr>
         <td>${esc(o.ticker)}</td>
         <td>${kant}</td>
         <td>${weergavePrijs.toFixed(2)}</td>
         <td>${aantal}</td>
+        <td>${kansFout}</td>
         <td>${resultaat}</td>
       </tr>`;
     }).join('');
 
     const table = isCollapsed ? '' : `<table class="log-table orders-table">
-        <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Aantal</th><th>Resultaat</th></tr></thead>
+        <thead><tr><th>Strike</th><th>Kant</th><th>Prijs</th><th>Aantal</th><th>Kans fout</th><th>Resultaat</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
+
+    // Kansmodel-velden bestaan pas sinds de kansmodel-upgrade -- val voor oudere
+    // (vlakke-prijs) records terug op de oude Min/Max-weergave.
+    const model = day.mean_factor != null
+      ? `UCG gem <b>${day.mean_factor.toFixed(3)}</b> (&sigma; ${(day.std_factor / day.mean_factor * 100).toFixed(1)}%) &middot; risico &lt;${(day.risk_threshold * 100).toFixed(1)}%`
+      : `Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b>`;
 
     return `<div class="orders-day">
       <div class="orders-day-header" onclick="toggleOrderDay('${date}')">
         <span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>
         <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
-        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> &middot; Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b></span>
+        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> &middot; ${model}</span>
         <span class="orders-day-meta">${day.strikes_quoted} strikes &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
       </div>
       ${table}

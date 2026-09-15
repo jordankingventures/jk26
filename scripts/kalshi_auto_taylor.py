@@ -5,10 +5,16 @@ Draait via GitHub Actions (getriggerd door cron-job.org, zelfde patroon als
 fetch_views.py). Bepaalt zelf, uit taylor_data.json, of de meest recent
 afgesloten dag (gisteren, UTC-8) betrouwbaar berekend kan worden -- dezelfde
 dag-afsluitlogica als computeDayInfo() in index.html -- en zo ja, plaatst
-het via kalshi_daily_mm.py dezelfde eenzijdige limiet-orders als de
-handmatige versie (één order per strike, op de kant die met de bandbreedte
-overeenkomt, tegen een vaste prijs), met MIN/MAX automatisch berekend uit
-de UCG-factor-historie i.p.v. handmatig ingevoerd.
+via kalshi_daily_mm.py's plan_orders_by_probability() een order per strike
+die veilig genoeg is.
+
+Prijs en strike-selectie komen uit een kansmodel (UCG-factor als Normaal-
+verdeling, gemiddelde/stdev uit de historische punten): alleen strikes
+waar de kans dat je fout zit onder RISK_THRESHOLD ligt worden gequote, en
+de prijs schaalt mee met hoe diep een strike in die veilige zone zit --
+van PRICE_FLOOR (net binnen de grens) tot PRICE_CAP (vrijwel zeker). Zie
+strike_price_by_probability() in kalshi_daily_mm.py voor de precieze
+formule.
 
 Houdt bij welke datum al gequote is in kalshi_state.json (door de workflow
 gecommit, zelfde patroon als de databestanden), zodat een herhaalde trigger
@@ -23,13 +29,14 @@ code zet dat niet zelf aan.
 
 import json
 import os
+import statistics
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from dotenv import load_dotenv
 
-from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, load_private_key, plan_orders
+from kalshi_daily_mm import Environment, KalshiClient, build_event_ticker, load_private_key, plan_orders_by_probability
 
 ARTIST_KEY = "taylor"
 DATA_FILE = "data/taylor_data.json"
@@ -37,7 +44,10 @@ ANALYSIS_FILE = "data/analysis_data.json"
 STATE_FILE = "data/kalshi_state.json"
 
 CONTRACTS = 1
-PRICE = 0.60  # prijs die je betaalt voor de kant die met de bandbreedte overeenkomt
+RISK_THRESHOLD = 0.01  # alleen strikes quoten met <1% kans dat je fout zit
+PRICE_FLOOR = 0.55     # prijs vlak binnen de risicogrens (voorzichtig)
+PRICE_CAP = 0.95       # prijs diep in de veilige zone (vrijwel zeker)
+Z_RANGE = 2.0           # aantal extra standaarddeviaties boven de risicogrens tot PRICE_CAP bereikt wordt
 # Orders blijven gewoon open staan tot de markt resolved (good_till_canceled
 # zonder expiration_time) -- geen automatische vervaltijd.
 
@@ -152,9 +162,15 @@ def main():
               "of catalogus-sprong rond de daggrens) -- probeer het later opnieuw.")
         return
 
+    factors = [p["factor"] for p in ucg["points"]]
+    mean_factor = statistics.mean(factors)
+    std_factor = statistics.pstdev(factors)
+    # Ter referentie/vergelijking met de oude simpele min/max-bandbreedte (niet meer
+    # gebruikt voor de strike-selectie zelf, die gebeurt nu via het kansmodel).
     min_views = floor1000(day_total * ucg["min"])
     max_views = floor1000(day_total * ucg["max"])
-    print(f"Dagtotaal (eigen counter): {day_total:,} | MIN UCG: {min_views:,} | MAX UCG: {max_views:,}")
+    print(f"Dagtotaal (eigen counter): {day_total:,} | UCG-factor gem={mean_factor:.4f} std={std_factor:.4f} "
+          f"(n={len(factors)}) | ter referentie MIN={min_views:,} MAX={max_views:,}")
 
     dry_run = (os.getenv("KALSHI_DRY_RUN", "true").strip().lower() != "false")
     print(f"Modus: {'DRY RUN (niets wordt verstuurd)' if dry_run else 'LIVE'}")
@@ -178,8 +194,11 @@ def main():
         print(f"Geen open markten gevonden voor {event_ticker} -- niets te doen.")
         return
 
-    plan = plan_orders(markets, min_views, max_views, PRICE, CONTRACTS)
-    print(f"{len(plan)} strikes buiten [{min_views:,}, {max_views:,}] views.")
+    plan = plan_orders_by_probability(
+        markets, day_total, mean_factor, std_factor, CONTRACTS,
+        risk_threshold=RISK_THRESHOLD, price_floor=PRICE_FLOOR, price_cap=PRICE_CAP, z_range=Z_RANGE,
+    )
+    print(f"{len(plan)} strikes veilig genoeg (risico < {RISK_THRESHOLD * 100:.1f}%).")
 
     results = []
     if not dry_run:
@@ -187,11 +206,11 @@ def main():
             for o in item["orders"]:
                 try:
                     r = client.create_order(item["ticker"], o["side"], o["price"], o["count"], expiration_time=None)
-                    print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} -> order_id={r.get('order_id')}")
-                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "order_id": r.get("order_id")})
+                    print(f"  OK  {item['ticker']} {o['side']} @ {o['price']:.2f} (p_fout={o['p_wrong']*100:.3f}%) -> order_id={r.get('order_id')}")
+                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "p_wrong": o["p_wrong"], "order_id": r.get("order_id")})
                 except Exception as e:
                     print(f"  FOUT {item['ticker']} {o['side']} @ {o['price']:.2f} -> {e}")
-                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "error": str(e)})
+                    results.append({"ticker": item["ticker"], "side": o["side"], "price": o["price"], "count": o["count"], "p_wrong": o["p_wrong"], "error": str(e)})
 
         if not any(r.get("order_id") for r in results):
             print("Geen enkele order is gelukt -- deze dag NIET als afgehandeld vastleggen, zodat een volgende run het opnieuw probeert.")
@@ -200,6 +219,9 @@ def main():
         artist_state[target_date] = {
             "quoted_at": datetime.now(timezone.utc).isoformat(),
             "day_total": day_total,
+            "mean_factor": round(mean_factor, 4),
+            "std_factor": round(std_factor, 4),
+            "risk_threshold": RISK_THRESHOLD,
             "min_views": min_views,
             "max_views": max_views,
             "strikes_quoted": len(plan),
