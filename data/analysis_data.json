@@ -1,5 +1,5 @@
 {
-  "note": "UCG-factor-historie handmatig bijgehouden door Joris (View History & Predictions/View_History_Predictions_20260918.xlsx, tab \"UCG Factor\"): eigen counter vs. YouTube Global Charts, per dag per artiest. KATSEYE nog niet opgenomen (nog geen betrouwbare Global Charts data gevonden). Bij te werken door het bestand te vervangen en deze import opnieuw te draaien.",
+  "note": "UCG-factor-historie handmatig bijgehouden door Joris (View History & Predictions/View_History_Predictions_20260918.xlsx, tab \"UCG Factor\"): eigen counter vs. YouTube Global Charts, per dag per artiest. Bij te werken door het bestand te vervangen en deze import opnieuw te draaien.",
   "ucg_factor": {
     "taylor": {
       "points": [
@@ -1660,6 +1660,67 @@
       "min": 1.2561092477240057,
       "max": 1.377023901310717,
       "avg": 1.2947133938011437
+    },
+    "katseye": {
+      "points": [
+        {
+          "date": "2026-09-08",
+          "own_counter": 9209000,
+          "global_charts": 17845000,
+          "factor": 1.9377782603974374
+        },
+        {
+          "date": "2026-09-09",
+          "own_counter": 8787000,
+          "global_charts": 19008000,
+          "factor": 2.1631956299078183
+        },
+        {
+          "date": "2026-09-10",
+          "own_counter": 9372000,
+          "global_charts": 19141000,
+          "factor": 2.042360221937687
+        },
+        {
+          "date": "2026-09-11",
+          "own_counter": 10016000,
+          "global_charts": 21182000,
+          "factor": 2.1148162939297124
+        },
+        {
+          "date": "2026-09-12",
+          "own_counter": 11302000,
+          "global_charts": 24246000,
+          "factor": 2.1452840205273405
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 9981000,
+          "global_charts": 20925000,
+          "factor": 2.096483318304779
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 8132000,
+          "global_charts": 17219000,
+          "factor": 2.117437284800787
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 7945000,
+          "global_charts": 17698000,
+          "factor": 2.227564505978603
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 8909000,
+          "global_charts": 18322000,
+          "factor": 2.0565720058367942
+        }
+      ],
+      "min": 1.9377782603974374,
+      "max": 2.227564505978603,
+      "avg": 2.1001657268467735
     },
     "kendrick": {
       "points": [
