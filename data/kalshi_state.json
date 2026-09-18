@@ -127,6 +127,114 @@
           "order_id": "01a0a16c-a4d8-71ea-9ff5-25514e2a05d3"
         }
       ]
+    },
+    "2026-09-14": {
+      "quoted_at": "2026-09-15T13:37:57.285360+00:00",
+      "day_total": 11769680,
+      "mean_factor": 1.2151,
+      "std_factor": 0.0331,
+      "risk_threshold": 0.01,
+      "min_views": 13485000,
+      "max_views": 15234000,
+      "strikes_quoted": 12,
+      "orders": [
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-13.0M",
+          "side": "bid",
+          "price": 0.45,
+          "count": 1,
+          "p_wrong": 0.00042,
+          "order_id": "01a0a549-bfc8-7b4f-ad10-7ad31fddd898"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-13.1M",
+          "side": "bid",
+          "price": 0.36,
+          "count": 1,
+          "p_wrong": 0.00103,
+          "order_id": "01a0a549-c3b0-766d-8919-e3eaf6e3733e"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-13.2M",
+          "side": "bid",
+          "price": 0.27,
+          "count": 1,
+          "p_wrong": 0.00236,
+          "order_id": "01a0a549-c3b0-7b26-a1f5-96f1bfb62261"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-13.3M",
+          "side": "bid",
+          "price": 0.19,
+          "count": 1,
+          "p_wrong": 0.00509,
+          "order_id": "01a0a549-c798-7706-b853-34056c3b20a1"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.3M",
+          "side": "ask",
+          "price": 0.82,
+          "count": 1,
+          "p_wrong": 0.00516,
+          "order_id": "01a0a549-cb80-7dfe-b3e4-47c443b08ae9"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.4M",
+          "side": "ask",
+          "price": 0.73,
+          "count": 1,
+          "p_wrong": 0.00239,
+          "order_id": "01a0a549-cb80-72b0-b7a2-8302fb354456"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.5M",
+          "side": "ask",
+          "price": 0.64,
+          "count": 1,
+          "p_wrong": 0.00104,
+          "order_id": "01a0a549-cf68-7648-a29a-e9ae6d510aca"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.6M",
+          "side": "ask",
+          "price": 0.55,
+          "count": 1,
+          "p_wrong": 0.00043,
+          "order_id": "01a0a549-d350-71b7-958b-19539c231a92"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.7M",
+          "side": "ask",
+          "price": 0.46,
+          "count": 1,
+          "p_wrong": 0.00016,
+          "order_id": "01a0a549-d738-7afc-b953-83d57cdecf28"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.8M",
+          "side": "ask",
+          "price": 0.37,
+          "count": 1,
+          "p_wrong": 6e-05,
+          "order_id": "01a0a549-d738-7b15-9049-bee433739599"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-15.9M",
+          "side": "ask",
+          "price": 0.28,
+          "count": 1,
+          "p_wrong": 2e-05,
+          "order_id": "01a0a549-db20-7abb-a116-0edea4056ec8"
+        },
+        {
+          "ticker": "KXYTVIEWSD-TAY26SEP14-16.0M",
+          "side": "ask",
+          "price": 0.2,
+          "count": 1,
+          "p_wrong": 1e-05,
+          "order_id": "01a0a549-df08-73e6-87b0-2b17fede8c13"
+        }
+      ]
     }
   }
 }

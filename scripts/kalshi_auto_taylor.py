@@ -52,10 +52,10 @@ STATE_FILE = "data/kalshi_state.json"
 
 CONTRACTS = 1
 RISK_THRESHOLD = 0.01  # alleen strikes quoten met <1% kans dat je fout zit
-PRICE_FLOOR = 0.55     # prijs vlak binnen de risicogrens (voorzichtig)
-PRICE_CAP = 0.95       # prijs diep in de veilige zone (vrijwel zeker)
+PRICE_FLOOR = 0.10     # prijs vlak binnen de risicogrens (voorzichtig)
+PRICE_CAP = 0.80       # prijs diep in de veilige zone (vrijwel zeker)
 Z_RANGE = 2.0           # aantal extra standaarddeviaties boven de risicogrens tot PRICE_CAP bereikt wordt
-TAKE_MARGIN = 0.03      # alleen een koopje pakken als het minstens dit veel goedkoper is dan fair value
+TAKE_MARGIN = 0.25      # alleen een koopje pakken als het minstens dit veel goedkoper is dan fair value
 # Orders blijven gewoon open staan tot de markt resolved (good_till_canceled
 # zonder expiration_time) -- geen automatische vervaltijd.
 
