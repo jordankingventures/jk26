@@ -1,5 +1,5 @@
 {
-  "note": "UCG-factor-historie handmatig bijgehouden door Joris (View History & Predictions/View_History_Predictions_20260914.xlsx, tab \"UCG Factor\"): eigen counter vs. YouTube Global Charts, per dag per artiest. KATSEYE nog niet opgenomen (nog geen betrouwbare Global Charts data gevonden). Bij te werken door het bestand te vervangen en deze import opnieuw te draaien.",
+  "note": "UCG-factor-historie handmatig bijgehouden door Joris (View History & Predictions/View_History_Predictions_20260918.xlsx, tab \"UCG Factor\"): eigen counter vs. YouTube Global Charts, per dag per artiest. KATSEYE nog niet opgenomen (nog geen betrouwbare Global Charts data gevonden). Bij te werken door het bestand te vervangen en deze import opnieuw te draaien.",
   "ucg_factor": {
     "taylor": {
       "points": [
@@ -182,11 +182,35 @@
           "own_counter": 11569000,
           "global_charts": 14543000,
           "factor": 1.257066297864984
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 11075000,
+          "global_charts": 14008000,
+          "factor": 1.2648306997742664
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 11769000,
+          "global_charts": 14402000,
+          "factor": 1.2237233409805421
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 10970000,
+          "global_charts": 14542000,
+          "factor": 1.3256153144940748
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 12036000,
+          "global_charts": 14627000,
+          "factor": 1.2152708541043535
         }
       ],
       "min": 1.145822483446172,
-      "max": 1.294414916790102,
-      "avg": 1.2150635715752567
+      "max": 1.3256153144940748,
+      "avg": 1.2200396281356158
     },
     "drake": {
       "points": [
@@ -369,11 +393,35 @@
           "own_counter": 10277000,
           "global_charts": 12496000,
           "factor": 1.215919042522137
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 8922000,
+          "global_charts": 10746000,
+          "factor": 1.2044384667114996
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 9585000,
+          "global_charts": 11587000,
+          "factor": 1.20886802295253
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 9797000,
+          "global_charts": 12815000,
+          "factor": 1.3080534857609472
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 11250000,
+          "global_charts": 12952000,
+          "factor": 1.1512888888888888
         }
       ],
-      "min": 1.1572344074374943,
-      "max": 1.2635947642864744,
-      "avg": 1.2021312874632586
+      "min": 1.1512888888888888,
+      "max": 1.3080534857609472,
+      "avg": 1.2040172790650476
     },
     "wallen": {
       "points": [
@@ -556,11 +604,35 @@
           "own_counter": 3935000,
           "global_charts": 4371000,
           "factor": 1.1108005082592123
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 3350000,
+          "global_charts": 3619000,
+          "factor": 1.0802985074626865
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 3713000,
+          "global_charts": 4135000,
+          "factor": 1.1136547266361432
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 3722000,
+          "global_charts": 4275000,
+          "factor": 1.1485760343901128
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 3958000,
+          "global_charts": 4343000,
+          "factor": 1.0972713491662456
         }
       ],
       "min": 1.0630213160333641,
-      "max": 1.1395348837209303,
-      "avg": 1.1040289490777986
+      "max": 1.1485760343901128,
+      "avg": 1.1047255614702691
     },
     "badbunny": {
       "points": [
@@ -743,11 +815,35 @@
           "own_counter": 17269000,
           "global_charts": 29102000,
           "factor": 1.685216283513811
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 14326000,
+          "global_charts": 23528000,
+          "factor": 1.642328633254223
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 15149000,
+          "global_charts": 25031000,
+          "factor": 1.6523202851673378
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 15068000,
+          "global_charts": 26282000,
+          "factor": 1.7442261746748076
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 15950000,
+          "global_charts": 26263000,
+          "factor": 1.6465830721003134
         }
       ],
       "min": 1.5689803969917395,
-      "max": 1.7065168249047342,
-      "avg": 1.6219670777889021
+      "max": 1.7442261746748076,
+      "avg": 1.6277785440842278
     },
     "ariana": {
       "points": [
@@ -930,11 +1026,35 @@
           "own_counter": 11096000,
           "global_charts": 14833000,
           "factor": 1.3367880317231435
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 10466000,
+          "global_charts": 14070000,
+          "factor": 1.3443531435123257
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 11016000,
+          "global_charts": 14490000,
+          "factor": 1.315359477124183
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 10238000,
+          "global_charts": 14305000,
+          "factor": 1.3972455557726118
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 11235000,
+          "global_charts": 14445000,
+          "factor": 1.2857142857142858
         }
       ],
       "min": 1.168424468602953,
-      "max": 1.3652190017594221,
-      "avg": 1.248314626284221
+      "max": 1.3972455557726118,
+      "avg": 1.2585915073720602
     },
     "youngboy": {
       "points": [
@@ -1117,11 +1237,35 @@
           "own_counter": 6481000,
           "global_charts": 7024000,
           "factor": 1.0837833667643881
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 5674000,
+          "global_charts": 5911000,
+          "factor": 1.0417694747973212
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 5643000,
+          "global_charts": 6048000,
+          "factor": 1.0717703349282297
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 5510000,
+          "global_charts": 6362000,
+          "factor": 1.1546279491833031
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 6094000,
+          "global_charts": 6529000,
+          "factor": 1.0713816869051527
         }
       ],
       "min": 1.026572438162544,
-      "max": 1.13853445133066,
-      "avg": 1.0719759107586064
+      "max": 1.1546279491833031,
+      "avg": 1.0734949049580058
     },
     "bieber": {
       "points": [
@@ -1304,11 +1448,35 @@
           "own_counter": 10474000,
           "global_charts": 15625000,
           "factor": 1.4917891922856596
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 9606000,
+          "global_charts": 14434000,
+          "factor": 1.5026025400791172
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 9804000,
+          "global_charts": 14376000,
+          "factor": 1.4663402692778458
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 9385000,
+          "global_charts": 14621000,
+          "factor": 1.5579115610015983
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 10276000,
+          "global_charts": 14698000,
+          "factor": 1.4303230829116387
         }
       ],
       "min": 1.361630829377269,
-      "max": 1.5295269504277027,
-      "avg": 1.4336292905258354
+      "max": 1.5579115610015983,
+      "avg": 1.4401781226189783
     },
     "fuerzaregida": {
       "points": [
@@ -1341,11 +1509,35 @@
           "own_counter": 12114000,
           "global_charts": 23105000,
           "factor": 1.9072973419184416
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 10509000,
+          "global_charts": 20210000,
+          "factor": 1.9231135217432678
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 10116000,
+          "global_charts": 19779000,
+          "factor": 1.9552194543297745
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 10191000,
+          "global_charts": 21251000,
+          "factor": 2.0852713178294575
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 11157000,
+          "global_charts": 20899000,
+          "factor": 1.873173792238057
         }
       ],
       "min": 1.808147053389987,
-      "max": 1.9072973419184416,
-      "avg": 1.871990004232091
+      "max": 2.0852713178294575,
+      "avg": 1.9107475674778902
     },
     "future": {
       "points": [
@@ -1378,11 +1570,35 @@
           "own_counter": 4445000,
           "global_charts": 6465000,
           "factor": 1.4544431946006748
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 3754000,
+          "global_charts": 5404000,
+          "factor": 1.439531166755461
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 3992000,
+          "global_charts": 5762000,
+          "factor": 1.4433867735470942
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 3840000,
+          "global_charts": 5948000,
+          "factor": 1.5489583333333334
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 4613000,
+          "global_charts": 6054000,
+          "factor": 1.3123780619986993
         }
       ],
-      "min": 1.4282768102658112,
-      "max": 1.5172149961744452,
-      "avg": 1.4694382835525994
+      "min": 1.3123780619986993,
+      "max": 1.5489583333333334,
+      "avg": 1.4546050837108426
     },
     "kanye": {
       "points": [
@@ -1415,11 +1631,35 @@
           "own_counter": 4308000,
           "global_charts": 5555000,
           "factor": 1.2894614670380686
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 3737000,
+          "global_charts": 4823000,
+          "factor": 1.2906074391222906
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 4046000,
+          "global_charts": 5188000,
+          "factor": 1.282254078101829
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 3891000,
+          "global_charts": 5358000,
+          "factor": 1.377023901310717
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 4334000,
+          "global_charts": 5449000,
+          "factor": 1.2572681125980618
         }
       ],
       "min": 1.2561092477240057,
-      "max": 1.3371714643304131,
-      "avg": 1.2890534026154792
+      "max": 1.377023901310717,
+      "avg": 1.2947133938011437
     },
     "kendrick": {
       "points": [
@@ -1452,11 +1692,35 @@
           "own_counter": 4538000,
           "global_charts": 5407000,
           "factor": 1.1914940502423976
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 4041000,
+          "global_charts": 4853000,
+          "factor": 1.2009403612967087
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 4460000,
+          "global_charts": 5286000,
+          "factor": 1.185201793721973
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 4296000,
+          "global_charts": 5435000,
+          "factor": 1.2651303538175047
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 4691000,
+          "global_charts": 5525000,
+          "factor": 1.1777872521850352
         }
       ],
       "min": 1.1528309919114517,
-      "max": 1.2377049180327868,
-      "avg": 1.1893283940913073
+      "max": 1.2651303538175047,
+      "avg": 1.1973001923864175
     },
     "olivia": {
       "points": [
@@ -1489,11 +1753,35 @@
           "own_counter": 5147000,
           "global_charts": 6658000,
           "factor": 1.2935690693607926
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 5038000,
+          "global_charts": 6579000,
+          "factor": 1.3058753473600635
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 5237000,
+          "global_charts": 6609000,
+          "factor": 1.2619820507924384
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 4885000,
+          "global_charts": 6687000,
+          "factor": 1.3688843398157626
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 5385000,
+          "global_charts": 6769000,
+          "factor": 1.2570102135561745
         }
       ],
       "min": 1.231212831140746,
-      "max": 1.3290119819288941,
-      "avg": 1.2799621952344422
+      "max": 1.3688843398157626,
+      "avg": 1.288173658632961
     },
     "postmalone": {
       "points": [
@@ -1526,11 +1814,35 @@
           "own_counter": 6677000,
           "global_charts": 7961000,
           "factor": 1.1923019320053916
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 6045000,
+          "global_charts": 7125000,
+          "factor": 1.1786600496277915
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 5955000,
+          "global_charts": 7035000,
+          "factor": 1.181360201511335
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 5756000,
+          "global_charts": 7271000,
+          "factor": 1.2632036136205698
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 6389000,
+          "global_charts": 7381000,
+          "factor": 1.1552668649240883
         }
       ],
       "min": 1.1505067312055666,
-      "max": 1.2250290842612597,
-      "avg": 1.18489500552009
+      "max": 1.2632036136205698,
+      "avg": 1.189218417476026
     },
     "tatemcrae": {
       "points": [
@@ -1563,11 +1875,35 @@
           "own_counter": 1960000,
           "global_charts": 2670000,
           "factor": 1.3622448979591837
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 1887000,
+          "global_charts": 2566000,
+          "factor": 1.359830418653948
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 2028000,
+          "global_charts": 2673000,
+          "factor": 1.3180473372781065
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 1897000,
+          "global_charts": 2713000,
+          "factor": 1.430152872957301
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 2117000,
+          "global_charts": 2806000,
+          "factor": 1.3254605573925367
         }
       ],
       "min": 1.3164933135215453,
-      "max": 1.4214135021097047,
-      "avg": 1.358977149163437
+      "max": 1.430152872957301,
+      "avg": 1.3587085480110086
     },
     "weeknd": {
       "points": [
@@ -1600,11 +1936,35 @@
           "own_counter": 13030000,
           "global_charts": 16664000,
           "factor": 1.278894858019954
+        },
+        {
+          "date": "2026-09-13",
+          "own_counter": 11973000,
+          "global_charts": 15307000,
+          "factor": 1.2784598680364152
+        },
+        {
+          "date": "2026-09-14",
+          "own_counter": 12486000,
+          "global_charts": 15796000,
+          "factor": 1.265096908537562
+        },
+        {
+          "date": "2026-09-15",
+          "own_counter": 11797000,
+          "global_charts": 16121000,
+          "factor": 1.3665338645418326
+        },
+        {
+          "date": "2026-09-16",
+          "own_counter": 13052000,
+          "global_charts": 16472000,
+          "factor": 1.2620288078455408
         }
       ],
       "min": 1.2428251121076233,
-      "max": 1.3304439403758912,
-      "avg": 1.2797212921259407
+      "max": 1.3665338645418326,
+      "avg": 1.285636212176784
     }
   }
 }
