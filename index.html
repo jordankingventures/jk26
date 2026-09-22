@@ -107,6 +107,34 @@
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 1px 6px; font-size: 0.58rem; vertical-align: 1px; }
     .badge.release { color: var(--accent); border-color: var(--accent); }
+    /* Eigen hover-tooltip i.p.v. het native title-attribuut -- dat bleek in
+       de praktijk niet betrouwbaar te verschijnen (traag/inconsistent per
+       browser). data-tooltip + ::after verschijnt direct en overal gelijk. */
+    [data-tooltip] { position: relative; cursor: help; }
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      display: none;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(100% + 6px);
+      width: max-content;
+      max-width: 220px;
+      white-space: normal;
+      text-align: left;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.68rem;
+      line-height: 1.35;
+      font-weight: 400;
+      text-transform: none;
+      z-index: 50;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    }
+    [data-tooltip]:hover::after, [data-tooltip]:focus::after { display: block; }
     .week-row .day-label { padding-left: 16px; text-transform: none; color: #7c7b8a; font-style: italic; }
     .older-row .day-label { text-transform: none; color: #7c7b8a; font-style: italic; }
     .day-total {
@@ -809,7 +837,7 @@ function renderLog() {
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
           <div class="day-row-inner">
-            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}${releaseDays.has(key) ? `<span class="badge release day-badge" title="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>` : ''}</span>
+            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}${releaseDays.has(key) ? `<span class="badge release day-badge" data-tooltip="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>` : ''}</span>
             <span class="day-total">${dHtml(dayTotal)} views</span>
           </div>
         </td></tr>`;
@@ -1176,7 +1204,7 @@ function renderPredictionDays() {
     const todayBadge = d.isToday ? ' <span class="badge ok day-badge">vandaag</span>' : '';
     const highestBadge = isHighest ? ' <span class="badge release day-badge" title="Hoogste eigen counter van deze week">🏆 hoogste</span>' : '';
     const releaseBadge = predictionReleaseDays.has(d.key)
-      ? ` <span class="badge release day-badge" title="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
+      ? ` <span class="badge release day-badge" data-tooltip="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
       : '';
     const rowClasses = [d.isToday ? 'prediction-today-row' : '', isHighest ? 'prediction-highest-row' : ''].filter(Boolean).join(' ');
     return `<tr class="${rowClasses}">
@@ -1257,7 +1285,7 @@ function renderUcgHistory() {
     const isRelease = predictionReleaseDays.has(p.date);
     const isDayAfter = !isRelease && excludedDates.has(p.date);
     const tag = isRelease
-      ? ` <span class="badge release day-badge" title="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
+      ? ` <span class="badge release day-badge" data-tooltip="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
       : isDayAfter
       ? ' <span class="est-tag" title="Dag na een release -- uitgesloten van de excl.-statistiek hiernaast">na release</span>'
       : '';
