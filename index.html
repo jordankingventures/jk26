@@ -1043,16 +1043,47 @@ function getWeekToDateTotals(log) {
 
 function ucgStorageKey(artistKey) { return `ytTracker.ucgFactor.${artistKey}`; }
 
-// Startwaarde: altijd het gemiddelde van de echte, historisch gemeten
-// UCG-factor (analysis_data.json -- zie ucg-history hieronder), zodat je bij
-// elk bezoek/artiestwissel vanaf dat referentiepunt begint te schuiven i.p.v.
-// vanaf waar je de vorige keer toevallig gebleven was. Bestaat er nog geen
-// historische data voor deze artiest, dan valt hij terug op een eerder
-// handmatig opgeslagen waarde, en anders op de verhouding officieel/eigen-
-// totaal van de meest recente meting als laatste noodgreep.
-function loadUcgFactor(artistKey) {
+// Release-dagen (+2 dagen erna) uitsluiten bij het berekenen van de "schone"
+// UCG-factor-statistiek -- vlak na een nieuwe video valt de factor artificieel
+// laag uit (Global Charts telt de nieuwe views vertraagd mee, soms pas 1-2
+// dagen later in een keer, zie analyse in de UCG-factor-historie), en dat mag
+// een gewone (niet-release-)dag niet scheeftrekken.
+function releaseExcludedDates(releaseDays) {
+  const excluded = new Set();
+  for (const d of releaseDays) {
+    excluded.add(d);
+    excluded.add(addDaysToDateKey(d, 1));
+    excluded.add(addDaysToDateKey(d, 2));
+  }
+  return excluded;
+}
+
+// Incl.- en excl.-releasedagen statistiek voor deze artiest in één keer,
+// gebaseerd op de actuele predictionReleaseDays (moet dus na
+// computeReleaseDays() voor deze artiest aangeroepen worden). Valt terug op
+// de incl.-statistiek als uitsluiten niets overlaat (te weinig datapunten).
+function getUcgStats(artistKey) {
   const hist = analysisData?.ucg_factor?.[artistKey];
-  if (hist) return hist.avg;
+  if (!hist) return null;
+  const excluded = releaseExcludedDates(predictionReleaseDays);
+  const allFactors   = hist.points.map(p => p.factor);
+  const cleanFactors = hist.points.filter(p => !excluded.has(p.date)).map(p => p.factor);
+  const incl = computeUcgStats(allFactors);
+  const excl = computeUcgStats(cleanFactors) || incl;
+  return { hist, excluded, incl, excl };
+}
+
+// Startwaarde: altijd het gemiddelde van de echte, historisch gemeten
+// UCG-factor exclusief releasedagen (analysis_data.json -- zie ucg-history
+// hieronder), zodat je bij elk bezoek/artiestwissel vanaf dat schone
+// referentiepunt begint te schuiven i.p.v. vanaf waar je de vorige keer
+// toevallig gebleven was, of vervuild door een recente release. Bestaat er
+// nog geen historische data voor deze artiest, dan valt hij terug op een
+// eerder handmatig opgeslagen waarde, en anders op de verhouding
+// officieel/eigen-totaal van de meest recente meting als laatste noodgreep.
+function loadUcgFactor(artistKey) {
+  const stats = getUcgStats(artistKey);
+  if (stats) return stats.excl.avg;
   const saved = localStorage.getItem(ucgStorageKey(artistKey));
   if (saved !== null && Number.isFinite(Number(saved)) && Number(saved) > 0) return Number(saved);
   const latest = appData?.log?.[0];
@@ -1093,7 +1124,7 @@ function renderPrediction() {
   // 1,0 (de factor kan niet lager: Global Charts bevat altijd minstens de
   // eigen counter), bovengrens is het spiegelbeeld daarvan zodat het
   // gemiddelde precies in het midden van de slider staat.
-  const center    = analysisData?.ucg_factor?.[activeArtist]?.avg ?? factor;
+  const center    = getUcgStats(activeArtist)?.excl.avg ?? factor;
   const halfRange = Math.max(center - 1, 0.05);
   sliderEl.min = 1;
   sliderEl.max = Math.round((1 + 2 * halfRange) * 100) / 100;
@@ -1114,16 +1145,19 @@ function currentUcgFactor() {
 // (niet op een vooraf opgetelde som). Wordt zowel bij de eerste render als
 // bij elke schuif-/typbeweging van de UCG-factor opnieuw aangeroepen
 // (goedkoop: geen dagtotalen-herberekening).
-// Min/max UCG kolommen + weekrij gebruiken de min/max uit de volledige
-// (incl. releasedagen) historische spreiding -- zelfde bron als waarmee de
-// slider zijn startwaarde (gemiddelde) bepaalt, zie loadUcgFactor().
+// Min/max UCG kolommen + weekrij gebruiken de min/max uit de schone
+// (excl. releasedagen) historische spreiding -- zelfde bron als waarmee de
+// slider zijn startwaarde (gemiddelde) bepaalt, zie loadUcgFactor(). Een dag
+// die zelf een release-badge heeft, blijft gewoon in de tabel staan met een
+// waarschuwing -- de min/max-band is dan alleen niet meer gebaseerd op dat
+// soort uitschieterdagen.
 function renderPredictionDays() {
   const daysEl = document.getElementById('prediction-days');
   const factor = currentUcgFactor();
   const missing = predictionDays.some(d => d.total == null);
-  const hist = analysisData?.ucg_factor?.[activeArtist];
-  const minFactor = hist ? hist.min : null;
-  const maxFactor = hist ? hist.max : null;
+  const stats = getUcgStats(activeArtist);
+  const minFactor = stats ? stats.excl.min : null;
+  const maxFactor = stats ? stats.excl.max : null;
 
   // Welke dag heeft de hoogste EIGEN counter (niet incl. UCG) -- dat is de
   // dag die bepalend is voor een "hoogste dagtotaal deze week"-inschatting,
@@ -1207,19 +1241,14 @@ function computeUcgStats(factors) {
 
 function renderUcgHistory() {
   const el = document.getElementById('ucg-history');
-  const hist = analysisData?.ucg_factor?.[activeArtist];
-  if (!hist) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
+  const stats = getUcgStats(activeArtist);
+  if (!stats) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
 
   // De UCG-factor valt vlak na een release-dag artificieel laag uit (zie
   // notitie in de bron-Excel), tot ~2 dagen erna. Die dagen tellen niet mee
   // in de "excl."-statistiek, maar blijven gewoon zichtbaar in de tabel
   // eronder.
-  const excludedDates = new Set();
-  for (const d of predictionReleaseDays) {
-    excludedDates.add(d);
-    excludedDates.add(addDaysToDateKey(d, 1));
-    excludedDates.add(addDaysToDateKey(d, 2));
-  }
+  const { hist, excluded: excludedDates, incl: inclStats, excl: exclStats } = stats;
 
   const pointRow = (p) => {
     const isRelease = predictionReleaseDays.has(p.date);
@@ -1255,19 +1284,14 @@ function renderUcgHistory() {
     if (!collapsedUcgOlder) rows += olderPoints.map(pointRow).join('');
   }
 
-  const allFactors   = hist.points.map(p => p.factor);
-  const cleanFactors = hist.points.filter(p => !excludedDates.has(p.date)).map(p => p.factor);
-  const inclStats = computeUcgStats(allFactors);
-  const exclStats = computeUcgStats(cleanFactors);
-
   const statRow = (label, fn) => `<tr>
     <td>${label}</td>
-    <td>${inclStats ? fn(inclStats) : '—'}</td>
     <td>${exclStats ? fn(exclStats) : '—'}</td>
+    <td>${inclStats ? fn(inclStats) : '—'}</td>
   </tr>`;
 
   el.innerHTML = `<table class="log-table prediction-stats-table">
-    <thead><tr><th>Statistiek</th><th>Incl. releasedagen</th><th>Excl. releasedagen (+2 dagen)</th></tr></thead>
+    <thead><tr><th>Statistiek</th><th>Excl. releasedagen (+2 dagen)</th><th>Incl. releasedagen</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
       ${statRow('Gem. (min–max)', s => `<b>${s.avg.toFixed(2)}</b> <span class="neu">(${s.min.toFixed(2)}–${s.max.toFixed(2)})</span>`)}
