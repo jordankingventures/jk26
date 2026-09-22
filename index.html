@@ -809,7 +809,7 @@ function renderLog() {
 
         rows += `<tr class="day-row" onclick="toggleDay('${key}')"><td colspan="6">
           <div class="day-row-inner">
-            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}${releaseDays.has(key) ? '<span class="badge release day-badge">🎵 nieuwe video</span>' : ''}</span>
+            <span class="day-label"><span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>${ptDateLabel(e.ts)}${isToday ? '<span class="badge ok day-badge">vandaag</span>' : ''}${releaseDays.has(key) ? `<span class="badge release day-badge" title="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>` : ''}</span>
             <span class="day-total">${dHtml(dayTotal)} views</span>
           </div>
         </td></tr>`;
