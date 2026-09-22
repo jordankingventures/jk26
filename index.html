@@ -507,6 +507,8 @@ function rawFallbackTotal(log, key) {
 // door zowel het Refresh log als de Voorspelling-tab (daar: om te waarschuwen
 // dat de UCG-factor op zo'n dag waarschijnlijk lager uitvalt).
 const SHORTS_MAX_SECONDS = 60;
+const RELEASE_DAY_TOOLTIP = "Let op: YouTube Global Charts verwerkt views op nieuwe video's pas 1-2 dagen later. UCG-factor voor release dagen zal significant lager uitvallen.";
+
 function computeReleaseDays(videos) {
   const releaseDays = new Set();
   for (const v of videos || []) {
@@ -1173,7 +1175,7 @@ function renderPredictionDays() {
     const todayBadge = d.isToday ? ' <span class="badge ok day-badge">vandaag</span>' : '';
     const highestBadge = isHighest ? ' <span class="badge release day-badge" title="Hoogste eigen counter van deze week">🏆 hoogste</span>' : '';
     const releaseBadge = predictionReleaseDays.has(d.key)
-      ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
+      ? ` <span class="badge release day-badge" title="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
       : '';
     const rowClasses = [d.isToday ? 'prediction-today-row' : '', isHighest ? 'prediction-highest-row' : ''].filter(Boolean).join(' ');
     return `<tr class="${rowClasses}">
@@ -1254,7 +1256,7 @@ function renderUcgHistory() {
     const isRelease = predictionReleaseDays.has(p.date);
     const isDayAfter = !isRelease && excludedDates.has(p.date);
     const tag = isRelease
-      ? ' <span class="badge release day-badge" title="Nieuwe video deze dag -- UCG-factor valt hierdoor waarschijnlijk lager uit dan gemiddeld">🎵 nieuwe video</span>'
+      ? ` <span class="badge release day-badge" title="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
       : isDayAfter
       ? ' <span class="est-tag" title="Dag na een release -- uitgesloten van de excl.-statistiek hiernaast">na release</span>'
       : '';
