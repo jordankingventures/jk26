@@ -1,0 +1,50 @@
+name: Fetch Kalshi Markets (weekly views, alle artiesten)
+
+on:
+  # Zelfde patroon als de fetch_<artiest>.yml-workflows: getriggerd door
+  # cron-job.org via de workflow_dispatch-API. Geen secrets nodig -- de
+  # Kalshi-endpoints hier (GET /events, GET /markets) zijn publiek en
+  # vereisen geen API-key, dit is puur lezen.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run fetch script
+        run: python scripts/fetch_kalshi_markets.py
+
+      - name: Commit & push data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/kalshi_markets.json
+          if git diff --staged --quiet; then
+            echo "Geen wijzigingen om te committen"
+            exit 0
+          fi
+          git commit -m "Update Kalshi-marktprijzen $(date -u '+%Y-%m-%d %H:%M') UTC"
+
+          # Zelfde retry/rebase-aanpak als de andere fetch-workflows.
+          for i in $(seq 1 20); do
+            if git push; then
+              exit 0
+            fi
+            echo "Push mislukt (poging $i/20), main is intussen gewijzigd -- rebasen en opnieuw proberen..."
+            git fetch origin main
+            if git rebase origin/main; then
+              sleep $((RANDOM % 12 + 3))
+              continue
+            fi
+            git rebase --abort
+            echo "Rebase-conflict (waarschijnlijk een gelijktijdige dubbele run) -- eigen update overgeslagen, remote main heeft al recente data."
+            exit 0
+          done
+          echo "::error::Kon na 20 pogingen niet pushen naar main"
+          exit 1
