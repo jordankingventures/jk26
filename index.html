@@ -1449,8 +1449,13 @@ function renderKalshiTab() {
   const maxProjected = (highestDay && maxFactor != null) ? highestDay.total * maxFactor : null;
   const rangeKnown = minProjected != null && maxProjected != null;
 
+  const shortDay = highestDay
+    ? new Date(highestDay.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+    : '';
   rangeEl.innerHTML = rangeKnown
-    ? `Jouw week-range (hoogste eigen dag &times; excl.-releasedagen UCG-factor ${minFactor.toFixed(2)}&ndash;${maxFactor.toFixed(2)}): <b>${fmt(floor1000(minProjected))} &ndash; ${fmt(floor1000(maxProjected))}</b> views &middot; hoogste dag: ${esc(highestDay.label)}`
+    ? `<span data-tooltip="Jouw verwachte hoogste dagtotaal deze week (min &ndash; max)">📊 <b>${fmt(floor1000(minProjected))} &ndash; ${fmt(floor1000(maxProjected))}</b></span>`
+      + ` &nbsp;<span data-tooltip="Dag met de hoogste eigen counter deze week: ${esc(highestDay.label)}">🏆 ${esc(shortDay)}</span>`
+      + ` &nbsp;<span data-tooltip="UCG-factor min&ndash;max (excl. releasedagen) waarmee de eigen counter is omgerekend">⚙️ ${minFactor.toFixed(2)}&ndash;${maxFactor.toFixed(2)}</span>`
     : 'Nog niet genoeg data om een week-range te berekenen.';
 
   const market = kalshiMarkets?.artists?.[activeArtist];
