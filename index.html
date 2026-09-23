@@ -1458,6 +1458,13 @@ function renderKalshiTab() {
       + ` &nbsp;<span data-tooltip="UCG-factor min&ndash;max (excl. releasedagen) waarmee de eigen counter is omgerekend">⚙️ ${minFactor.toFixed(2)}&ndash;${maxFactor.toFixed(2)}</span>`
     : 'Nog niet genoeg data om een week-range te berekenen.';
 
+  if (kalshiMarkets?.fetched_at) {
+    const ageMin = Math.max(0, Math.round((Date.now() - new Date(kalshiMarkets.fetched_at).getTime()) / 60000));
+    const ageTxt = ageMin < 60 ? `${ageMin} min geleden` : `${Math.floor(ageMin / 60)} u ${ageMin % 60} min geleden`;
+    const stale = ageMin > 30;
+    rangeEl.innerHTML += ` &nbsp;<span class="${stale ? 'orders-err' : 'orders-ok'}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (ververst elke paar minuten; rood = ouder dan 30 min)">🕒 ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} &middot; ${ageTxt}</span>`;
+  }
+
   const market = kalshiMarkets?.artists?.[activeArtist];
   if (!market || !market.brackets || !market.brackets.length) {
     oppEl.innerHTML = '';
