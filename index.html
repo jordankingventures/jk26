@@ -1490,7 +1490,7 @@ function renderKalshiTab() {
   bodyEl.innerHTML = `<table class="log-table kalshi-table">
     <thead><tr><th>Bracket</th><th>YES koop</th><th>NO koop</th></tr></thead>
     <tbody>${rows.map(({ b, opp }) => `<tr class="${opp ? 'kalshi-row-opp' : ''}">
-      <td>${esc(b.label || fmt(b.floor_strike))}</td>
+      <td>${esc(b.label || fmt(b.floor_strike))}${opp ? ` <span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span>` : ''}</td>
       <td>${price(b.yes_ask)}</td>
       <td>${price(b.no_ask)}</td>
     </tr>`).join('')}</tbody>
