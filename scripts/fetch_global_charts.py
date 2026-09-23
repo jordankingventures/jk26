@@ -40,8 +40,18 @@ ANALYSIS_FILE = "data/analysis_data.json"
 # hier en daar exact hetzelfde blok uren dekt.
 DAY_BOUNDARY_TZ = timezone(timedelta(hours=-8))
 
+# Eerste (halve) dag dat de eigen counter voor een artiest live stond: de
+# counter mist dan een deel van de dag terwijl Global Charts de hele dag
+# telt, dus de UCG-factor van die dag is kunstmatig hoog. Wordt nooit
+# opgeslagen. (Fase 1 begon al voor de historie in analysis_data.json.)
+PARTIAL_FIRST_DAY = {
+    key: "2026-09-07"
+    for key in ("fuerzaregida", "future", "kanye", "katseye", "kendrick",
+                "olivia", "postmalone", "tatemcrae", "weeknd")
+}
+
 ARTISTS = {
-    "taylor":       {"entity_id": "/m/0dl567",     "data_file": "data/taylor_data.json"},
+    "taylor":      {"entity_id": "/m/0dl567",     "data_file": "data/taylor_data.json"},
     "drake":        {"entity_id": "/m/05mt_q",     "data_file": "data/drake_data.json"},
     "wallen":       {"entity_id": "/g/11g7ntnqs5", "data_file": "data/wallen_data.json"},
     "badbunny":     {"entity_id": "/g/11gdq15782", "data_file": "data/badbunny_data.json"},
@@ -138,9 +148,12 @@ def main():
         counter_by_date = own_counter_by_date(info["data_file"])
         existing_points = analysis["ucg_factor"].get(key, {}).get("points", [])
         points_by_date = {p["date"]: p for p in existing_points}
+        points_by_date.pop(PARTIAL_FIRST_DAY.get(key), None)
 
         updated = 0
         for date, gc_raw in gc_by_date.items():
+            if date == PARTIAL_FIRST_DAY.get(key):
+                continue
             counter_raw = counter_by_date.get(date)
             if counter_raw is None:
                 continue  # eigen counter heeft deze dag nog niet afgesloten
