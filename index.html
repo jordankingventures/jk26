@@ -229,7 +229,6 @@
     .kalshi-side-no { color: var(--accent2); border: 1px solid var(--accent2); }
     .kalshi-table th, .kalshi-table td { padding: 5px 12px; font-size: 0.74rem; }
     .kalshi-row-opp td { background: var(--surface2); }
-    .kalshi-note { color: var(--muted); font-size: 0.68rem; }
 
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
@@ -1475,24 +1474,25 @@ function renderKalshiTab() {
 
   const opportunities = rows.filter(r => r.opp);
 
+  const price = v => v != null ? '$' + v.toFixed(2) : '—';
+
   oppEl.innerHTML = opportunities.length
     ? `<table class="log-table kalshi-table">
-        <thead><tr><th>Bracket</th><th>Kant</th><th>Vraagprijs</th><th>Marge</th></tr></thead>
+        <thead><tr><th>Bracket</th><th>Kant</th><th>Vraagprijs</th></tr></thead>
         <tbody>${opportunities.map(({ b, opp }) => `<tr class="kalshi-row-opp">
           <td>${esc(b.label || fmt(b.floor_strike))}</td>
           <td><span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span></td>
-          <td>${opp.price != null ? '$' + opp.price.toFixed(2) : '<span class="neu">—</span>'}</td>
-          <td class="kalshi-note">${fmt(floor1000(opp.gap))} ${opp.side === 'YES' ? 'onder je minimum' : 'boven je maximum'}</td>
+          <td>${price(opp.price)}</td>
         </tr>`).join('')}</tbody>
       </table>`
     : `<div class="kalshi-opp-empty">Geen brackets buiten je week-range gevonden -- alle strikes vallen momenteel binnen je min-max.</div>`;
 
   bodyEl.innerHTML = `<table class="log-table kalshi-table">
-    <thead><tr><th>Bracket</th><th>YES bid/ask</th><th>NO bid/ask</th></tr></thead>
+    <thead><tr><th>Bracket</th><th>YES koop</th><th>NO koop</th></tr></thead>
     <tbody>${rows.map(({ b, opp }) => `<tr class="${opp ? 'kalshi-row-opp' : ''}">
-      <td>${esc(b.label || fmt(b.floor_strike))}${opp ? ` <span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span>` : ''}</td>
-      <td>${b.yes_bid != null ? b.yes_bid.toFixed(2) : '—'} / ${b.yes_ask != null ? b.yes_ask.toFixed(2) : '—'}</td>
-      <td>${b.no_bid != null ? b.no_bid.toFixed(2) : '—'} / ${b.no_ask != null ? b.no_ask.toFixed(2) : '—'}</td>
+      <td>${esc(b.label || fmt(b.floor_strike))}</td>
+      <td>${price(b.yes_ask)}</td>
+      <td>${price(b.no_ask)}</td>
     </tr>`).join('')}</tbody>
   </table>`;
 }
