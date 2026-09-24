@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-24T07:40:34Z",
+  "fetched_at": "2026-09-24T07:45:32Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -636,10 +636,10 @@
           "ticker": "KXYTVIEWSW-KAT26SEP27-23.0M",
           "floor_strike": 23000000,
           "label": "Above 23M",
-          "yes_bid": 0.53,
+          "yes_bid": 0.5,
           "yes_ask": 0.9,
           "no_bid": 0.1,
-          "no_ask": 0.47
+          "no_ask": 0.5
         },
         {
           "ticker": "KXYTVIEWSW-KAT26SEP27-24.0M",
@@ -1413,8 +1413,8 @@
           "floor_strike": 17000000,
           "label": "Above 17M",
           "yes_bid": 0.5,
-          "yes_ask": 0.71,
-          "no_bid": 0.29,
+          "yes_ask": 0.75,
+          "no_bid": 0.25,
           "no_ask": 0.5
         },
         {
