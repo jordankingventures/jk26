@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-24T08:20:34Z",
+  "fetched_at": "2026-09-24T08:25:27Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -22,18 +22,18 @@
           "floor_strike": 14500000,
           "label": "Above 14.5M",
           "yes_bid": 0.01,
-          "yes_ask": 0.83,
-          "no_bid": 0.17,
+          "yes_ask": 0.89,
+          "no_bid": 0.11,
           "no_ask": 0.99
         },
         {
           "ticker": "KXYTVIEWSW-ARI26SEP27-15.0M",
           "floor_strike": 15000000,
           "label": "Above 15M",
-          "yes_bid": 0.35,
-          "yes_ask": 0.56,
-          "no_bid": 0.44,
-          "no_ask": 0.65
+          "yes_bid": 0.01,
+          "yes_ask": 0.75,
+          "no_bid": 0.25,
+          "no_ask": 0.99
         },
         {
           "ticker": "KXYTVIEWSW-ARI26SEP27-15.5M",
@@ -49,8 +49,8 @@
           "floor_strike": 16000000,
           "label": "Above 16M",
           "yes_bid": 0.01,
-          "yes_ask": 0.29,
-          "no_bid": 0.71,
+          "yes_ask": 0.31,
+          "no_bid": 0.69,
           "no_ask": 0.99
         },
         {
@@ -67,8 +67,8 @@
           "floor_strike": 17000000,
           "label": "Above 17M",
           "yes_bid": 0.01,
-          "yes_ask": 0.25,
-          "no_bid": 0.75,
+          "yes_ask": 0.27,
+          "no_bid": 0.73,
           "no_ask": 0.99
         },
         {
@@ -133,15 +133,6 @@
       "title": "Bad Bunny: Highest daily view count (September 21, 2026 - September 27, 2026)",
       "close_time": "2026-09-29T14:00:00Z",
       "brackets": [
-        {
-          "ticker": "KXYTVIEWSW-BAD26SEP27-25.5M",
-          "floor_strike": 25500000,
-          "label": "Above 25.5M",
-          "yes_bid": 0.91,
-          "yes_ask": 1.0,
-          "no_bid": 0.0,
-          "no_ask": 0.09
-        },
         {
           "ticker": "KXYTVIEWSW-BAD26SEP27-26.0M",
           "floor_strike": 26000000,
@@ -1166,24 +1157,6 @@
       "title": "Taylor Swift: Highest daily view count (September 21, 2026 - September 27, 2026)",
       "close_time": "2026-09-29T14:00:00Z",
       "brackets": [
-        {
-          "ticker": "KXYTVIEWSW-TAY26SEP27-14.3M",
-          "floor_strike": 14300000,
-          "label": "Above 14.3M",
-          "yes_bid": 0.99,
-          "yes_ask": 1.0,
-          "no_bid": 0.0,
-          "no_ask": 0.01
-        },
-        {
-          "ticker": "KXYTVIEWSW-TAY26SEP27-14.4M",
-          "floor_strike": 14400000,
-          "label": "Above 14.4M",
-          "yes_bid": 0.99,
-          "yes_ask": 1.0,
-          "no_bid": 0.0,
-          "no_ask": 0.01
-        },
         {
           "ticker": "KXYTVIEWSW-TAY26SEP27-14.5M",
           "floor_strike": 14500000,
