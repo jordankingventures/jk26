@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-24T19:15:32Z",
+  "fetched_at": "2026-09-24T19:20:38Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -343,10 +343,10 @@
           "ticker": "KXYTVIEWSW-DRA26SEP27-14.75M",
           "floor_strike": 14750000,
           "label": "Above 14.75M",
-          "yes_bid": 0.13,
+          "yes_bid": 0.15,
           "yes_ask": 0.95,
           "no_bid": 0.05,
-          "no_ask": 0.87
+          "no_ask": 0.85
         },
         {
           "ticker": "KXYTVIEWSW-DRA26SEP27-15.0M",
@@ -627,10 +627,10 @@
           "ticker": "KXYTVIEWSW-KAT26SEP27-23.0M",
           "floor_strike": 23000000,
           "label": "Above 23M",
-          "yes_bid": 0.52,
+          "yes_bid": 0.51,
           "yes_ask": 0.98,
           "no_bid": 0.02,
-          "no_ask": 0.48
+          "no_ask": 0.49
         },
         {
           "ticker": "KXYTVIEWSW-KAT26SEP27-24.0M",
@@ -699,8 +699,8 @@
           "floor_strike": 8000000,
           "label": "Above 8M",
           "yes_bid": 0.01,
-          "yes_ask": 0.16,
-          "no_bid": 0.84,
+          "yes_ask": 0.12,
+          "no_bid": 0.88,
           "no_ask": 0.99
         }
       ]
@@ -1296,10 +1296,10 @@
           "ticker": "KXYTVIEWSW-TAY26SEP27-18.0M",
           "floor_strike": 18000000,
           "label": "Above 18M",
-          "yes_bid": 0.29,
+          "yes_bid": 0.31,
           "yes_ask": 0.88,
           "no_bid": 0.12,
-          "no_ask": 0.71
+          "no_ask": 0.69
         },
         {
           "ticker": "KXYTVIEWSW-TAY26SEP27-20.0M",
@@ -1324,8 +1324,8 @@
           "floor_strike": 24000000,
           "label": "Above 24M",
           "yes_bid": 0.02,
-          "yes_ask": 0.91,
-          "no_bid": 0.09,
+          "yes_ask": 0.89,
+          "no_bid": 0.11,
           "no_ask": 0.98
         },
         {
@@ -1333,8 +1333,8 @@
           "floor_strike": 26000000,
           "label": "Above 26M",
           "yes_bid": 0.02,
-          "yes_ask": 0.91,
-          "no_bid": 0.09,
+          "yes_ask": 0.9,
+          "no_bid": 0.1,
           "no_ask": 0.98
         },
         {
@@ -1377,8 +1377,8 @@
           "floor_strike": 17000000,
           "label": "Above 17M",
           "yes_bid": 0.39,
-          "yes_ask": 0.57,
-          "no_bid": 0.43,
+          "yes_ask": 0.68,
+          "no_bid": 0.32,
           "no_ask": 0.61
         },
         {
@@ -1475,8 +1475,8 @@
           "floor_strike": 5500000,
           "label": "Above 5.5M",
           "yes_bid": 0.21,
-          "yes_ask": 0.62,
-          "no_bid": 0.38,
+          "yes_ask": 0.76,
+          "no_bid": 0.24,
           "no_ask": 0.79
         },
         {
@@ -1537,8 +1537,8 @@
           "floor_strike": 7000000,
           "label": "Above 7M",
           "yes_bid": 0.41,
-          "yes_ask": 0.78,
-          "no_bid": 0.22,
+          "yes_ask": 0.74,
+          "no_bid": 0.26,
           "no_ask": 0.59
         },
         {
