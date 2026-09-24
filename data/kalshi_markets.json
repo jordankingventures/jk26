@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-24T18:45:32Z",
+  "fetched_at": "2026-09-24T18:50:37Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -12,19 +12,19 @@
           "ticker": "KXYTVIEWSW-ARI26SEP27-14.0M",
           "floor_strike": 14000000,
           "label": "Above 14M",
-          "yes_bid": 0.67,
+          "yes_bid": 0.82,
           "yes_ask": 0.98,
           "no_bid": 0.02,
-          "no_ask": 0.33
+          "no_ask": 0.18
         },
         {
           "ticker": "KXYTVIEWSW-ARI26SEP27-14.5M",
           "floor_strike": 14500000,
           "label": "Above 14.5M",
-          "yes_bid": 0.53,
+          "yes_bid": 0.43,
           "yes_ask": 0.86,
           "no_bid": 0.14,
-          "no_ask": 0.47
+          "no_ask": 0.57
         },
         {
           "ticker": "KXYTVIEWSW-ARI26SEP27-15.0M",
@@ -183,18 +183,18 @@
           "floor_strike": 28500000,
           "label": "Above 28.5M",
           "yes_bid": 0.7,
-          "yes_ask": 0.82,
-          "no_bid": 0.18,
+          "yes_ask": 0.84,
+          "no_bid": 0.16,
           "no_ask": 0.3
         },
         {
           "ticker": "KXYTVIEWSW-BAD26SEP27-29.0M",
           "floor_strike": 29000000,
           "label": "Above 29M",
-          "yes_bid": 0.53,
+          "yes_bid": 0.52,
           "yes_ask": 0.75,
           "no_bid": 0.25,
-          "no_ask": 0.47
+          "no_ask": 0.48
         },
         {
           "ticker": "KXYTVIEWSW-BAD26SEP27-29.5M",
@@ -406,8 +406,8 @@
           "floor_strike": 24000000,
           "label": "Above 24M",
           "yes_bid": 0.3,
-          "yes_ask": 0.53,
-          "no_bid": 0.47,
+          "yes_ask": 0.49,
+          "no_bid": 0.51,
           "no_ask": 0.7
         },
         {
@@ -566,8 +566,8 @@
           "floor_strike": 17000000,
           "label": "Above 17M",
           "yes_bid": 0.11,
-          "yes_ask": 0.32,
-          "no_bid": 0.68,
+          "yes_ask": 0.31,
+          "no_bid": 0.69,
           "no_ask": 0.89
         }
       ]
@@ -636,10 +636,10 @@
           "ticker": "KXYTVIEWSW-KAT26SEP27-24.0M",
           "floor_strike": 24000000,
           "label": "Above 24M",
-          "yes_bid": 0.32,
+          "yes_bid": 0.31,
           "yes_ask": 0.74,
           "no_bid": 0.26,
-          "no_ask": 0.68
+          "no_ask": 0.69
         },
         {
           "ticker": "KXYTVIEWSW-KAT26SEP27-25.0M",
@@ -699,8 +699,8 @@
           "floor_strike": 8000000,
           "label": "Above 8M",
           "yes_bid": 0.01,
-          "yes_ask": 0.14,
-          "no_bid": 0.86,
+          "yes_ask": 0.12,
+          "no_bid": 0.88,
           "no_ask": 0.99
         }
       ]
@@ -742,10 +742,10 @@
           "ticker": "KXYTVIEWSW-MOR26SEP27-5.5M",
           "floor_strike": 5500000,
           "label": "Above 5.5M",
-          "yes_bid": 0.14,
-          "yes_ask": 0.6,
-          "no_bid": 0.4,
-          "no_ask": 0.86
+          "yes_bid": 0.15,
+          "yes_ask": 0.59,
+          "no_bid": 0.41,
+          "no_ask": 0.85
         },
         {
           "ticker": "KXYTVIEWSW-MOR26SEP27-5.75M",
@@ -1376,10 +1376,10 @@
           "ticker": "KXYTVIEWSW-WEE26SEP27-17.0M",
           "floor_strike": 17000000,
           "label": "Above 17M",
-          "yes_bid": 0.39,
+          "yes_bid": 0.45,
           "yes_ask": 0.63,
           "no_bid": 0.37,
-          "no_ask": 0.61
+          "no_ask": 0.55
         },
         {
           "ticker": "KXYTVIEWSW-WEE26SEP27-18.0M",
@@ -1492,10 +1492,10 @@
           "ticker": "KXYTVIEWSW-YE26SEP27-6.5M",
           "floor_strike": 6500000,
           "label": "Above 6.5M",
-          "yes_bid": 0.02,
-          "yes_ask": 0.42,
-          "no_bid": 0.58,
-          "no_ask": 0.98
+          "yes_bid": 0.03,
+          "yes_ask": 0.41,
+          "no_bid": 0.59,
+          "no_ask": 0.97
         },
         {
           "ticker": "KXYTVIEWSW-YE26SEP27-7.0M",
@@ -1537,8 +1537,8 @@
           "floor_strike": 7000000,
           "label": "Above 7M",
           "yes_bid": 0.41,
-          "yes_ask": 0.78,
-          "no_bid": 0.22,
+          "yes_ask": 0.74,
+          "no_bid": 0.26,
           "no_ask": 0.59
         },
         {
