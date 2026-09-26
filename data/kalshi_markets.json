@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-26T04:10:28Z",
+  "fetched_at": "2026-09-26T04:15:29Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -546,10 +546,10 @@
           "ticker": "KXYTVIEWSW-KAT26SEP27-24.0M",
           "floor_strike": 24000000,
           "label": "Above 24M",
-          "yes_bid": 0.14,
+          "yes_bid": 0.19,
           "yes_ask": 0.6,
           "no_bid": 0.4,
-          "no_ask": 0.86
+          "no_ask": 0.81
         },
         {
           "ticker": "KXYTVIEWSW-KAT26SEP27-25.0M",
@@ -573,8 +573,8 @@
           "floor_strike": 6000000,
           "label": "Above 6M",
           "yes_bid": 0.04,
-          "yes_ask": 0.17,
-          "no_bid": 0.83,
+          "yes_ask": 0.18,
+          "no_bid": 0.82,
           "no_ask": 0.96
         },
         {
@@ -751,8 +751,8 @@
           "floor_strike": 7000000,
           "label": "Above 7M",
           "yes_bid": 0.05,
-          "yes_ask": 0.4,
-          "no_bid": 0.6,
+          "yes_ask": 0.44,
+          "no_bid": 0.56,
           "no_ask": 0.95
         },
         {
@@ -875,8 +875,8 @@
           "floor_strike": 3400000,
           "label": "Above 3.4M",
           "yes_bid": 0.03,
-          "yes_ask": 0.23,
-          "no_bid": 0.77,
+          "yes_ask": 0.24,
+          "no_bid": 0.76,
           "no_ask": 0.97
         },
         {
@@ -911,8 +911,8 @@
           "floor_strike": 3800000,
           "label": "Above 3.8M",
           "yes_bid": 0.03,
-          "yes_ask": 0.24,
-          "no_bid": 0.76,
+          "yes_ask": 0.23,
+          "no_bid": 0.77,
           "no_ask": 0.97
         },
         {
@@ -1259,8 +1259,8 @@
           "floor_strike": 5500000,
           "label": "Above 5.5M",
           "yes_bid": 0.15,
-          "yes_ask": 0.32,
-          "no_bid": 0.68,
+          "yes_ask": 0.37,
+          "no_bid": 0.63,
           "no_ask": 0.85
         },
         {
