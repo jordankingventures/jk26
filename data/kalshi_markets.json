@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-26T06:40:29Z",
+  "fetched_at": "2026-09-26T06:45:32Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -31,8 +31,8 @@
           "floor_strike": 15000000,
           "label": "Above 15M",
           "yes_bid": 0.05,
-          "yes_ask": 0.24,
-          "no_bid": 0.76,
+          "yes_ask": 0.29,
+          "no_bid": 0.71,
           "no_ask": 0.95
         },
         {
@@ -528,10 +528,10 @@
           "ticker": "KXYTVIEWSW-KAT26SEP27-22.0M",
           "floor_strike": 22000000,
           "label": "Above 22M",
-          "yes_bid": 0.8,
+          "yes_bid": 0.83,
           "yes_ask": 0.98,
           "no_bid": 0.02,
-          "no_ask": 0.2
+          "no_ask": 0.17
         },
         {
           "ticker": "KXYTVIEWSW-KAT26SEP27-23.0M",
@@ -795,8 +795,8 @@
           "floor_strike": 7500000,
           "label": "Above 7.5M",
           "yes_bid": 0.64,
-          "yes_ask": 0.93,
-          "no_bid": 0.07,
+          "yes_ask": 0.92,
+          "no_bid": 0.08,
           "no_ask": 0.36
         },
         {
@@ -1089,10 +1089,10 @@
           "ticker": "KXYTVIEWSW-TAY26SEP27-20.0M",
           "floor_strike": 20000000,
           "label": "Above 20M",
-          "yes_bid": 0.16,
+          "yes_bid": 0.17,
           "yes_ask": 0.97,
           "no_bid": 0.03,
-          "no_ask": 0.84
+          "no_ask": 0.83
         },
         {
           "ticker": "KXYTVIEWSW-TAY26SEP27-22.0M",
@@ -1117,8 +1117,8 @@
           "floor_strike": 26000000,
           "label": "Above 26M",
           "yes_bid": 0.05,
-          "yes_ask": 0.88,
-          "no_bid": 0.12,
+          "yes_ask": 0.9,
+          "no_bid": 0.1,
           "no_ask": 0.95
         },
         {
@@ -1206,8 +1206,8 @@
           "floor_strike": 22000000,
           "label": "Above 22M",
           "yes_bid": 0.02,
-          "yes_ask": 0.41,
-          "no_bid": 0.59,
+          "yes_ask": 0.39,
+          "no_bid": 0.61,
           "no_ask": 0.98
         },
         {
