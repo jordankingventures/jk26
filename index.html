@@ -429,6 +429,14 @@
     <div id="kalshi-opportunities" class="kalshi-opportunities"></div>
     <div id="kalshi-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
   </div>
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Kalshi &mdash; maandmarkt</h2>
+    </div>
+    <div id="kalshi-m-range" class="kalshi-range"></div>
+    <div id="kalshi-m-opportunities" class="kalshi-opportunities"></div>
+    <div id="kalshi-m-body"></div>
+  </div>
 </div>
 
 <div id="orders-view" style="display:none">
@@ -1078,7 +1086,6 @@ function switchView(view) {
 // zondag uit alle 7. Sluit aan bij hoe er ook daadwerkelijk wordt ingezet:
 // per (lopende) week, niet een vast aantal dagen terug.
 function getWeekToDateTotals(log) {
-  const { dayTotalFor } = computeDayInfo(log);
   const todayKey = todayKeyNow();
   const [ty, tm, td] = todayKey.split('-').map(Number);
   const todayMs = Date.UTC(ty, tm - 1, td);
@@ -1089,7 +1096,26 @@ function getWeekToDateTotals(log) {
   for (let i = 0; i <= daysSinceMonday; i++) {
     keys.push(new Date(todayMs - (daysSinceMonday - i) * 86400000).toISOString().slice(0, 10));
   }
+  return getTotalsForKeys(log, keys);
+}
 
+// Alle dagen van een kalendermaand ('YYYY-MM', UTC-8-dagsleutels) t/m vandaag.
+function getMonthToDateTotals(log, monthKey) {
+  const [y, m] = monthKey.split('-').map(Number);
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const todayKey = todayKeyNow();
+  const keys = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${monthKey}-${String(d).padStart(2, '0')}`;
+    if (key > todayKey) break;
+    keys.push(key);
+  }
+  return getTotalsForKeys(log, keys);
+}
+
+function getTotalsForKeys(log, keys) {
+  const { dayTotalFor } = computeDayInfo(log);
+  const todayKey = todayKeyNow();
   return keys.map(key => {
     const isToday = key === todayKey;
     const entry = log.find(e => ptDateKey(e.ts) === key); // nieuwste meting van die dag (log is nieuw-naar-oud)
@@ -1426,11 +1452,13 @@ function renderKalshiTab() {
   const rangeEl = document.getElementById('kalshi-range');
   const oppEl = document.getElementById('kalshi-opportunities');
   const bodyEl = document.getElementById('kalshi-body');
+  const mSection = { rangeEl: document.getElementById('kalshi-m-range'), oppEl: document.getElementById('kalshi-m-opportunities'), bodyEl: document.getElementById('kalshi-m-body') };
 
   if (!appData || !appData.log || !appData.log.length) {
     rangeEl.textContent = '';
     oppEl.innerHTML = '';
     bodyEl.innerHTML = '<div class="log-empty">Nog geen data.</div>';
+    mSection.rangeEl.textContent = ''; mSection.oppEl.innerHTML = ''; mSection.bodyEl.innerHTML = '';
     return;
   }
 
@@ -1438,25 +1466,22 @@ function renderKalshiTab() {
   // releasedagen-statistiek ook klopt als de Voorspelling-tab deze sessie
   // nog niet bezocht is (predictionReleaseDays is een gedeelde global).
   predictionReleaseDays = computeReleaseDays(appData.videos);
-  const days = getWeekToDateTotals(appData.log);
-  const withTotal = days.filter(d => d.total != null);
-  const highestDay = withTotal.length ? withTotal.reduce((a, b) => (b.total > a.total ? b : a)) : null;
-
   const stats = getUcgStats(activeArtist);
   const minFactor = stats ? stats.excl.min : null;
   const maxFactor = stats ? stats.excl.max : null;
-  const minProjected = (highestDay && minFactor != null) ? highestDay.total * minFactor : null;
-  const maxProjected = (highestDay && maxFactor != null) ? highestDay.total * maxFactor : null;
-  const rangeKnown = minProjected != null && maxProjected != null;
 
-  const shortDay = highestDay
-    ? new Date(highestDay.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
-    : '';
-  rangeEl.innerHTML = rangeKnown
-    ? `<span data-tooltip="Jouw verwachte hoogste dagtotaal deze week (min &ndash; max)">📊 <b>${fmt(floor1000(minProjected))} &ndash; ${fmt(floor1000(maxProjected))}</b></span>`
-      + ` &nbsp;<span data-tooltip="Dag met de hoogste eigen counter deze week: ${esc(highestDay.label)}">🏆 ${esc(shortDay)}</span>`
-      + ` &nbsp;<span data-tooltip="UCG-factor min&ndash;max (excl. releasedagen) waarmee de eigen counter is omgerekend">⚙️ ${minFactor.toFixed(2)}&ndash;${maxFactor.toFixed(2)}</span>`
-    : 'Nog niet genoeg data om een week-range te berekenen.';
+  const market = kalshiMarkets?.artists?.[activeArtist];
+
+  // Maandmarkt die bij deze week hoort: de maand waarin de week eindigt
+  // (weekmarkt sluit ~2 dagen na zondag). Heeft de artiest die maand geen
+  // markt (bv. Drake), dan tonen we niets i.p.v. een verkeerde maand.
+  const weekEnd = market?.close_time ? new Date(new Date(market.close_time).getTime() - 3 * 86400000).toISOString().slice(0, 7) : null;
+  const monthly = (market?.monthly || []).find(m => m.month && m.month === weekEnd) || null;
+  const monthlyRow = monthly ? new Map(monthly.brackets.map(b => [b.floor_strike, b])) : new Map();
+
+  const weekDays = getWeekToDateTotals(appData.log);
+  const week = kalshiRange(weekDays, minFactor, maxFactor);
+  rangeEl.innerHTML = week.html('deze week');
 
   if (kalshiMarkets?.fetched_at) {
     const ageMin = Math.max(0, Math.round((Date.now() - new Date(kalshiMarkets.fetched_at).getTime()) / 60000));
@@ -1465,28 +1490,64 @@ function renderKalshiTab() {
     rangeEl.innerHTML += ` &nbsp;<span class="${stale ? 'orders-err' : 'orders-ok'}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (ververst elke paar minuten; rood = ouder dan 30 min)">🕒 ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} &middot; ${ageTxt}</span>`;
   }
 
-  const market = kalshiMarkets?.artists?.[activeArtist];
   if (!market || !market.brackets || !market.brackets.length) {
     oppEl.innerHTML = '';
     bodyEl.innerHTML = '<div class="log-empty">Geen lopende Kalshi-markt gevonden voor deze artiest deze week.</div>';
-    return;
+  } else {
+    // Extra kolom: prijs van dezelfde strike op de maandmarkt (waar die bestaat)
+    const monthCol = monthly ? { head: 'Maand YES', cell: b => monthlyRow.get(b.floor_strike)?.yes_ask } : null;
+    renderKalshiSection(oppEl, bodyEl, market.brackets, week, 'week', monthCol);
   }
 
-  const rows = market.brackets.map(b => {
+  // Maandmarkt: eigen range op basis van de hoogste eigen dag in die maand
+  if (!monthly) {
+    mSection.rangeEl.innerHTML = market ? 'Geen lopende maandmarkt voor deze artiest.' : '';
+    mSection.oppEl.innerHTML = '';
+    mSection.bodyEl.innerHTML = '';
+  } else {
+    const monthDays = monthly.month ? getMonthToDateTotals(appData.log, monthly.month) : [];
+    const mo = kalshiRange(monthDays, minFactor, maxFactor);
+    const monthLabel = monthly.month
+      ? new Date(monthly.month + '-15T12:00:00Z').toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+      : 'maand';
+    mSection.rangeEl.innerHTML = `<span data-tooltip="Maandmarkt: hoogste dagtotaal in ${esc(monthLabel)}">📅 ${esc(monthLabel)}</span> &nbsp;` + mo.html('deze maand');
+    renderKalshiSection(mSection.oppEl, mSection.bodyEl, monthly.brackets, mo, 'maand', null);
+  }
+}
+
+// Week-/maand-range: hoogste eigen-counter-dag in de periode x excl.-
+// releasedagen UCG-factor (min en max).
+function kalshiRange(days, minFactor, maxFactor) {
+  const withTotal = days.filter(d => d.total != null);
+  const highestDay = withTotal.length ? withTotal.reduce((a, b) => (b.total > a.total ? b : a)) : null;
+  const min = (highestDay && minFactor != null) ? highestDay.total * minFactor : null;
+  const max = (highestDay && maxFactor != null) ? highestDay.total * maxFactor : null;
+  const known = min != null && max != null;
+  return {
+    min, max, known,
+    html: (periode) => {
+      if (!known) return `Nog niet genoeg data om een range voor ${periode} te berekenen.`;
+      const shortDay = new Date(highestDay.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+      return `<span data-tooltip="Jouw verwachte hoogste dagtotaal ${periode} (min &ndash; max)">📊 <b>${fmt(floor1000(min))} &ndash; ${fmt(floor1000(max))}</b></span>`
+        + ` &nbsp;<span data-tooltip="Dag met de hoogste eigen counter ${periode}: ${esc(highestDay.label)}">🏆 ${esc(shortDay)}</span>`
+        + ` &nbsp;<span data-tooltip="UCG-factor min&ndash;max (excl. releasedagen) waarmee de eigen counter is omgerekend">⚙️ ${minFactor.toFixed(2)}&ndash;${maxFactor.toFixed(2)}</span>`;
+    },
+  };
+}
+
+// Kansen-tabel (brackets buiten je min-max) + volledige bracket-tabel.
+function renderKalshiSection(oppEl, bodyEl, brackets, range, periode, extraCol) {
+  const price = v => v != null ? '$' + v.toFixed(2) : '—';
+
+  const rows = brackets.map(b => {
     let opp = null;
-    if (rangeKnown && b.floor_strike != null) {
-      if (b.floor_strike < minProjected) {
-        opp = { side: 'YES', price: b.yes_ask, gap: minProjected - b.floor_strike };
-      } else if (b.floor_strike > maxProjected) {
-        opp = { side: 'NO', price: b.no_ask, gap: b.floor_strike - maxProjected };
-      }
+    if (range.known && b.floor_strike != null) {
+      if (b.floor_strike < range.min) opp = { side: 'YES', price: b.yes_ask };
+      else if (b.floor_strike > range.max) opp = { side: 'NO', price: b.no_ask };
     }
     return { b, opp };
   });
-
   const opportunities = rows.filter(r => r.opp);
-
-  const price = v => v != null ? '$' + v.toFixed(2) : '—';
 
   oppEl.innerHTML = opportunities.length
     ? `<table class="log-table kalshi-table">
@@ -1497,14 +1558,15 @@ function renderKalshiTab() {
           <td>${price(opp.price)}</td>
         </tr>`).join('')}</tbody>
       </table>`
-    : `<div class="kalshi-opp-empty">Geen brackets buiten je week-range gevonden -- alle strikes vallen momenteel binnen je min-max.</div>`;
+    : (range.known ? `<div class="kalshi-opp-empty">Geen brackets buiten je ${periode}-range gevonden -- alle strikes vallen momenteel binnen je min-max.</div>` : '');
 
   bodyEl.innerHTML = `<table class="log-table kalshi-table">
-    <thead><tr><th>Bracket</th><th>YES koop</th><th>NO koop</th></tr></thead>
+    <thead><tr><th>Bracket</th><th>YES koop</th><th>NO koop</th>${extraCol ? `<th>${extraCol.head}</th>` : ''}</tr></thead>
     <tbody>${rows.map(({ b, opp }) => `<tr class="${opp ? 'kalshi-row-opp' : ''}">
       <td>${esc(b.label || fmt(b.floor_strike))}${opp ? ` <span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span>` : ''}</td>
       <td>${price(b.yes_ask)}</td>
       <td>${price(b.no_ask)}</td>
+      ${extraCol ? `<td>${price(extraCol.cell(b))}</td>` : ''}
     </tr>`).join('')}</tbody>
   </table>`;
 }
