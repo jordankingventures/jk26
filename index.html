@@ -229,6 +229,9 @@
     .kalshi-side-no { color: var(--accent2); border: 1px solid var(--accent2); }
     .kalshi-table th, .kalshi-table td { padding: 5px 12px; font-size: 0.74rem; }
     .kalshi-row-opp td { background: var(--surface2); }
+    .kalshi-range-month { border-top: none; padding-top: 0; }
+    .kalshi-table th.kalshi-group, .kalshi-table td.kalshi-month-first { border-left: 1px solid var(--border); }
+    .kalshi-table th.kalshi-group { text-align: center; }
 
     /* Voorspelling-tab */
     .prediction-controls { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
@@ -423,19 +426,12 @@
 <div id="kalshi-view" style="display:none">
   <div class="log-wrap">
     <div class="log-header">
-      <h2>Kalshi &mdash; live marktprijzen (weekly views)</h2>
+      <h2>Kalshi &mdash; live marktprijzen (week &amp; maand)</h2>
     </div>
     <div id="kalshi-range" class="kalshi-range">Data ophalen...</div>
+    <div id="kalshi-m-range" class="kalshi-range kalshi-range-month"></div>
     <div id="kalshi-opportunities" class="kalshi-opportunities"></div>
     <div id="kalshi-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
-  </div>
-  <div class="log-wrap">
-    <div class="log-header">
-      <h2>Kalshi &mdash; maandmarkt</h2>
-    </div>
-    <div id="kalshi-m-range" class="kalshi-range"></div>
-    <div id="kalshi-m-opportunities" class="kalshi-opportunities"></div>
-    <div id="kalshi-m-body"></div>
   </div>
 </div>
 
@@ -1450,15 +1446,13 @@ async function loadKalshiState() {
 // zeker, en de vraag is alleen nog of de marktprijs dat al inprijst.
 function renderKalshiTab() {
   const rangeEl = document.getElementById('kalshi-range');
+  const mRangeEl = document.getElementById('kalshi-m-range');
   const oppEl = document.getElementById('kalshi-opportunities');
   const bodyEl = document.getElementById('kalshi-body');
-  const mSection = { rangeEl: document.getElementById('kalshi-m-range'), oppEl: document.getElementById('kalshi-m-opportunities'), bodyEl: document.getElementById('kalshi-m-body') };
 
   if (!appData || !appData.log || !appData.log.length) {
-    rangeEl.textContent = '';
-    oppEl.innerHTML = '';
+    rangeEl.textContent = ''; mRangeEl.innerHTML = ''; oppEl.innerHTML = '';
     bodyEl.innerHTML = '<div class="log-empty">Nog geen data.</div>';
-    mSection.rangeEl.textContent = ''; mSection.oppEl.innerHTML = ''; mSection.bodyEl.innerHTML = '';
     return;
   }
 
@@ -1477,11 +1471,9 @@ function renderKalshiTab() {
   // markt (bv. Drake), dan tonen we niets i.p.v. een verkeerde maand.
   const weekEnd = market?.close_time ? new Date(new Date(market.close_time).getTime() - 3 * 86400000).toISOString().slice(0, 7) : null;
   const monthly = (market?.monthly || []).find(m => m.month && m.month === weekEnd) || null;
-  const monthlyRow = monthly ? new Map(monthly.brackets.map(b => [b.floor_strike, b])) : new Map();
 
-  const weekDays = getWeekToDateTotals(appData.log);
-  const week = kalshiRange(weekDays, minFactor, maxFactor);
-  rangeEl.innerHTML = week.html('deze week');
+  const week = kalshiRange(getWeekToDateTotals(appData.log), minFactor, maxFactor);
+  rangeEl.innerHTML = `<span data-tooltip="Weekmarkt">📆 Week</span> &nbsp;` + week.html('deze week');
 
   if (kalshiMarkets?.fetched_at) {
     const ageMin = Math.max(0, Math.round((Date.now() - new Date(kalshiMarkets.fetched_at).getTime()) / 60000));
@@ -1490,29 +1482,24 @@ function renderKalshiTab() {
     rangeEl.innerHTML += ` &nbsp;<span class="${stale ? 'orders-err' : 'orders-ok'}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (ververst elke paar minuten; rood = ouder dan 30 min)">🕒 ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} &middot; ${ageTxt}</span>`;
   }
 
-  if (!market || !market.brackets || !market.brackets.length) {
-    oppEl.innerHTML = '';
-    bodyEl.innerHTML = '<div class="log-empty">Geen lopende Kalshi-markt gevonden voor deze artiest deze week.</div>';
+  // Maand: eigen range op basis van de hoogste eigen dag in die maand
+  let month = null;
+  if (monthly) {
+    month = kalshiRange(monthly.month ? getMonthToDateTotals(appData.log, monthly.month) : [], minFactor, maxFactor);
+    const monthLabel = new Date(monthly.month + '-15T12:00:00Z').toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    mRangeEl.innerHTML = `<span data-tooltip="Maandmarkt: hoogste dagtotaal in ${esc(monthLabel)}">🗓️ Maand</span> &nbsp;` + month.html('deze maand');
   } else {
-    // Extra kolom: prijs van dezelfde strike op de maandmarkt (waar die bestaat)
-    const monthCol = monthly ? { head: 'Maand YES', cell: b => monthlyRow.get(b.floor_strike)?.yes_ask } : null;
-    renderKalshiSection(oppEl, bodyEl, market.brackets, week, 'week', monthCol);
+    mRangeEl.innerHTML = market ? '<span class="neu">🗓️ Maand &mdash; geen lopende maandmarkt voor deze artiest</span>' : '';
   }
 
-  // Maandmarkt: eigen range op basis van de hoogste eigen dag in die maand
-  if (!monthly) {
-    mSection.rangeEl.innerHTML = market ? 'Geen lopende maandmarkt voor deze artiest.' : '';
-    mSection.oppEl.innerHTML = '';
-    mSection.bodyEl.innerHTML = '';
-  } else {
-    const monthDays = monthly.month ? getMonthToDateTotals(appData.log, monthly.month) : [];
-    const mo = kalshiRange(monthDays, minFactor, maxFactor);
-    const monthLabel = monthly.month
-      ? new Date(monthly.month + '-15T12:00:00Z').toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' })
-      : 'maand';
-    mSection.rangeEl.innerHTML = `<span data-tooltip="Maandmarkt: hoogste dagtotaal in ${esc(monthLabel)}">📅 ${esc(monthLabel)}</span> &nbsp;` + mo.html('deze maand');
-    renderKalshiSection(mSection.oppEl, mSection.bodyEl, monthly.brackets, mo, 'maand', null);
+  const weekBrackets = market?.brackets || [];
+  const monthBrackets = monthly?.brackets || [];
+  if (!weekBrackets.length && !monthBrackets.length) {
+    oppEl.innerHTML = '';
+    bodyEl.innerHTML = '<div class="log-empty">Geen lopende Kalshi-markt gevonden voor deze artiest.</div>';
+    return;
   }
+  renderKalshiTable(oppEl, bodyEl, weekBrackets, week, monthBrackets, month);
 }
 
 // Week-/maand-range: hoogste eigen-counter-dag in de periode x excl.-
@@ -1535,38 +1522,65 @@ function kalshiRange(days, minFactor, maxFactor) {
   };
 }
 
-// Kansen-tabel (brackets buiten je min-max) + volledige bracket-tabel.
-function renderKalshiSection(oppEl, bodyEl, brackets, range, periode, extraCol) {
+// Eén tabel voor week + maand: rij per strike (samenvoeging van beide
+// ladders). Brackets buiten je min-max krijgen een gekleurde YES/NO-prijs
+// op de kant die je in jouw model zou kopen; kansen-tabel erboven is de
+// gefilterde samenvatting daarvan.
+function renderKalshiTable(oppEl, bodyEl, weekBrackets, week, monthBrackets, month) {
   const price = v => v != null ? '$' + v.toFixed(2) : '—';
+  const oppFor = (b, range) => {
+    if (!b || !range || !range.known || b.floor_strike == null) return null;
+    if (b.floor_strike < range.min) return { side: 'YES', price: b.yes_ask };
+    if (b.floor_strike > range.max) return { side: 'NO', price: b.no_ask };
+    return null;
+  };
 
-  const rows = brackets.map(b => {
-    let opp = null;
-    if (range.known && b.floor_strike != null) {
-      if (b.floor_strike < range.min) opp = { side: 'YES', price: b.yes_ask };
-      else if (b.floor_strike > range.max) opp = { side: 'NO', price: b.no_ask };
-    }
-    return { b, opp };
-  });
-  const opportunities = rows.filter(r => r.opp);
+  const strikes = new Map();
+  for (const b of weekBrackets) strikes.set(b.floor_strike, { w: b });
+  for (const b of monthBrackets) strikes.set(b.floor_strike, { ...(strikes.get(b.floor_strike) || {}), m: b });
+  const rows = [...strikes.entries()].sort((x, y) => x[0] - y[0]).map(([strike, r]) => ({
+    strike,
+    label: (r.w || r.m).label || fmt(strike),
+    w: r.w, m: r.m,
+    wOpp: oppFor(r.w, week),
+    mOpp: oppFor(r.m, month),
+  }));
+  const hasMonth = monthBrackets.length > 0;
 
-  oppEl.innerHTML = opportunities.length
+  const pill = (opp) => `<span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span> ${price(opp.price)}`;
+  const opps = rows.filter(r => r.wOpp || r.mOpp);
+  const anyRange = week.known || (month && month.known);
+
+  oppEl.innerHTML = opps.length
     ? `<table class="log-table kalshi-table">
-        <thead><tr><th>Bracket</th><th>Kant</th><th>Vraagprijs</th></tr></thead>
-        <tbody>${opportunities.map(({ b, opp }) => `<tr class="kalshi-row-opp">
-          <td>${esc(b.label || fmt(b.floor_strike))}</td>
-          <td><span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span></td>
-          <td>${price(opp.price)}</td>
+        <thead><tr><th>Bracket</th><th>Week</th>${hasMonth ? '<th>Maand</th>' : ''}</tr></thead>
+        <tbody>${opps.map(r => `<tr class="kalshi-row-opp">
+          <td>${esc(r.label)}</td>
+          <td>${r.wOpp ? pill(r.wOpp) : '<span class="neu">—</span>'}</td>
+          ${hasMonth ? `<td>${r.mOpp ? pill(r.mOpp) : '<span class="neu">—</span>'}</td>` : ''}
         </tr>`).join('')}</tbody>
       </table>`
-    : (range.known ? `<div class="kalshi-opp-empty">Geen brackets buiten je ${periode}-range gevonden -- alle strikes vallen momenteel binnen je min-max.</div>` : '');
+    : (anyRange ? '<div class="kalshi-opp-empty">Geen brackets buiten je range gevonden -- alle strikes vallen momenteel binnen je min-max.</div>' : '');
+
+  // Prijs-cel: gekleurd als dit de kant is die je volgens je range zou kopen
+  const cell = (b, opp, side) => {
+    if (!b) return '<span class="neu">—</span>';
+    const v = side === 'YES' ? b.yes_ask : b.no_ask;
+    return opp && opp.side === side
+      ? `<span class="kalshi-side kalshi-side-${side.toLowerCase()}">${price(v)}</span>`
+      : price(v);
+  };
 
   bodyEl.innerHTML = `<table class="log-table kalshi-table">
-    <thead><tr><th>Bracket</th><th>YES koop</th><th>NO koop</th>${extraCol ? `<th>${extraCol.head}</th>` : ''}</tr></thead>
-    <tbody>${rows.map(({ b, opp }) => `<tr class="${opp ? 'kalshi-row-opp' : ''}">
-      <td>${esc(b.label || fmt(b.floor_strike))}${opp ? ` <span class="kalshi-side kalshi-side-${opp.side.toLowerCase()}">${opp.side}</span>` : ''}</td>
-      <td>${price(b.yes_ask)}</td>
-      <td>${price(b.no_ask)}</td>
-      ${extraCol ? `<td>${price(extraCol.cell(b))}</td>` : ''}
+    <thead>
+      <tr><th rowspan="2">Bracket</th><th class="kalshi-group" colspan="2">Week</th>${hasMonth ? '<th class="kalshi-group" colspan="2">Maand</th>' : ''}</tr>
+      <tr><th class="kalshi-group">YES</th><th>NO</th>${hasMonth ? '<th class="kalshi-group">YES</th><th>NO</th>' : ''}</tr>
+    </thead>
+    <tbody>${rows.map(r => `<tr class="${(r.wOpp || r.mOpp) ? 'kalshi-row-opp' : ''}">
+      <td>${esc(r.label)}</td>
+      <td class="kalshi-month-first">${cell(r.w, r.wOpp, 'YES')}</td>
+      <td>${cell(r.w, r.wOpp, 'NO')}</td>
+      ${hasMonth ? `<td class="kalshi-month-first">${cell(r.m, r.mOpp, 'YES')}</td><td>${cell(r.m, r.mOpp, 'NO')}</td>` : ''}
     </tr>`).join('')}</tbody>
   </table>`;
 }
