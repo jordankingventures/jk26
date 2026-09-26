@@ -219,62 +219,6 @@
     .orders-table th, .orders-table td { padding: 4px 12px; font-size: 0.72rem; }
     .orders-taken { color: var(--green); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
 
-
-    /* UI-versie-schakelaar */
-    .ui-switch { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
-    .ui-switch button { background: transparent; border: none; color: var(--muted); font-size: 0.7rem; font-weight: 700; padding: 4px 11px; cursor: pointer; }
-    .ui-switch button:hover { color: var(--text); }
-    .ui-switch button.active { background: var(--accent); color: #fff; }
-    body.ui-v2 #artist-name, body.ui-v2 #badge-updated { display: none; }
-
-    /* ===== UI versie 2 ===== */
-    .v2 .v2-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    .v2 .v2-nav { display: flex; gap: 6px; }
-    .v2 .v2-nav .tab { margin: 0; padding: 6px 16px; font-size: 0.8rem; }
-    .v2 .v2-status { font-size: 0.7rem; color: var(--muted); }
-    .v2 .v2-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 8px; }
-    .v2 .v2-seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
-    .v2 .v2-seg button { background: transparent; border: none; color: var(--muted); font-size: 0.68rem; font-weight: 700; padding: 4px 10px; cursor: pointer; }
-    .v2 .v2-seg button.active { background: var(--surface2); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
-    .v2 select { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 999px; font-size: 0.68rem; padding: 4px 8px; }
-    .v2 .v2-legend { font-size: 0.66rem; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
-    .v2 .v2-list { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-    .v2 .v2-opp { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--border); cursor: pointer; }
-    .v2 .v2-opp:first-child { border-top: none; }
-    .v2 .v2-opp:hover { background: var(--surface2); }
-    .v2 .v2-opp-name { font-size: 0.78rem; font-weight: 700; }
-    .v2 .v2-opp-sub { font-size: 0.66rem; color: var(--muted); }
-    .v2 .v2-opp-price { font-size: 0.78rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .v2 .v2-opp-win { text-align: right; font-size: 0.78rem; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; }
-    .v2 .v2-opp-win small { display: block; font-weight: 400; font-size: 0.62rem; color: var(--muted); }
-    .v2 .v2-more { width: 100%; padding: 9px; background: var(--surface2); border: none; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.72rem; cursor: pointer; }
-    .v2 .v2-empty { padding: 22px 16px; text-align: center; color: var(--muted); font-size: 0.8rem; }
-    .v2 .v2-artist { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; padding: 9px 12px 6px; }
-    .v2 .v2-artist-head { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-wrap: wrap; }
-    .v2 .v2-artist-head b { font-size: 0.82rem; }
-    .v2 .v2-range { font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-    .v2 .v2-counts { margin-left: auto; display: inline-flex; gap: 5px; }
-    .v2 .v2-chev { color: var(--muted); font-size: 0.7rem; width: 10px; }
-    .v2 .v2-strip { position: relative; height: 22px; margin: 6px 0 0; }
-    .v2 .v2-strip::before { content: ''; position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: var(--border); border-radius: 2px; }
-    .v2 .v2-band { position: absolute; top: 3px; height: 16px; background: rgba(124, 92, 252, 0.28); border: 1px solid var(--accent); border-radius: 4px; }
-    .v2 .v2-tick { position: absolute; top: 1px; width: 10px; height: 20px; margin-left: -5px; background: none; cursor: help; }
-    .v2 .v2-tick::before { content: ''; position: absolute; left: 3px; right: 3px; top: 0; bottom: 0; border-radius: 2px; background: #4a4a66; }
-    .v2 .v2-tick.yes::before { background: var(--green); }
-    .v2 .v2-tick.no::before { background: var(--accent2); }
-    .v2 .v2-axis { display: flex; justify-content: space-between; font-size: 0.58rem; color: var(--muted); margin-top: 1px; }
-    .v2 .v2-none { font-size: 0.68rem; color: var(--muted); padding: 6px 0 4px; }
-    .v2 .v2-detail { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-    .v2 .v2-detail h4 { font-size: 0.66rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 6px; }
-    .v2 .v2-bars { display: flex; align-items: flex-end; gap: 6px; height: 84px; margin-bottom: 12px; }
-    .v2 .v2-bar { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; font-size: 0.58rem; color: var(--muted); gap: 2px; }
-    .v2 .v2-bar i { display: block; width: 100%; background: var(--accent); opacity: 0.7; border-radius: 3px 3px 0 0; min-height: 2px; }
-    .v2 .v2-bar.top i { background: var(--green); opacity: 0.9; }
-    .v2 .v2-bar.today i { opacity: 0.4; }
-    .v2 .v2-bar.future i { background: var(--border); opacity: 1; }
-    .v2 .v2-links { display: flex; gap: 14px; margin-top: 8px; font-size: 0.7rem; }
-    .v2 .v2-links a, .v2 .v2-links button { color: var(--accent); background: none; border: none; cursor: pointer; font-size: 0.7rem; text-decoration: none; padding: 0; }
-
     /* Kalshi-tab */
     .kalshi-range { padding: 12px 16px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--border); }
     .kalshi-range b { color: var(--text); }
@@ -344,10 +288,6 @@
 <header>
   <h1><span id="artist-name">Taylor Swift</span><span class="subtitle">View Tracker</span></h1>
   <div class="header-right">
-    <div class="ui-switch" role="group" aria-label="UI-versie">
-      <button data-ui="1" onclick="setUiVersion('1')">UI 1</button>
-      <button data-ui="2" onclick="setUiVersion('2')">UI 2</button>
-    </div>
     <span class="badge" id="badge-updated">Laden...</span>
     <button class="info-btn" onclick="toggleInfoModal(true)" title="Hoe werkt deze tracker?">ℹ</button>
   </div>
@@ -372,7 +312,6 @@
   </div>
 </div>
 
-<div id="v1-root">
 <div id="artist-tabs">
   <div class="tabs-group">
     <div class="tabs-group-label">Fase 1</div>
@@ -504,9 +443,6 @@
     <div id="orders-body"><div class="log-empty">Data ophalen...</div></div>
   </div>
 </div>
-</div>
-
-<div id="v2-root" class="v2" style="display:none"></div>
 
 <script>
 const fmt = (n) => Number(n).toLocaleString('nl-NL');
@@ -1210,10 +1146,10 @@ function releaseExcludedDates(releaseDays) {
 // gebaseerd op de actuele predictionReleaseDays (moet dus na
 // computeReleaseDays() voor deze artiest aangeroepen worden). Valt terug op
 // de incl.-statistiek als uitsluiten niets overlaat (te weinig datapunten).
-function getUcgStats(artistKey, releaseDays = predictionReleaseDays) {
+function getUcgStats(artistKey) {
   const hist = analysisData?.ucg_factor?.[artistKey];
   if (!hist) return null;
-  const excluded = releaseExcludedDates(releaseDays);
+  const excluded = releaseExcludedDates(predictionReleaseDays);
   const allFactors   = hist.points.map(p => p.factor);
   const cleanFactors = hist.points.filter(p => !excluded.has(p.date)).map(p => p.factor);
   const incl = computeUcgStats(allFactors);
@@ -1720,298 +1656,6 @@ loadData();
 loadAnalysisData();
 loadKalshiMarkets();
 loadKalshiState();
-</script>
-<script>
-// ===================== UI versie 2 =====================
-// Schone, actiegerichte weergave bovenop dezelfde data als UI 1 (die
-// blijft ongewijzigd beschikbaar via de schakelaar rechtsboven).
-//  - Kansen: alle brackets (week + maand, alle artiesten) waar de markt
-//    buiten jouw min-max valt, gesorteerd op winst.
-//  - Artiesten: per artiest een balk met jouw range en de Kalshi-strikes.
-const V2_STORE = 'ytTracker.uiVersion';
-const v2 = {
-  data: {},          // artiestsleutel -> geladen artiest-JSON
-  rows: null,        // berekende rijen per artiest (opnieuw na elke refresh)
-  loading: false, done: 0,
-  view: 'kansen',    // 'kansen' | 'artiesten'
-  period: 'week',    // periode van de balken in 'artiesten'
-  f: { period: 'all', side: 'all', minWinst: 0.02, minBuffer: 0, sort: 'winst' },
-  showAll: false,
-  open: null,
-  timer: null,
-};
-
-function getUiVersion() {
-  try { return localStorage.getItem(V2_STORE) === '2' ? '2' : '1'; } catch (e) { return '1'; }
-}
-function setUiVersion(v) {
-  try { localStorage.setItem(V2_STORE, v); } catch (e) { /* zonder opslag werkt de schakelaar nog steeds voor deze sessie */ }
-  applyUiVersion(v);
-}
-function applyUiVersion(force) {
-  const v = force || getUiVersion();
-  document.body.classList.toggle('ui-v2', v === '2');
-  document.getElementById('v1-root').style.display = v === '2' ? 'none' : '';
-  document.getElementById('v2-root').style.display = v === '2' ? '' : 'none';
-  document.querySelectorAll('.ui-switch button').forEach(b => b.classList.toggle('active', b.dataset.ui === v));
-  clearInterval(v2.timer);
-  if (v === '2') {
-    v2Render();
-    v2Refresh();
-    v2.timer = setInterval(v2Refresh, 5 * 60 * 1000);
-  }
-}
-
-async function v2Refresh() {
-  if (v2.loading) return;
-  v2.loading = true; v2.done = 0;
-  const t = Date.now();
-  try {
-    const r = await fetch('data/kalshi_markets.json?t=' + t);
-    if (r.ok) kalshiMarkets = await r.json();
-  } catch (e) { /* oude data blijft staan */ }
-  if (!analysisData) await loadAnalysisData();
-  await Promise.all(Object.keys(ARTISTS).map(async key => {
-    try {
-      const r = await fetch(ARTISTS[key].dataFile + '?t=' + t);
-      if (r.ok) v2.data[key] = await r.json();
-    } catch (e) { /* vorige versie blijft staan */ }
-    v2.done++;
-    const el = document.getElementById('v2-progress');
-    if (el) el.textContent = `Laden ${v2.done}/${Object.keys(ARTISTS).length}...`;
-  }));
-  v2.rows = v2Compute();
-  v2.loading = false;
-  v2Render();
-}
-
-// Alles wat per artiest nodig is: range week/maand + kansen.
-function v2Compute() {
-  const todayKey = todayKeyNow();
-  return Object.keys(ARTISTS).map(key => {
-    const d = v2.data[key];
-    const label = ARTISTS[key].label;
-    if (!d || !d.log || !d.log.length) return { key, label, missing: true, opps: [] };
-    const market = kalshiMarkets?.artists?.[key] || null;
-    const releaseDays = computeReleaseDays(d.videos);
-    const stats = getUcgStats(key, releaseDays);
-    const minF = stats ? stats.excl.min : null;
-    const maxF = stats ? stats.excl.max : null;
-
-    const weekDays = getWeekToDateTotals(d.log);
-    const week = kalshiRange(weekDays, minF, maxF);
-    const weekEnd = market?.close_time ? new Date(new Date(market.close_time).getTime() - 3 * 86400000).toISOString().slice(0, 7) : null;
-    const monthly = (market?.monthly || []).find(m => m.month && m.month === weekEnd) || null;
-    const month = monthly ? kalshiRange(monthly.month ? getMonthToDateTotals(d.log, monthly.month) : [], minF, maxF) : null;
-    const recentRelease = [...releaseDays].some(r => r >= addDaysToDateKey(todayKey, -2) && r <= todayKey);
-
-    const opps = [];
-    const add = (period, brackets, range, event) => {
-      for (const b of brackets || []) {
-        const o = v2Opp(b, range);
-        if (o) opps.push({ key, artist: label, period, b, event, ...o });
-      }
-    };
-    add('week', market?.brackets, week, market?.event_ticker);
-    if (monthly) add('month', monthly.brackets, month, monthly.event_ticker);
-    return { key, label, market, monthly, week, month, weekDays, recentRelease, opps };
-  });
-}
-
-// Buiten je min-max: aan die kant is de uitkomst volgens jouw model
-// praktisch zeker. winst = 1 - vraagprijs (per contract), buffer = hoe ver
-// (relatief) de strike buiten je range ligt.
-function v2Opp(b, range) {
-  if (!range || !range.known || b.floor_strike == null) return null;
-  if (b.floor_strike < range.min) {
-    if (b.yes_ask == null) return null;
-    return { side: 'YES', ask: b.yes_ask, winst: 1 - b.yes_ask, buffer: (range.min - b.floor_strike) / range.min };
-  }
-  if (b.floor_strike > range.max) {
-    if (b.no_ask == null) return null;
-    return { side: 'NO', ask: b.no_ask, winst: 1 - b.no_ask, buffer: (b.floor_strike - range.max) / range.max };
-  }
-  return null;
-}
-
-const v2M = n => (n / 1e6).toFixed(n >= 1e7 ? 1 : 2).replace('.', ',') + 'M';
-const v2Cents = n => Math.round(n * 100) + '¢';
-const v2Pct = n => (n * 100).toFixed(1).replace('.', ',') + '%';
-const v2Pill = side => `<span class="kalshi-side kalshi-side-${side.toLowerCase()}">${side}</span>`;
-
-function v2KalshiUrl(period, event) {
-  const ev = String(event || '').toLowerCase();
-  return period === 'week'
-    ? `https://kalshi.com/markets/kxytviewsw/highest-daily-view-count-this-week/${ev}`
-    : `https://kalshi.com/markets/kxytviewshigh/highest-daily-views-in-time-period/${ev}`;
-}
-
-function v2Set(path, value) {
-  const [a, b] = path.split('.');
-  if (b) v2[a][b] = value; else v2[a] = value;
-  v2.showAll = false;
-  v2Render();
-}
-function v2Seg(path, current, options) {
-  return `<span class="v2-seg">${options.map(([val, txt]) => `<button class="${String(val) === String(current) ? 'active' : ''}" onclick="v2Set('${path}', ${typeof val === 'number' ? val : `'${val}'`})">${txt}</button>`).join('')}</span>`;
-}
-function v2Select(path, current, options) {
-  return `<select onchange="v2Set('${path}', Number(this.value))">${options.map(([val, txt]) => `<option value="${val}" ${val === current ? 'selected' : ''}>${txt}</option>`).join('')}</select>`;
-}
-function v2OpenArtist(key) {
-  v2.view = 'artiesten'; v2.open = key; v2Render();
-  const el = document.getElementById('v2a-' + key);
-  if (el) el.scrollIntoView({ block: 'start' });
-}
-function v2Toggle(key) { v2.open = v2.open === key ? null : key; v2Render(); }
-function v2ToV1(key) { setUiVersion('1'); switchArtist(key); }
-
-function v2Render() {
-  const root = document.getElementById('v2-root');
-  if (!root) return;
-  const ready = v2.rows && kalshiMarkets;
-
-  let status = '';
-  if (kalshiMarkets?.fetched_at) {
-    const ageMin = Math.max(0, Math.round((Date.now() - new Date(kalshiMarkets.fetched_at).getTime()) / 60000));
-    const ageTxt = ageMin < 60 ? `${ageMin} min` : `${Math.floor(ageMin / 60)} u ${ageMin % 60} min`;
-    status = `<span class="${ageMin > 30 ? 'orders-err' : 'orders-ok'}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (rood = ouder dan 30 min). Deze pagina ververst zichzelf elke 5 min.">🕒 ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} &middot; ${ageTxt} geleden</span>`;
-  }
-  const nav = `<div class="v2-nav">
-      <button class="tab ${v2.view === 'kansen' ? 'active' : ''}" onclick="v2Set('view','kansen')">Kansen</button>
-      <button class="tab ${v2.view === 'artiesten' ? 'active' : ''}" onclick="v2Set('view','artiesten')">Artiesten</button>
-    </div>`;
-  const top = `<div class="v2-top">${nav}<span class="v2-status">${status}</span></div>`;
-
-  if (!ready) {
-    root.innerHTML = top + `<div class="v2-list"><div class="v2-empty" id="v2-progress">Laden ${v2.done}/${Object.keys(ARTISTS).length}...</div></div>`;
-    return;
-  }
-  root.innerHTML = top + (v2.view === 'kansen' ? v2KansenHtml() : v2ArtiestenHtml());
-}
-
-function v2KansenHtml() {
-  const f = v2.f;
-  let list = v2.rows.flatMap(r => r.opps.map(o => ({ ...o, recent: r.recentRelease })));
-  const total = list.length;
-  list = list.filter(o =>
-    (f.period === 'all' || o.period === f.period) &&
-    (f.side === 'all' || o.side === f.side) &&
-    o.winst >= f.minWinst - 1e-9 &&
-    o.buffer * 100 >= f.minBuffer);
-  list.sort((a, b) => f.sort === 'buffer'
-    ? (b.buffer - a.buffer) || (b.winst - a.winst)
-    : (b.winst - a.winst) || (b.buffer - a.buffer));
-
-  const filters = `<div class="v2-filters">
-      ${v2Seg('f.period', f.period, [['all', 'Alles'], ['week', 'Week'], ['month', 'Maand']])}
-      ${v2Seg('f.side', f.side, [['all', 'YES + NO'], ['YES', 'YES'], ['NO', 'NO']])}
-      ${v2Select('f.minWinst', f.minWinst, [[0.01, 'winst ≥ 1¢'], [0.02, 'winst ≥ 2¢'], [0.05, 'winst ≥ 5¢'], [0.1, 'winst ≥ 10¢'], [0.25, 'winst ≥ 25¢']])}
-      ${v2Select('f.minBuffer', f.minBuffer, [[0, 'buffer ≥ 0%'], [2, 'buffer ≥ 2%'], [5, 'buffer ≥ 5%'], [10, 'buffer ≥ 10%']])}
-      ${v2Seg('f.sort', f.sort, [['winst', 'Sorteer: winst'], ['buffer', 'buffer']])}
-    </div>`;
-
-  const legend = `<div class="v2-legend">${v2Pill('YES')} / ${v2Pill('NO')} = de kant die je volgens je range zou kopen. <b>Winst</b> = 100¢ &minus; prijs. <b>Buffer</b> = hoe ver de strike buiten je min&ndash;max ligt (groter = veiliger). 🎵 = recente release, UCG-range minder betrouwbaar. Klik een rij voor details.</div>`;
-
-  if (!list.length) {
-    return filters + legend + `<div class="v2-list"><div class="v2-empty">${total ? 'Geen kansen met deze filters.' : 'Geen brackets buiten je range gevonden.'}</div></div>`;
-  }
-  const LIMIT = 30;
-  const shown = v2.showAll ? list : list.slice(0, LIMIT);
-  const rows = shown.map(o => `<div class="v2-opp" onclick="v2OpenArtist('${o.key}')">
-      <div>
-        <div class="v2-opp-name">${esc(o.artist)}${o.recent ? ' <span data-tooltip="' + esc(RELEASE_DAY_TOOLTIP) + '">🎵</span>' : ''}</div>
-        <div class="v2-opp-sub">${o.period === 'week' ? 'Week' : 'Maand'} &middot; ${esc(o.b.label || v2M(o.b.floor_strike))}</div>
-      </div>
-      <div class="v2-opp-price">${v2Pill(o.side)} $${o.ask.toFixed(2)}</div>
-      <div class="v2-opp-win">+${v2Cents(o.winst)}<small>buffer ${v2Pct(o.buffer)}</small></div>
-    </div>`).join('');
-  const more = list.length > LIMIT && !v2.showAll
-    ? `<button class="v2-more" onclick="v2.showAll=true;v2Render()">Toon alle ${list.length} kansen</button>` : '';
-  return filters + legend + `<div class="v2-list">${rows}${more}</div>`;
-}
-
-function v2Strip(range, brackets, period) {
-  if (!brackets || !brackets.length) return '<div class="v2-none">Geen lopende markt</div>';
-  const vals = brackets.map(b => b.floor_strike).filter(v => v != null);
-  if (range && range.known) vals.push(range.min, range.max);
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  const pad = (hi - lo) * 0.04 || hi * 0.02;
-  lo -= pad; hi += pad;
-  const pos = v => (((v - lo) / (hi - lo)) * 100).toFixed(2);
-
-  const band = range && range.known
-    ? `<div class="v2-band" style="left:${pos(range.min)}%;width:${(pos(range.max) - pos(range.min)).toFixed(2)}%" data-tooltip="Jouw range: ${v2M(range.min)} &ndash; ${v2M(range.max)}"></div>` : '';
-  const ticks = brackets.filter(b => b.floor_strike != null).map(b => {
-    const o = v2Opp(b, range);
-    const tip = `${b.label || v2M(b.floor_strike)} · YES $${b.yes_ask != null ? b.yes_ask.toFixed(2) : '—'} / NO $${b.no_ask != null ? b.no_ask.toFixed(2) : '—'}` + (o ? ` → koop ${o.side} (+${v2Cents(o.winst)})` : '');
-    return `<span class="v2-tick ${o ? o.side.toLowerCase() : ''}" style="left:${pos(b.floor_strike)}%" data-tooltip="${esc(tip)}"></span>`;
-  }).join('');
-  return `<div class="v2-strip">${band}${ticks}</div><div class="v2-axis"><span>${v2M(lo)}</span>${range && range.known ? '' : '<span>geen range beschikbaar</span>'}<span>${v2M(hi)}</span></div>`;
-}
-
-function v2ArtiestenHtml() {
-  const p = v2.period;
-  const rows = v2.rows.map(r => {
-    const range = p === 'week' ? r.week : r.month;
-    const brackets = p === 'week' ? r.market?.brackets : r.monthly?.brackets;
-    const mine = r.opps.filter(o => o.period === p);
-    return { r, range, brackets, yes: mine.filter(o => o.side === 'YES').length, no: mine.filter(o => o.side === 'NO').length };
-  }).sort((a, b) => (b.yes + b.no) - (a.yes + a.no) || a.r.label.localeCompare(b.r.label));
-
-  const bar = `<div class="v2-filters">${v2Seg('period', p, [['week', 'Week'], ['month', 'Maand']])}</div>
-    <div class="v2-legend">Paarse balk = jouw min&ndash;max. Streepjes = Kalshi-strikes: ${v2Pill('YES')} links van je range (koop YES), ${v2Pill('NO')} rechts (koop NO), grijs = binnen je range. Hover voor prijzen; klik een artiest voor details.</div>`;
-
-  const html = rows.map(({ r, range, brackets, yes, no }) => {
-    if (r.missing) return `<div class="v2-artist"><div class="v2-artist-head"><b>${esc(r.label)}</b><span class="v2-range">data laden...</span></div></div>`;
-    const open = v2.open === r.key;
-    const counts = (yes ? v2Pill('YES').replace('>YES<', `>${yes} YES<`) : '') + (no ? v2Pill('NO').replace('>NO<', `>${no} NO<`) : '');
-    const rangeTxt = range && range.known ? `📊 ${v2M(range.min)} &ndash; ${v2M(range.max)}` : 'geen range';
-    return `<div class="v2-artist" id="v2a-${r.key}">
-      <div class="v2-artist-head" onclick="v2Toggle('${r.key}')">
-        <span class="v2-chev">${open ? '▾' : '▸'}</span><b>${esc(r.label)}</b>
-        ${r.recentRelease ? `<span data-tooltip="${esc(RELEASE_DAY_TOOLTIP)}">🎵</span>` : ''}
-        <span class="v2-range">${rangeTxt}</span>
-        <span class="v2-counts">${counts}</span>
-      </div>
-      ${v2Strip(range, brackets, p)}
-      ${open ? v2DetailHtml(r) : ''}
-    </div>`;
-  }).join('');
-  return bar + html;
-}
-
-function v2DetailHtml(r) {
-  // Eigen counter per weekdag (ma-zo) -- de hoogste is de basis van je range
-  const names = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-  const days = r.weekDays;
-  const max = Math.max(...days.map(d => d.total || 0), 1);
-  const topKey = days.filter(d => d.total != null).reduce((a, b) => (a && a.total >= b.total ? a : b), null)?.key;
-  const bars = names.map((n, i) => {
-    const d = days[i];
-    if (!d || d.total == null) return `<div class="v2-bar future"><span>&nbsp;</span><i style="height:2px"></i><span>${n}</span></div>`;
-    const cls = d.key === topKey ? 'top' : (d.isToday ? 'today' : '');
-    return `<div class="v2-bar ${cls}"><span>${v2M(d.total)}</span><i style="height:${Math.max(3, (d.total / max) * 56).toFixed(0)}px"></i><span>${n}</span></div>`;
-  }).join('');
-
-  const tmpOpp = document.createElement('div'), tmpBody = document.createElement('div');
-  renderKalshiTable(tmpOpp, tmpBody, r.market?.brackets || [], r.week, r.monthly?.brackets || [], r.month);
-
-  const links = [
-    r.market?.event_ticker ? `<a href="${v2KalshiUrl('week', r.market.event_ticker)}" target="_blank" rel="noopener">Weekmarkt op Kalshi ↗</a>` : '',
-    r.monthly?.event_ticker ? `<a href="${v2KalshiUrl('month', r.monthly.event_ticker)}" target="_blank" rel="noopener">Maandmarkt ↗</a>` : '',
-    `<button onclick="v2ToV1('${r.key}')">Volledige details in UI 1 ›</button>`,
-  ].filter(Boolean).join('');
-  return `<div class="v2-detail">
-      <h4>Eigen counter deze week</h4>
-      <div class="v2-bars">${bars}</div>
-      <h4>Alle strikes</h4>
-      ${tmpBody.innerHTML || '<div class="v2-none">Geen lopende markt</div>'}
-      <div class="v2-links">${links}</div>
-    </div>`;
-}
-
-applyUiVersion();
 </script>
 </body>
 </html>
