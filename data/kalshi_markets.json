@@ -1,6 +1,6 @@
 {
   "series_ticker": "KXYTVIEWSW",
-  "fetched_at": "2026-09-26T00:40:31Z",
+  "fetched_at": "2026-09-26T00:45:29Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -31,8 +31,8 @@
           "floor_strike": 15000000,
           "label": "Above 15M",
           "yes_bid": 0.08,
-          "yes_ask": 0.25,
-          "no_bid": 0.75,
+          "yes_ask": 0.31,
+          "no_bid": 0.69,
           "no_ask": 0.92
         },
         {
@@ -361,8 +361,8 @@
           "floor_strike": 24000000,
           "label": "Above 24M",
           "yes_bid": 0.17,
-          "yes_ask": 0.46,
-          "no_bid": 0.54,
+          "yes_ask": 0.41,
+          "no_bid": 0.59,
           "no_ask": 0.83
         },
         {
@@ -485,8 +485,8 @@
           "floor_strike": 16500000,
           "label": "Above 16.5M",
           "yes_bid": 0.12,
-          "yes_ask": 0.39,
-          "no_bid": 0.61,
+          "yes_ask": 0.43,
+          "no_bid": 0.57,
           "no_ask": 0.88
         },
         {
@@ -636,8 +636,8 @@
           "floor_strike": 8000000,
           "label": "Above 8M",
           "yes_bid": 0.02,
-          "yes_ask": 0.13,
-          "no_bid": 0.87,
+          "yes_ask": 0.15,
+          "no_bid": 0.85,
           "no_ask": 0.98
         }
       ]
@@ -777,10 +777,10 @@
           "ticker": "KXYTVIEWSW-OLI26SEP27-7.0M",
           "floor_strike": 7000000,
           "label": "Above 7M",
-          "yes_bid": 0.28,
+          "yes_bid": 0.3,
           "yes_ask": 0.61,
           "no_bid": 0.39,
-          "no_ask": 0.72
+          "no_ask": 0.7
         },
         {
           "ticker": "KXYTVIEWSW-OLI26SEP27-7.5M",
@@ -856,10 +856,10 @@
           "ticker": "KXYTVIEWSW-TAT26SEP27-2.8M",
           "floor_strike": 2800000,
           "label": "Above 2.8M",
-          "yes_bid": 0.25,
+          "yes_bid": 0.2,
           "yes_ask": 0.82,
           "no_bid": 0.18,
-          "no_ask": 0.75
+          "no_ask": 0.8
         },
         {
           "ticker": "KXYTVIEWSW-TAT26SEP27-2.9M",
@@ -1305,8 +1305,8 @@
           "floor_strike": 22000000,
           "label": "Above 22M",
           "yes_bid": 0.04,
-          "yes_ask": 0.39,
-          "no_bid": 0.61,
+          "yes_ask": 0.23,
+          "no_bid": 0.77,
           "no_ask": 0.96
         },
         {
@@ -1447,8 +1447,8 @@
           "floor_strike": 10000000,
           "label": "Above 10M",
           "yes_bid": 0.04,
-          "yes_ask": 0.38,
-          "no_bid": 0.62,
+          "yes_ask": 0.32,
+          "no_bid": 0.68,
           "no_ask": 0.96
         },
         {
