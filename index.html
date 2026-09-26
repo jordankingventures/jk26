@@ -205,6 +205,22 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .err-txt { color: var(--accent2); font-weight: 600; margin-bottom: 6px; font-size: 0.85rem; }
 
+    /* Log-tab compacter: kleiner lettertype en minder padding (alleen in de Log-weergave) */
+    #log-view .log-table, #log-view table { font-size: 0.68rem; }
+    #log-view .log-table th, #log-view th { font-size: 0.58rem; padding: 4px 8px; }
+    #log-view .log-table td, #log-view td { padding: 3px 8px; }
+    #log-view .day-row td { padding: 4px 8px 3px; }
+    #log-view .day-label { font-size: 0.7rem; }
+    #log-view .day-chevron { font-size: 0.62rem; width: 12px; }
+    #log-view .day-badge { font-size: 0.52rem; padding: 0 5px; }
+    #log-view .est-tag { font-size: 0.52rem; padding: 0 5px; }
+    #log-view .midnight-row td { padding: 3px 8px; }
+    #log-view .thumb img { width: 44px; height: 25px; }
+    #log-view .video-title a { font-size: 0.68rem; }
+    #log-view .vid-date { font-size: 0.6rem; margin-top: 1px; }
+    #log-view .rank { font-size: 0.65rem; width: 24px; }
+    #log-view .log-header h2 { font-size: 0.72rem; }
+
     /* Orders-tab */
     .orders-ok { color: var(--green); }
     .orders-err { color: var(--accent2); }
@@ -735,11 +751,11 @@ function renderLog() {
     return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
   };
 
-  // Standaard: alleen vandaag uitgeklapt, oudere dagen/weken ingeklapt. Wordt
+  // Standaard: alle dagen (ook vandaag) en weken ingeklapt. Wordt
   // eenmalig bepaald en blijft daarna staan totdat de gebruiker zelf toggelt.
   if (collapsedDays === null) {
     const allKeys = [...new Set(log.map(e => ptDateKey(e.ts)))];
-    collapsedDays = new Set(allKeys.filter(k => k !== todayKey));
+    collapsedDays = new Set(allKeys); // ook vandaag standaard ingeklapt
   }
   if (collapsedWeeks === null) {
     collapsedWeeks = new Set(log.map(e => isoWeekKey(ptDateKey(e.ts))));
