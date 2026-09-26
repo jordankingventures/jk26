@@ -235,6 +235,26 @@
     .orders-table th, .orders-table td { padding: 4px 12px; font-size: 0.72rem; }
     .orders-taken { color: var(--green); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
 
+    /* UCG-grafieken (Voorspelling-tab) */
+    .ucg-chart-wrap { position: relative; padding: 4px 12px 10px; }
+    .ucg-chart-wrap h4 { font-size: 0.64rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 12px 0 2px; font-weight: 600; }
+    .ucg-svg { display: block; width: 100%; overflow: visible; }
+    .ucg-svg text { fill: var(--muted); font-size: 9.5px; font-family: inherit; }
+    .ucg-svg .grid { stroke: var(--border); stroke-width: 1; }
+    .ucg-svg .axis0 { stroke: var(--muted); stroke-width: 1; opacity: .6; }
+    .ucg-svg .mean { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+    .ucg-svg .line { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+    .ucg-svg .band { fill: var(--accent); opacity: .12; }
+    .ucg-svg .cross { stroke: var(--text); stroke-width: 1; opacity: .35; display: none; }
+    .ucg-tip { position: absolute; top: 0; left: 0; display: none; pointer-events: none; z-index: 6; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 0.66rem; line-height: 1.4; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+    .ucg-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.64rem; color: var(--muted); margin: 4px 0 2px; }
+    .ucg-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .ucg-acc { width: 100%; border-collapse: collapse; margin: 6px 0 2px; }
+    .ucg-acc th, .ucg-acc td { font-size: 0.68rem; padding: 3px 6px; text-align: right; border-bottom: 1px solid var(--border); }
+    .ucg-acc th:first-child, .ucg-acc td:first-child { text-align: left; }
+    .ucg-acc th { color: var(--muted); font-weight: 600; font-size: 0.6rem; text-transform: uppercase; }
+    .ucg-var { font-size: 0.7rem; margin: 6px 0 2px; }
+
     /* Kalshi-tab */
     .kalshi-range { padding: 12px 16px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--border); }
     .kalshi-range b { color: var(--text); }
@@ -429,6 +449,13 @@
       <input type="number" id="ucg-number" min="1" max="5" step="0.01" value="1" oninput="onUcgNumberInput()">
     </div>
     <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>UCG-factor: nauwkeurigheid &amp; variatie</h2>
+    </div>
+    <div id="ucg-chart" class="ucg-chart-wrap"><div class="log-empty">Data ophalen...</div></div>
   </div>
 
   <div class="log-wrap">
@@ -1234,6 +1261,7 @@ function renderPrediction() {
 
   renderPredictionDays();
   renderUcgHistory();
+  renderUcgChart();
 }
 
 function currentUcgFactor() {
@@ -1404,6 +1432,152 @@ function renderUcgHistory() {
     <tbody>${rows}</tbody>
   </table>`;
 }
+
+// ---- UCG-grafieken: hoe nauwkeurig is de factor-voorspelling? ----
+// Walk-forward: voor elke dag voorspellen we de Global Charts-waarde met het
+// gemiddelde van alle eerdere niet-release-dagen (min. 5), zoals je dat ook
+// echt zou doen. Afwijking = voorspeld / werkelijk - 1 (positief = te hoog
+// voorspeld). Zo zie je ook of de spreiding aan het toenemen is.
+function renderUcgChart() {
+  const el = document.getElementById('ucg-chart');
+  const stats = getUcgStats(activeArtist);
+  if (!stats || stats.hist.points.length < 6) {
+    el.innerHTML = '<div class="log-empty">Nog te weinig historische data voor een grafiek.</div>';
+    return;
+  }
+  const excl = stats.excluded;
+  const mean = stats.excl.avg, sd = stats.excl.stdev;
+  const P = stats.hist.points;
+  const pts = P.map((p, i) => {
+    const prior = P.slice(0, i).filter(q => !excl.has(q.date)).map(q => q.factor);
+    const m = prior.length >= 5 ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
+    return { ...p, excluded: excl.has(p.date), isRelease: predictionReleaseDays.has(p.date), pred: m, err: m == null ? null : m / p.factor - 1 };
+  });
+  const tag = p => p.isRelease ? ' &middot; 🎵 releasedag' : (p.excluded ? ' &middot; dag na release' : '');
+  const pct = (v, d = 1) => (v * 100).toFixed(d).replace('.', ',') + '%';
+  const shortDate = k => { const [, m, d] = k.split('-'); return `${+d}/${+m}`; };
+
+  // ---- accuraatheid-tabel ----
+  const withErr = pts.filter(p => p.err != null);
+  const mape = arr => arr.length ? arr.reduce((s, p) => s + Math.abs(p.err), 0) / arr.length : null;
+  const cell = v => v == null ? '<span class="neu">—</span>' : pct(v);
+  const l7 = withErr.slice(-7);
+  const worst = withErr.reduce((a, b) => (!a || Math.abs(b.err) > Math.abs(a.err) ? b : a), null);
+  const accTable = withErr.length
+    ? `<table class="ucg-acc"><thead><tr><th>Gem. afwijking</th><th>excl. release</th><th>incl. release</th></tr></thead><tbody>
+        <tr><td>Laatste 7 dagen</td><td>${cell(mape(l7.filter(p => !p.excluded)))}</td><td>${cell(mape(l7))}</td></tr>
+        <tr><td>Alle dagen (${withErr.length})</td><td>${cell(mape(withErr.filter(p => !p.excluded)))}</td><td>${cell(mape(withErr))}</td></tr>
+      </tbody></table>
+      <div class="ucg-var">Grootste afwijking: <b>${pct(worst.err)}</b> op ${esc(shortDate(worst.date))}${tag(worst)}</div>`
+    : '<div class="ucg-var neu">Nog te weinig dagen om de voorspelling te toetsen (min. 5 eerdere dagen nodig).</div>';
+
+  // ---- variatie: is de spreiding aan het toenemen? ----
+  const nonRel = pts.filter(p => !p.excluded);
+  const recent = nonRel.slice(-10);
+  let varTxt = '';
+  if (recent.length >= 6) {
+    const rs = computeUcgStats(recent.map(p => p.factor));
+    const ratio = rs.cv / stats.excl.cv;
+    const verdict = ratio > 1.3 ? '<span class="orders-err">toenemend ⚠️</span>' : ratio < 0.75 ? '<span class="orders-ok">afnemend</span>' : '<span class="orders-ok">stabiel</span>';
+    varTxt = `<div class="ucg-var">Spreiding (variatiecoëfficiënt): laatste ${recent.length} dagen <b>${rs.cv.toFixed(1).replace('.', ',')}%</b> vs. totaal <b>${stats.excl.cv.toFixed(1).replace('.', ',')}%</b> &rarr; ${verdict}</div>`;
+  }
+
+  const W = Math.max(280, (el.clientWidth || 600) - 24);
+  const t0 = new Date(pts[0].date + 'T12:00:00Z').getTime();
+  const t1 = new Date(pts[pts.length - 1].date + 'T12:00:00Z').getTime();
+  const padL = 34, padR = 8;
+  const xOf = d => padL + ((new Date(d + 'T12:00:00Z').getTime() - t0) / Math.max(1, t1 - t0)) * (W - padL - padR);
+  const xs = pts.map(p => xOf(p.date));
+
+  const xAxis = (H, padB) => {
+    const n = Math.max(2, Math.floor((W - padL) / 62));
+    const idx = [...new Set(Array.from({ length: n }, (_, k) => Math.round(k * (pts.length - 1) / (n - 1))))];
+    return idx.map(i => `<text x="${xs[i].toFixed(1)}" y="${H - padB + 13}" text-anchor="middle">${shortDate(pts[i].date)}</text>`).join('');
+  };
+
+  // Grafiek 1: factor per dag met gem. ± 1,5σ-band
+  const H1 = 150, top1 = 8, bot1 = 20;
+  const fvals = pts.map(p => p.factor).concat([mean - 1.5 * sd, mean + 1.5 * sd]);
+  let y0 = Math.min(...fvals), y1 = Math.max(...fvals);
+  const pad1 = (y1 - y0) * 0.08 || 0.02; y0 -= pad1; y1 += pad1;
+  const yF = v => top1 + (1 - (v - y0) / (y1 - y0)) * (H1 - top1 - bot1);
+  const grid1 = [0, 1, 2, 3].map(k => { const v = y0 + (y1 - y0) * k / 3; return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yF(v).toFixed(1)}" y2="${yF(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yF(v) + 3).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`; }).join('');
+  const dots1 = pts.map((p, i) => {
+    const out = !p.excluded && Math.abs(p.factor - mean) > 1.5 * sd;
+    const st = p.excluded ? 'fill:var(--bg);stroke:var(--muted);stroke-width:1.5' : out ? 'fill:var(--accent2)' : 'fill:var(--accent)';
+    return `<circle cx="${xs[i].toFixed(1)}" cy="${yF(p.factor).toFixed(1)}" r="${p.excluded || out ? 3.2 : 2.4}" style="${st}"/>`;
+  }).join('');
+  const svg1 = `<svg class="ucg-svg" id="ucg-svg1" width="${W}" height="${H1}" viewBox="0 0 ${W} ${H1}">
+      ${grid1}
+      <rect class="band" x="${padL}" y="${yF(mean + 1.5 * sd).toFixed(1)}" width="${W - padL - padR}" height="${(yF(mean - 1.5 * sd) - yF(mean + 1.5 * sd)).toFixed(1)}"/>
+      <line class="mean" x1="${padL}" x2="${W - padR}" y1="${yF(mean).toFixed(1)}" y2="${yF(mean).toFixed(1)}"/>
+      <polyline class="line" points="${pts.map((p, i) => xs[i].toFixed(1) + ',' + yF(p.factor).toFixed(1)).join(' ')}"/>
+      ${dots1}${xAxis(H1, bot1)}
+      <line class="cross" id="ucg-cross1" y1="${top1}" y2="${H1 - bot1}"/>
+    </svg>`;
+
+  // Grafiek 2: voorspelfout per dag (walk-forward)
+  const H2 = 130, top2 = 8, bot2 = 20;
+  const emax = Math.max(0.03, ...withErr.map(p => Math.abs(p.err))) * 1.1;
+  const yE = v => top2 + (1 - (v + emax) / (2 * emax)) * (H2 - top2 - bot2);
+  const bw = Math.max(2, Math.min(14, (W - padL - padR) / pts.length * 0.62));
+  const ma = mape(withErr.filter(p => !p.excluded));
+  const bars2 = pts.map((p, i) => {
+    if (p.err == null) return '';
+    const y = yE(Math.max(0, p.err)), h = Math.max(1, Math.abs(yE(p.err) - yE(0)));
+    return `<rect x="${(xs[i] - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="1" style="fill:${p.excluded ? 'var(--muted)' : 'var(--accent)'};opacity:${p.excluded ? 0.55 : 0.9}"/>`;
+  }).join('');
+  const refLines = ma == null ? '' : [ma, -ma].map(v => `<line class="mean" x1="${padL}" x2="${W - padR}" y1="${yE(v).toFixed(1)}" y2="${yE(v).toFixed(1)}"/>`).join('');
+  const grid2 = [-emax, 0, emax].map(v => `<text x="${padL - 4}" y="${(yE(v) + 3).toFixed(1)}" text-anchor="end">${v > 0 ? '+' : ''}${(v * 100).toFixed(0)}%</text>`).join('');
+  const svg2 = `<svg class="ucg-svg" id="ucg-svg2" width="${W}" height="${H2}" viewBox="0 0 ${W} ${H2}">
+      ${grid2}<line class="axis0" x1="${padL}" x2="${W - padR}" y1="${yE(0).toFixed(1)}" y2="${yE(0).toFixed(1)}"/>
+      ${refLines}${bars2}${xAxis(H2, bot2)}
+      <line class="cross" id="ucg-cross2" y1="${top2}" y2="${H2 - bot2}"/>
+    </svg>`;
+
+  el.innerHTML = `
+    ${accTable}${varTxt}
+    <h4>Factor per dag</h4>
+    <div class="ucg-legend"><span><i style="background:var(--accent)"></i>dag</span><span><i style="background:var(--accent2)"></i>buiten gem. &plusmn; 1,5&sigma;</span><span><i style="background:var(--bg);border:1.5px solid var(--muted)"></i>release / na release (niet in gem.)</span><span>vlak = gem. &plusmn; 1,5&sigma;</span></div>
+    ${svg1}
+    <h4>Voorspelfout per dag (voorspeld vs. werkelijk Global Charts)</h4>
+    <div class="ucg-legend"><span>boven 0 = te hoog voorspeld, onder 0 = te laag</span><span>stippellijnen = gem. afwijking (excl. release)</span></div>
+    ${svg2}
+    <div class="ucg-tip" id="ucg-tip"></div>`;
+
+  // hover / touch: dichtstbijzijnde dag
+  const tip = document.getElementById('ucg-tip');
+  const show = (svg, cross, clientX, clientY) => {
+    const r = svg.getBoundingClientRect(), box = el.getBoundingClientRect();
+    const x = clientX - r.left;
+    let best = 0, bd = 1e9;
+    xs.forEach((xx, i) => { const d = Math.abs(xx - x); if (d < bd) { bd = d; best = i; } });
+    const p = pts[best];
+    cross.style.display = 'block';
+    cross.setAttribute('x1', xs[best]); cross.setAttribute('x2', xs[best]);
+    tip.innerHTML = `<b>${esc(shortDate(p.date))}</b>${tag(p)}<br>factor ${p.factor.toFixed(3)} &middot; eigen ${fmt(p.own_counter)} &middot; GC ${fmt(p.global_charts)}`
+      + (p.err != null ? `<br>voorspeld ${p.pred.toFixed(3)} &rarr; afwijking ${p.err > 0 ? '+' : ''}${pct(p.err)}` : '<br><span class="neu">geen voorspelling (te weinig eerdere dagen)</span>');
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(xs[best] + 12 + (r.left - box.left), box.width - tw - 4)) + 'px';
+    tip.style.top = Math.max(0, clientY - box.top - tip.offsetHeight - 10) + 'px';
+  };
+  const hide = () => { tip.style.display = 'none'; document.querySelectorAll('#ucg-chart .cross').forEach(c => c.style.display = 'none'); };
+  [['ucg-svg1', 'ucg-cross1'], ['ucg-svg2', 'ucg-cross2']].forEach(([sid, cid]) => {
+    const svg = document.getElementById(sid), cross = document.getElementById(cid);
+    svg.addEventListener('mousemove', e => show(svg, cross, e.clientX, e.clientY));
+    svg.addEventListener('mouseleave', hide);
+    svg.addEventListener('touchstart', e => show(svg, cross, e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    svg.addEventListener('touchmove', e => show(svg, cross, e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  });
+}
+
+let ucgChartResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (activeView !== 'prediction') return;
+  clearTimeout(ucgChartResizeTimer);
+  ucgChartResizeTimer = setTimeout(renderUcgChart, 150);
+});
 
 function toggleUcgOlder() {
   collapsedUcgOlder = !collapsedUcgOlder;
