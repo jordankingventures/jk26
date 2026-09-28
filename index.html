@@ -462,6 +462,13 @@
 
   <div class="log-wrap">
     <div class="log-header">
+      <h2>Weekpatroon &amp; gecombineerde voorspelling</h2>
+    </div>
+    <div id="weekday-chart"><div class="log-empty">Data ophalen...</div></div>
+  </div>
+
+  <div class="log-wrap">
+    <div class="log-header">
       <h2>UCG-factor: nauwkeurigheid &amp; variatie</h2>
     </div>
     <div id="ucg-chart" class="ucg-chart-wrap"><div class="log-empty">Data ophalen...</div></div>
@@ -1287,6 +1294,7 @@ function renderPrediction() {
   renderPredictionDays();
   renderUcgHistory();
   renderUcgChart();
+  renderWeekdayPrediction();
 }
 
 function currentUcgFactor() {
@@ -1390,6 +1398,163 @@ function computeUcgStats(factors) {
     min: Math.min(...factors), max: Math.max(...factors),
     ciLow: avg - 1.5 * stdev, ciHigh: avg + 1.5 * stdev,
   };
+}
+
+// ---- Weekpatroon-voorspelling: vrijdag schatten uit eerdere dagen dezelfde
+// week, los van de UCG-factor-methode. Idee: binnen een schone (niet-
+// release-)week correleert elke doordeweekse Global Charts-waarde sterk met
+// de vrijdag-waarde van diezelfde week. Getoetst op 28 sep 2026 over alle 16
+// artiesten (61 schone weken, releaseweken uitgesloten met hetzelfde -1..+3-
+// venster als de UCG-factor): r > 0,99 voor elke dag, en de band wordt
+// smaller naarmate de week vordert (maandag CV ~5%, donderdag CV ~3%). De
+// gepoolde factoren hieronder zijn dat totaalresultaat; zodra een artiest
+// zelf genoeg schone weken heeft, gebruiken we liever zijn eigen factor --
+// sommige artiesten (Wallen, YoungBoy) hebben een veel sterkere vrijdagpiek
+// dan andere (Ariana, Taylor, Tate McRae).
+const WEEKDAY_LABELS = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag'];
+const WEEKDAY_POOLED_FACTOR = [
+  { factor: 1.108, lo: 1.02, hi: 1.19 }, // maandag -> vrijdag
+  { factor: 1.088, lo: 1.02, hi: 1.17 }, // dinsdag -> vrijdag
+  { factor: 1.078, lo: 1.01, hi: 1.15 }, // woensdag -> vrijdag
+  { factor: 1.049, lo: 1.00, hi: 1.11 }, // donderdag -> vrijdag
+];
+const WD_MIN_ARTIST_WEEKS = 4; // minimum eigen schone weken voordat we de gepoolde factor loslaten
+
+function mondayKeyOf(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=zo..6=za
+  return addDaysToDateKey(dateKey, -((dow + 6) % 7));
+}
+
+// Per artiest, per weekdag (ma..do) de historische ratio vrijdag/dag_i over
+// alle schone weken -- valt terug op de gepoolde factor zolang er te weinig
+// eigen weken zijn.
+function weekdayFactorStats(artistKey) {
+  const hist = analysisData?.ucg_factor?.[artistKey];
+  if (!hist) return WEEKDAY_POOLED_FACTOR.map(f => ({ ...f, n: 0, own: false }));
+  const gcByDate = new Map(hist.points.map(p => [p.date, p.global_charts]));
+  const excluded = releaseExcludedDates(predictionReleaseDays);
+  const ratiosByWeekday = [[], [], [], []];
+
+  const mondays = new Set(hist.points.map(p => mondayKeyOf(p.date)));
+  for (const monday of mondays) {
+    const days = [0, 1, 2, 3, 4].map(i => addDaysToDateKey(monday, i));
+    const friday = days[4];
+    if (!gcByDate.has(friday) || days.some(d => excluded.has(d))) continue;
+    const fv = gcByDate.get(friday);
+    for (let i = 0; i < 4; i++) {
+      const dv = gcByDate.get(days[i]);
+      if (dv) ratiosByWeekday[i].push(fv / dv);
+    }
+  }
+
+  return ratiosByWeekday.map((ratios, i) => {
+    if (ratios.length >= WD_MIN_ARTIST_WEEKS) {
+      const s = computeUcgStats(ratios);
+      return { factor: s.avg, lo: s.ciLow, hi: s.ciHigh, n: s.n, own: true };
+    }
+    return { ...WEEKDAY_POOLED_FACTOR[i], n: ratios.length, own: false };
+  });
+}
+
+// Vrijdag-schatting voor de LOPENDE week, op basis van de laatst bekende
+// (niet-release-besmette) dag deze week. Is vrijdag zelf al gepubliceerd
+// door Global Charts, dan is er niets te voorspellen -- dat cijfer staat al
+// vast.
+function weekdayPredictionRange(artistKey) {
+  const hist = analysisData?.ucg_factor?.[artistKey];
+  if (!hist) return { known: false, min: null, max: null, meta: '', tooltip: '' };
+  const gcByDate = new Map(hist.points.map(p => [p.date, p.global_charts]));
+  const excluded = releaseExcludedDates(predictionReleaseDays);
+  const monday = mondayKeyOf(todayKeyNow());
+  const days = [0, 1, 2, 3, 4].map(i => addDaysToDateKey(monday, i));
+  const fridayKey = days[4];
+
+  if (gcByDate.has(fridayKey)) {
+    const v = gcByDate.get(fridayKey);
+    return {
+      known: true, settled: true, min: v, max: v,
+      meta: 'al bekend via Global Charts',
+      tooltip: `Vrijdag ${ptDateLabel(fridayKey + 'T12:00:00Z')} is al gepubliceerd door Global Charts -- geen voorspelling meer nodig.`,
+    };
+  }
+
+  const weekContaminated = days.some(d => excluded.has(d));
+  const wdStats = weekdayFactorStats(artistKey);
+  let idx = -1;
+  for (let i = 3; i >= 0; i--) {
+    if (gcByDate.has(days[i]) && !excluded.has(days[i])) { idx = i; break; }
+  }
+  if (idx === -1) {
+    return {
+      known: false, settled: false, min: null, max: null, meta: '', tooltip: '',
+      note: weekContaminated ? 'Deze week bevat een releasedag -- weekpatroon-methode nog niet betrouwbaar.' : 'Nog geen enkele dag deze week bevestigd door Global Charts.',
+    };
+  }
+
+  const dv = gcByDate.get(days[idx]);
+  const f = wdStats[idx];
+  const dayLabel = new Date(days[idx] + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'long', timeZone: 'UTC' });
+  return {
+    known: true, settled: false,
+    min: dv * f.lo, max: dv * f.hi,
+    meta: `o.b.v. ${dayLabel} · ${f.own ? `eigen factor (n=${f.n})` : `gepoold over alle artiesten (n=${f.n})`}${weekContaminated ? ' · let op: releaseweek' : ''}`,
+    tooltip: `Vrijdag geschat als ${dayLabel.toLowerCase()}-waarde (${fmt(floor1000(dv))}) x ${f.factor.toFixed(3)} (${f.own ? 'eigen' : 'gepoolde'} historische ratio, n=${f.n} schone weken). Correlatie dag-vrijdag r > 0,99 over 61 schone weken (alle artiesten, getoetst 28 sep 2026).`,
+  };
+}
+
+// Combineert de weekpatroon-schatting met de bestaande UCG-factor-schatting
+// (kalshiWeekRange, zelfde methode als de Kalshi-tab) tot een smallere band
+// waar beide onafhankelijke methoden het over eens zijn.
+function combinedWeekRange(wd, ucg) {
+  if (wd?.settled) return wd;
+  if (!wd?.known && !ucg?.known) return { known: false, min: null, max: null, meta: '', tooltip: '' };
+  if (!wd?.known) return { ...ucg, meta: `${ucg.meta || ''} · alleen UCG-methode (weekpatroon: ${wd?.note || 'nog niet beschikbaar'})` };
+  if (!ucg?.known) return { ...wd, meta: `${wd.meta || ''} · alleen weekpatroon-methode` };
+
+  const overlap = Math.max(wd.min, ucg.min) <= Math.min(wd.max, ucg.max);
+  const min = overlap ? Math.max(wd.min, ucg.min) : Math.min(wd.min, ucg.min);
+  const max = overlap ? Math.min(wd.max, ucg.max) : Math.max(wd.max, ucg.max);
+  return {
+    known: true, settled: false, min, max,
+    meta: overlap ? 'doorsnede UCG- & weekpatroon-methode' : 'methoden wijken af -- brede band getoond',
+    tooltip: `UCG-methode: ${fmt(floor1000(ucg.min))}–${fmt(floor1000(ucg.max))} · Weekpatroon-methode: ${fmt(floor1000(wd.min))}–${fmt(floor1000(wd.max))}. ${overlap ? 'Doorsnede van beide onafhankelijke intervallen.' : 'Geen overlap tussen de twee methoden -- unie getoond i.p.v. een (te) smalle band.'}`,
+  };
+}
+
+function renderWeekdayPrediction() {
+  const el = document.getElementById('weekday-chart');
+  if (!el) return;
+  const hist = analysisData?.ucg_factor?.[activeArtist];
+  if (!hist || hist.points.length < 10) {
+    el.innerHTML = '<div class="log-empty">Nog te weinig Global Charts-geschiedenis voor deze methode (minimaal ~2 weken nodig).</div>';
+    return;
+  }
+
+  const wd = weekdayPredictionRange(activeArtist);
+  const stats = getUcgStats(activeArtist);
+  const ucgWeek = kalshiWeekRange(predictionDays, stats?.excl.min ?? null, stats?.excl.max ?? null);
+  const combined = combinedWeekRange(wd, ucgWeek);
+  const wdStats = weekdayFactorStats(activeArtist);
+
+  const factorRows = wdStats.map((f, i) => `<tr>
+      <td>${WEEKDAY_LABELS[i]}</td>
+      <td>${f.factor.toFixed(3)}</td>
+      <td>${f.lo.toFixed(2)}–${f.hi.toFixed(2)}</td>
+      <td>${f.n}${f.own ? '' : ' <span class="est-tag" title="Te weinig eigen schone weken voor deze artiest -- gepoolde factor over alle 16 artiesten gebruikt">gepoold</span>'}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="ucg-line">Combineert twee onafhankelijke methoden: de UCG-factor (eigen counter &times; historische ratio) en het weekpatroon (Global Charts-historie van eerdere dagen dezelfde week). Waar beide intervallen overlappen, ontstaat een smallere en betrouwbaardere band.</div>
+    ${kalshiRangeRow('Gecomb.', combined)}
+    ${kalshiRangeRow('Weekpatr.', wd)}
+    ${kalshiRangeRow('UCG', ucgWeek)}
+    <table class="log-table prediction-stats-table" style="margin-top:10px">
+      <thead><tr><th>Dag &rarr; vrijdag</th><th>Factor</th><th>Band (&plusmn;1,5&sigma;)</th><th>n</th></tr></thead>
+      <tbody>${factorRows}</tbody>
+    </table>
+    <div class="ucg-line neu" style="margin-top:6px">Gebaseerd op 61 schone (niet-release-)weken over alle 16 artiesten (getoetst 28 sep 2026), correlatie dag&rarr;vrijdag r &gt; 0,99. Releaseweken (dag -1 t/m +3 rond een nieuwe video) worden net als bij de UCG-factor uitgesloten.</div>
+  `;
 }
 
 function renderUcgHistory() {
