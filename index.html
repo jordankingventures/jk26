@@ -258,8 +258,15 @@
     .ucg-line b { color: var(--text); }
 
     /* Kalshi-tab */
-    .kalshi-range { padding: 12px 16px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--border); }
+    .kalshi-range { padding: 10px 16px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--border); }
     .kalshi-range b { color: var(--text); }
+    .kalshi-range-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 3px 10px; padding: 2px 0; }
+    .kalshi-range-label { flex: 0 0 auto; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); width: 46px; }
+    .kalshi-range-value { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .kalshi-range-meta { color: var(--muted); font-size: 0.7rem; }
+    .kalshi-range-settled { color: var(--muted); font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 6px; border: 1px solid var(--border); border-radius: 999px; }
+    .kalshi-fetched { font-size: 0.68rem; color: var(--muted); }
+    .kalshi-fetched.stale { color: var(--accent2); }
     .kalshi-opportunities { padding: 0 16px 4px; }
     .kalshi-opp-empty { padding: 12px 16px; color: var(--muted); font-size: 0.78rem; }
     .kalshi-side { font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.02em; }
@@ -1477,7 +1484,7 @@ function renderUcgChart() {
     const isDayBefore = !isRelease && predictionReleaseDays.has(addDaysToDateKey(p.date, 1));
     return { ...p, excluded: excl.has(p.date), isRelease, isDayBefore, pred: m, err: m == null ? null : m / p.factor - 1 };
   });
-  const tag = p => p.isRelease ? ' &middot; 🎵 releasedag' : (p.isDayBefore ? ' &middot; dag vóór release' : (p.excluded ? ' &middot; dag na release' : ''));
+  const tag = p => p.isRelease ? ' · 🎵 releasedag' : (p.isDayBefore ? ' · dag vóór release' : (p.excluded ? ' · dag na release' : ''));
   const p_tag = p => p.isRelease ? ' 🎵' : (p.isDayBefore ? ' (voor release)' : (p.excluded ? ' (na release)' : ''));
   const pct = (v, d = 1) => (v * 100).toFixed(d).replace('.', ',') + '%';
   const shortDate = k => { const [, m, d] = k.split('-'); return `${+d}/${+m}`; };
@@ -1491,8 +1498,8 @@ function renderUcgChart() {
   const accTable = withErr.length
     ? `<div class="ucg-line"><span data-tooltip="Gemiddelde absolute afwijking tussen voorspelde en werkelijke Global Charts (excl. release-dagen; tussen haakjes incl.)">🎯 Afwijking</span>
         7d <b>${cell(mape(l7.filter(p => !p.excluded)))}</b> <span class="neu">(${cell(mape(l7))})</span>
-        &middot; alle <b>${cell(mape(withErr.filter(p => !p.excluded)))}</b> <span class="neu">(${cell(mape(withErr))})</span>
-        &middot; max <b>${pct(worst.err)}</b> <span class="neu">${esc(shortDate(worst.date))}${p_tag(worst)}</span></div>`
+        · alle <b>${cell(mape(withErr.filter(p => !p.excluded)))}</b> <span class="neu">(${cell(mape(withErr))})</span>
+        · max <b>${pct(worst.err)}</b> <span class="neu">${esc(shortDate(worst.date))}${p_tag(worst)}</span></div>`
     : '<div class="ucg-line neu">Nog te weinig dagen om de voorspelling te toetsen (min. 5 eerdere dagen nodig).</div>';
 
   // ---- variatie: is de spreiding aan het toenemen? ----
@@ -1576,7 +1583,7 @@ function renderUcgChart() {
     const p = pts[best];
     cross.style.display = 'block';
     cross.setAttribute('x1', xs[best]); cross.setAttribute('x2', xs[best]);
-    tip.innerHTML = `<b>${esc(shortDate(p.date))}</b>${tag(p)}<br>factor ${p.factor.toFixed(3)} &middot; eigen ${fmt(p.own_counter)} &middot; GC ${fmt(p.global_charts)}`
+    tip.innerHTML = `<b>${esc(shortDate(p.date))}</b>${tag(p)}<br>factor ${p.factor.toFixed(3)} · eigen ${fmt(p.own_counter)} · GC ${fmt(p.global_charts)}`
       + (p.err != null ? `<br>voorspeld ${p.pred.toFixed(3)} &rarr; afwijking ${p.err > 0 ? '+' : ''}${pct(p.err)}` : '<br><span class="neu">geen voorspelling (te weinig eerdere dagen)</span>');
     tip.style.display = 'block';
     const tw = tip.offsetWidth;
@@ -1683,24 +1690,26 @@ function renderKalshiTab() {
   const weekEnd = market?.close_time ? new Date(new Date(market.close_time).getTime() - 3 * 86400000).toISOString().slice(0, 7) : null;
   const monthly = (market?.monthly || []).find(m => m.month && m.month === weekEnd) || null;
 
-  const week = kalshiRange(getWeekToDateTotals(appData.log), minFactor, maxFactor);
-  rangeEl.innerHTML = `<span data-tooltip="Weekmarkt">📆 Week</span> &nbsp;` + week.html('deze week');
-
+  const week = kalshiWeekRange(getWeekToDateTotals(appData.log), minFactor, maxFactor);
+  let statusHtml = '';
   if (kalshiMarkets?.fetched_at) {
     const ageMin = Math.max(0, Math.round((Date.now() - new Date(kalshiMarkets.fetched_at).getTime()) / 60000));
     const ageTxt = ageMin < 60 ? `${ageMin} min geleden` : `${Math.floor(ageMin / 60)} u ${ageMin % 60} min geleden`;
     const stale = ageMin > 30;
-    rangeEl.innerHTML += ` &nbsp;<span class="${stale ? 'orders-err' : 'orders-ok'}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (ververst elke paar minuten; rood = ouder dan 30 min)">🕒 ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} &middot; ${ageTxt}</span>`;
+    statusHtml = ` <span class="kalshi-fetched ${stale ? 'stale' : ''}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (ververst elke paar minuten)">Prijzen bijgewerkt ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} · ${ageTxt}</span>`;
   }
+  rangeEl.innerHTML = kalshiRangeRow('Week', week) + statusHtml;
 
-  // Maand: eigen range op basis van de hoogste eigen dag in die maand
+  // Maand: gebruikt voor alle al afgesloten dagen de officiele Global
+  // Charts-waarde (geen UCG-factor-onzekerheid nodig -- die dagen liggen al
+  // vast); alleen voor nog niet gepubliceerde/lopende dagen valt het terug
+  // op de eigen counter x UCG-factor-range, net als de week.
   let month = null;
   if (monthly) {
-    month = kalshiRange(monthly.month ? getMonthToDateTotals(appData.log, monthly.month) : [], minFactor, maxFactor);
-    const monthLabel = new Date(monthly.month + '-15T12:00:00Z').toLocaleDateString('nl-NL', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-    mRangeEl.innerHTML = `<span data-tooltip="Maandmarkt: hoogste dagtotaal in ${esc(monthLabel)}">🗓️ Maand</span> &nbsp;` + month.html('deze maand');
+    month = kalshiMonthRange(activeArtist, monthly.month, appData.log, minFactor, maxFactor);
+    mRangeEl.innerHTML = kalshiRangeRow('Maand', month);
   } else {
-    mRangeEl.innerHTML = market ? '<span class="neu">🗓️ Maand &mdash; geen lopende maandmarkt voor deze artiest</span>' : '';
+    mRangeEl.innerHTML = market ? '<div class="kalshi-range-row"><span class="kalshi-range-label">Maand</span><span class="neu">geen lopende maandmarkt voor deze artiest</span></div>' : '';
   }
 
   const weekBrackets = market?.brackets || [];
@@ -1713,24 +1722,79 @@ function renderKalshiTab() {
   renderKalshiTable(oppEl, bodyEl, weekBrackets, week, monthBrackets, month);
 }
 
-// Week-/maand-range: hoogste eigen-counter-dag in de periode x excl.-
-// releasedagen UCG-factor (min en max).
-function kalshiRange(days, minFactor, maxFactor) {
+// Eén rij-opmaak voor zowel de week- als de maand-range -- vaste label-
+// kolom, de range zelf, en een korte toelichting (bron/piekdag).
+function kalshiRangeRow(label, range) {
+  const value = !range.known
+    ? '<span class="neu">nog geen range beschikbaar</span>'
+    : range.settled
+    ? `<span class="kalshi-range-value">${fmt(floor1000(range.min))}</span> <span class="kalshi-range-settled" data-tooltip="Alle relevante dagen zijn al bekend via Global Charts -- dit cijfer staat vast">definitief</span>`
+    : `<span class="kalshi-range-value">${fmt(floor1000(range.min))} – ${fmt(floor1000(range.max))}</span>`;
+  const meta = range.known ? ` <span class="kalshi-range-meta" data-tooltip="${esc(range.tooltip || '')}">${range.meta || ''}</span>` : '';
+  return `<div class="kalshi-range-row"><span class="kalshi-range-label">${esc(label)}</span>${value}${meta}</div>`;
+}
+
+// Week-range: hoogste eigen-counter-dag deze week x excl.-releasedagen
+// UCG-factor (min en max) -- Global Charts heeft voor deze week nog geen
+// van de dagen definitief gepubliceerd, dus hier blijft de UCG-factor de
+// enige beschikbare methode.
+function kalshiWeekRange(days, minFactor, maxFactor) {
   const withTotal = days.filter(d => d.total != null);
   const highestDay = withTotal.length ? withTotal.reduce((a, b) => (b.total > a.total ? b : a)) : null;
   const min = (highestDay && minFactor != null) ? highestDay.total * minFactor : null;
   const max = (highestDay && maxFactor != null) ? highestDay.total * maxFactor : null;
   const known = min != null && max != null;
+  const shortDay = highestDay ? new Date(highestDay.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
   return {
-    min, max, known,
-    html: (periode) => {
-      if (!known) return `Nog niet genoeg data om een range voor ${periode} te berekenen.`;
-      const shortDay = new Date(highestDay.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
-      return `<span data-tooltip="Jouw verwachte hoogste dagtotaal ${periode} (min &ndash; max)">📊 <b>${fmt(floor1000(min))} &ndash; ${fmt(floor1000(max))}</b></span>`
-        + ` &nbsp;<span data-tooltip="Dag met de hoogste eigen counter ${periode}: ${esc(highestDay.label)}">🏆 ${esc(shortDay)}</span>`
-        + ` &nbsp;<span data-tooltip="UCG-factor min&ndash;max (excl. releasedagen) waarmee de eigen counter is omgerekend">⚙️ ${minFactor.toFixed(2)}&ndash;${maxFactor.toFixed(2)}</span>`;
-    },
+    min, max, known, settled: false,
+    meta: known ? `piekdag ${shortDay} · UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}` : '',
+    tooltip: known ? `Hoogste eigen-counter-dag deze week (${esc(highestDay.label)}) vermenigvuldigd met de UCG-factor-range (excl. releasedagen)` : '',
   };
+}
+
+// Maand-range: voor elke dag deze maand die al een officiele Global Charts-
+// waarde heeft (via analysis_data.json), gebruiken we die waarde direct --
+// geen schatting nodig. Alleen voor dagen die Global Charts nog niet
+// gepubliceerd heeft (de laatste dag of twee, zie fetch_global_charts.py se
+// venster) vallen we terug op eigen counter x UCG-factor. Het resultaat is
+// dus "minimaal de hoogste al bekende dag, mogelijk hoger als een nog niet
+// bevestigde dag daar overheen gaat".
+function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor) {
+  const histPoints = (analysisData?.ucg_factor?.[artistKey]?.points || []).filter(p => p.date.startsWith(monthKey));
+  let knownMax = null, knownDay = null;
+  for (const p of histPoints) {
+    if (knownMax == null || p.global_charts > knownMax) { knownMax = p.global_charts; knownDay = p.date; }
+  }
+  const knownDates = new Set(histPoints.map(p => p.date));
+
+  const monthDays = getMonthToDateTotals(log, monthKey).filter(d => d.total != null && !knownDates.has(d.key));
+  const openHighest = monthDays.length ? monthDays.reduce((a, b) => (b.total > a.total ? b : a)) : null;
+  const openMin = (openHighest && minFactor != null) ? openHighest.total * minFactor : null;
+  const openMax = (openHighest && maxFactor != null) ? openHighest.total * maxFactor : null;
+
+  const minCandidates = [knownMax, openMin].filter(v => v != null);
+  const maxCandidates = [knownMax, openMax].filter(v => v != null);
+  const known = minCandidates.length > 0;
+  const min = known ? Math.max(...minCandidates) : null;
+  const max = known ? Math.max(...maxCandidates) : null;
+  // "Definitief" zodra geen enkele nog-onbevestigde dag de bekende piek nog kan overtreffen.
+  const settled = known && (openMax == null || knownMax >= openMax);
+
+  const knownLabel = knownDay ? new Date(knownDay + 'T12:00:00Z').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : null;
+  let meta = '', tooltip = '';
+  if (known) {
+    if (settled) {
+      meta = `officiële Global Charts-piek, ${knownLabel}`;
+      tooltip = 'Hoogste al door Global Charts gepubliceerde dagtotaal deze maand -- geen schatting.';
+    } else if (knownMax != null) {
+      meta = `bekende piek ${knownLabel} · resterende dagen via UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}`;
+      tooltip = 'Ondergrens is de al bekende Global Charts-piek; bovengrens gaat ervan uit dat de nog niet gepubliceerde dag(en) die overtreffen.';
+    } else {
+      meta = `nog geen Global Charts-data deze maand · UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}`;
+      tooltip = 'Nog geen dag deze maand heeft een gepubliceerde Global Charts-waarde -- volledig geschat via eigen counter x UCG-factor.';
+    }
+  }
+  return { min, max, known, settled, meta, tooltip };
 }
 
 // Eén tabel voor week + maand: rij per strike (samenvoeging van beide
@@ -1848,15 +1912,15 @@ function renderOrders() {
     // Kansmodel-velden bestaan pas sinds de kansmodel-upgrade -- val voor oudere
     // (vlakke-prijs) records terug op de oude Min/Max-weergave.
     const model = day.mean_factor != null
-      ? `UCG gem <b>${day.mean_factor.toFixed(3)}</b> (&sigma; ${(day.std_factor / day.mean_factor * 100).toFixed(1)}%) &middot; risico &lt;${(day.risk_threshold * 100).toFixed(1)}%`
-      : `Min <b>${fmt(day.min_views)}</b> &middot; Max <b>${fmt(day.max_views)}</b>`;
+      ? `UCG gem <b>${day.mean_factor.toFixed(3)}</b> (&sigma; ${(day.std_factor / day.mean_factor * 100).toFixed(1)}%) · risico &lt;${(day.risk_threshold * 100).toFixed(1)}%`
+      : `Min <b>${fmt(day.min_views)}</b> · Max <b>${fmt(day.max_views)}</b>`;
 
     return `<div class="orders-day">
       <div class="orders-day-header" onclick="toggleOrderDay('${date}')">
         <span class="day-chevron">${isCollapsed ? '▸' : '▾'}</span>
         <strong>${esc(ptDateLabel(date + 'T12:00:00Z'))}</strong>
-        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> &middot; ${model}</span>
-        <span class="orders-day-meta">${day.strikes_quoted} strikes &middot; ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
+        <span class="orders-day-totals">Dagtotaal <span class="orders-day-total-value">${fmt(day.day_total)}</span> · ${model}</span>
+        <span class="orders-day-meta">${day.strikes_quoted} strikes · ${ptTimeLabel(day.quoted_at)} (UTC-8)</span>
       </div>
       ${table}
     </div>`;
