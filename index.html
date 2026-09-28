@@ -86,14 +86,10 @@
     }
     .log-header h2 { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
     .log-empty { padding: 16px; color: var(--muted); font-size: 0.8rem; }
-    /* Inklapbare .log-wrap-secties (als <details>) -- zelfde chevron-patroon
-       als de Video's-tabel hieronder, generiek gemaakt zodat beide het
-       hergebruiken. */
+    /* Inklapbare .log-wrap-secties (als <details>) -- geen chevron-icoon,
+       de hele header (summary) is gewoon klikbaar. */
     summary { list-style: none; cursor: pointer; }
     summary::-webkit-details-marker { display: none; }
-    summary.log-header { justify-content: flex-start; gap: 8px; }
-    .summary-chevron { display: inline-block; color: var(--muted); font-size: 0.7rem; transition: transform .15s; }
-    details[open] > summary .summary-chevron { transform: rotate(90deg); }
 
     #log-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .log-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
@@ -411,7 +407,6 @@
   <!-- Log -->
   <details class="log-wrap" open>
     <summary class="log-header">
-      <span class="summary-chevron">▸</span>
       <h2>Refresh log</h2>
     </summary>
     <div id="log-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
@@ -420,7 +415,6 @@
   <!-- Video table -->
   <details class="video-details" id="video-details">
     <summary class="video-summary">
-      <span class="summary-chevron">▸</span>
       <h2 id="vid-count-label">Video's</h2>
     </summary>
 
@@ -461,7 +455,6 @@
 <div id="prediction-view" style="display:none">
   <details class="log-wrap" open>
     <summary class="log-header">
-      <span class="summary-chevron">▸</span>
       <h2>Deze week (maandag t/m vandaag, UTC-8)</h2>
     </summary>
     <div class="prediction-controls">
@@ -474,7 +467,6 @@
 
   <details class="log-wrap" open>
     <summary class="log-header">
-      <span class="summary-chevron">▸</span>
       <h2>Deze week: bekend &amp; voorspeld</h2>
     </summary>
     <div id="week-forecast-chart" class="ucg-chart-wrap"><div class="log-empty">Data ophalen...</div></div>
@@ -482,18 +474,17 @@
 
   <details class="log-wrap" open>
     <summary class="log-header">
-      <span class="summary-chevron">▸</span>
       <h2>UCG-factor: nauwkeurigheid &amp; variatie</h2>
     </summary>
     <div id="ucg-chart" class="ucg-chart-wrap"><div class="log-empty">Data ophalen...</div></div>
   </details>
 
-  <div class="log-wrap">
-    <div class="log-header">
+  <details class="log-wrap" open>
+    <summary class="log-header">
       <h2>UCG-factor: spreiding &amp; historie</h2>
-    </div>
+    </summary>
     <div id="ucg-history"><div class="log-empty">Data ophalen...</div></div>
-  </div>
+  </details>
 </div>
 
 <div id="kalshi-view" style="display:none">
