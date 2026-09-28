@@ -1183,12 +1183,14 @@ function releaseExcludedDates(releaseDays) {
     // -1: getest bij Drake (16 sep) -- kijkersgroei loopt bij een grote
     // release soms al een dag vóór de officiele video omhoog (pre-release
     // hype/promotie elders), waardoor de factor daar al kunstmatig laag
-    // uitvalt. 0..+2: de release zelf en de vertraagde Global Charts-
-    // verwerking erna.
+    // uitvalt. 0..+3: de release zelf en de vertraagde Global Charts-
+    // verwerking erna -- +3 i.p.v. +2 getest over alle artiesten (gemiddelde
+    // CV 3,08% -> 3,05%, bij Drake specifiek 2,34% -> 2,20%).
     excluded.add(addDaysToDateKey(d, -1));
     excluded.add(d);
     excluded.add(addDaysToDateKey(d, 1));
     excluded.add(addDaysToDateKey(d, 2));
+    excluded.add(addDaysToDateKey(d, 3));
   }
   return excluded;
 }
