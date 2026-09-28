@@ -1,7 +1,7 @@
 {
   "series_ticker": "KXYTVIEWSW",
   "monthly_series_ticker": "KXYTVIEWSHIGH",
-  "fetched_at": "2026-09-28T02:25:24Z",
+  "fetched_at": "2026-09-28T02:30:44Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -193,8 +193,8 @@
               "floor_strike": 19000000,
               "label": "Above 19M",
               "yes_bid": 0.01,
-              "yes_ask": 0.19,
-              "no_bid": 0.81,
+              "yes_ask": 0.16,
+              "no_bid": 0.84,
               "no_ask": 0.99
             },
             {
@@ -489,8 +489,8 @@
               "floor_strike": 30500000,
               "label": "Above 30.5M",
               "yes_bid": 0.02,
-              "yes_ask": 0.26,
-              "no_bid": 0.74,
+              "yes_ask": 0.2,
+              "no_bid": 0.8,
               "no_ask": 0.98
             },
             {
@@ -543,8 +543,8 @@
               "floor_strike": 33500000,
               "label": "Above 33.5M",
               "yes_bid": 0.01,
-              "yes_ask": 0.21,
-              "no_bid": 0.79,
+              "yes_ask": 0.2,
+              "no_bid": 0.8,
               "no_ask": 0.99
             },
             {
@@ -552,8 +552,8 @@
               "floor_strike": 34000000,
               "label": "Above 34M",
               "yes_bid": 0.01,
-              "yes_ask": 0.16,
-              "no_bid": 0.84,
+              "yes_ask": 0.13,
+              "no_bid": 0.87,
               "no_ask": 0.99
             }
           ]
@@ -569,8 +569,8 @@
               "floor_strike": 22000000,
               "label": "Above 22M",
               "yes_bid": 0.98,
-              "yes_ask": 1.0,
-              "no_bid": 0.0,
+              "yes_ask": 0.99,
+              "no_bid": 0.01,
               "no_ask": 0.02
             },
             {
@@ -1180,8 +1180,8 @@
           "floor_strike": 16250000,
           "label": "Above 16.25M",
           "yes_bid": 0.0,
-          "yes_ask": 0.28,
-          "no_bid": 0.72,
+          "yes_ask": 0.27,
+          "no_bid": 0.73,
           "no_ask": 1.0
         },
         {
@@ -1663,8 +1663,8 @@
               "floor_strike": 6000000,
               "label": "Above 6M",
               "yes_bid": 0.04,
-              "yes_ask": 0.25,
-              "no_bid": 0.75,
+              "yes_ask": 0.23,
+              "no_bid": 0.77,
               "no_ask": 0.96
             },
             {
@@ -2461,8 +2461,8 @@
           "floor_strike": 2900000,
           "label": "Above 2.9M",
           "yes_bid": 0.03,
-          "yes_ask": 0.36,
-          "no_bid": 0.64,
+          "yes_ask": 0.32,
+          "no_bid": 0.68,
           "no_ask": 0.97
         },
         {
@@ -2685,8 +2685,8 @@
               "floor_strike": 3100000,
               "label": "Above 3.1M",
               "yes_bid": 0.13,
-              "yes_ask": 0.24,
-              "no_bid": 0.76,
+              "yes_ask": 0.33,
+              "no_bid": 0.67,
               "no_ask": 0.87
             },
             {
@@ -3107,8 +3107,8 @@
               "floor_strike": 4600000,
               "label": "Above 4.6M",
               "yes_bid": 0.06,
-              "yes_ask": 0.79,
-              "no_bid": 0.21,
+              "yes_ask": 0.78,
+              "no_bid": 0.22,
               "no_ask": 0.94
             },
             {
@@ -3468,8 +3468,8 @@
           "floor_strike": 17000000,
           "label": "Above 17M",
           "yes_bid": 0.03,
-          "yes_ask": 0.46,
-          "no_bid": 0.54,
+          "yes_ask": 0.44,
+          "no_bid": 0.56,
           "no_ask": 0.97
         },
         {
@@ -3862,8 +3862,8 @@
               "floor_strike": 7500000,
               "label": "Above 7.5M",
               "yes_bid": 0.01,
-              "yes_ask": 0.19,
-              "no_bid": 0.81,
+              "yes_ask": 0.16,
+              "no_bid": 0.84,
               "no_ask": 0.99
             },
             {
