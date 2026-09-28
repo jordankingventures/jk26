@@ -1532,15 +1532,13 @@ function weekForecastData(artistKey) {
   const stats = getUcgStats(artistKey);
   const minFactor = stats ? stats.excl.min : null;
   const maxFactor = stats ? stats.excl.max : null;
-  const midFactor = currentUcgFactor();
-  // Vast referentiepunt voor de weekpatroon-verankering -- NIET de live
-  // UCG-slider. De twee voorspelmethoden moeten onafhankelijk van elkaar
-  // blijven staan (zodat je kan zien of ze overlappen); als de weekpatroon-
-  // schatting meebeweegt met de slider, is dat geen echte tweede methode
-  // meer. Het historische gemiddelde (excl. releasedagen) is hetzelfde
-  // stabiele referentiepunt waarmee de slider zelf ook initieel gevuld
-  // wordt (zie loadUcgFactor).
-  const anchorFactor = stats ? stats.excl.avg : midFactor;
+  // Deze hele grafiek staat bewust volledig los van de UCG-factor-slider
+  // (geen currentUcgFactor() hier) -- alleen het vaste historische
+  // gemiddelde (excl. releasedagen), zowel voor de eigen-counter-band als
+  // voor de weekpatroon-verankering. De twee voorspelmethoden moeten
+  // onafhankelijk blijven zodat je kan zien of ze overlappen; als de
+  // grafiek meebeweegt met de slider is dat geen eerlijke vergelijking meer.
+  const fixedFactor = stats ? stats.excl.avg : 1;
   const ownByDate = new Map(predictionDays.map(d => [d.key, d.total]));
 
   const monday = mondayKeyOf(todayKeyNow());
@@ -1556,7 +1554,7 @@ function weekForecastData(artistKey) {
     if (ownVal != null) {
       d.known = {
         ownVal,
-        mid: ownVal * midFactor,
+        mid: ownVal * fixedFactor,
         lo: minFactor != null ? ownVal * minFactor : null,
         hi: maxFactor != null ? ownVal * maxFactor : null,
       };
@@ -1567,7 +1565,7 @@ function weekForecastData(artistKey) {
   for (let i = 6; i >= 0; i--) { if (out[i].official != null || out[i].known != null) { anchorIdx = i; break; } }
 
   if (anchorIdx >= 0) {
-    const anchorVal = out[anchorIdx].official != null ? out[anchorIdx].official : out[anchorIdx].known.ownVal * anchorFactor;
+    const anchorVal = out[anchorIdx].official != null ? out[anchorIdx].official : out[anchorIdx].known.mid;
     const friday = fridayFromDay(anchorIdx, anchorVal, wdStats, weStats);
     out.forEach((d, i) => {
       if (i === anchorIdx) return; // zichzelf -- geen onafhankelijke tweede schatting
@@ -1604,17 +1602,9 @@ function renderWeekForecastChart() {
   const xOf = i => padL + slot * (i + 0.5);
   const xOffset = Math.min(9, slot * 0.16);
   // Compacte notatie (bv. "12.34M") voor de staafjes en de hover -- twee
-  // decimalen voor precisie. De as zelf gebruikt ronde stappen (bv. 4.9M,
-  // 5.0M) via fmtAxis/niceStep hieronder, dat leest rustiger dan exacte
-  // (willekeurige) tussenwaarden.
+  // decimalen voor precisie. De as zelf op 1 decimaal.
   const fmtM = v => v == null ? '—' : (v / 1e6).toFixed(2) + 'M';
   const fmtAxis = v => (v / 1e6).toFixed(1) + 'M';
-  const niceStep = (raw) => {
-    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
-    const norm = raw / mag;
-    const niceNorm = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
-    return niceNorm * mag;
-  };
 
   const allVals = [];
   data.forEach((d) => {
@@ -1627,11 +1617,8 @@ function renderWeekForecastChart() {
   y0 = Math.max(0, y0 - pad); y1 += pad;
   const yOf = v => padT + (1 - (v - y0) / (y1 - y0)) * (H - padT - padB);
 
-  const step = niceStep((y1 - y0) / 3) || 1;
-  const firstTick = Math.ceil(y0 / step) * step;
-  const ticks = [];
-  for (let v = firstTick; v <= y1 + step * 0.001; v += step) ticks.push(v);
-  const grid = ticks.map((v) => {
+  const grid = [0, 1, 2, 3].map((k) => {
+    const v = y0 + (y1 - y0) * k / 3;
     return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yOf(v) + 3).toFixed(1)}" text-anchor="end">${fmtAxis(v)}</text>`;
   }).join('');
 
