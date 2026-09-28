@@ -300,12 +300,11 @@
     .prediction-th-factor { font-size: 0.6rem; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: normal; }
     .prediction-stats-table th, .prediction-stats-table td,
     .prediction-history-table th, .prediction-history-table td { padding: 4px 12px; font-size: 0.72rem; }
-    /* "Naar vrijdag"-kolom (weekpatroon) -- zelfde accent2-kleur als "voorspeld"
-       in de weekgrafiek, met een getinte achtergrond zodat de hele kolom in
-       een oogopslag opvalt tussen de rest van de tabel. */
-    td.ucg-friday-col, th.ucg-friday-col { background: rgba(252, 92, 125, 0.1); }
-    td.ucg-friday-col { color: var(--accent2); font-weight: 700; font-variant-numeric: tabular-nums; }
-    th.ucg-friday-col { color: var(--accent2); }
+    /* "Weekpatroon"-kolom -- bewust ingetogen (grijs, normaal gewicht), puur
+       een subtiel visueel scheiding t.o.v. de rest van de tabel, niet "in
+       your face". */
+    td.ucg-weekpattern-col { color: var(--muted); font-variant-numeric: tabular-nums; }
+    th.ucg-weekpattern-col { color: var(--muted); }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -1500,13 +1499,33 @@ function weekendFactorStats(artistKey) {
   });
 }
 
-// Bouwt de 7 dagen (ma..zo) van de lopende week op, gelaagd op databron:
-// 1) al gepubliceerde Global Charts-waarde -- definitief, geen band nodig;
-// 2) verstreken dag zonder officiele waarde: eigen-counter-dagtotaal x
-//    UCG-factor-range (zelfde methode als de tabel hierboven);
-// 3) nog niet verstreken dag: voorspeld via het weekpatroon, verankerd op
-//    een vrijdag-schatting (laatst bekende ma-do-dag x factor) en van daaruit
-//    terug- (overige ma-do-dagen) of vooruitgerekend (za/zo).
+// Rekent een bekende waarde op dag i om naar een vrijdag-schatting, en
+// omgekeerd: rekent een vrijdag-schatting om naar een schatting voor dag i.
+// Beide kanten hergebruiken dezelfde weekdag/weekend-factoren (ma-do:
+// vrijdag = dag x factor; za/zo: dag = vrijdag x factor).
+function fridayFromDay(i, val, wdStats, weStats) {
+  if (i === 4) return { mid: val, lo: val, hi: val };
+  if (i <= 3) { const f = wdStats[i]; return { mid: val * f.factor, lo: val * f.lo, hi: val * f.hi, factorInfo: f }; }
+  const f = weStats[i - 5];
+  return { mid: val / f.factor, lo: val / f.hi, hi: val / f.lo, factorInfo: f };
+}
+function dayFromFriday(i, friday, wdStats, weStats) {
+  if (i === 4) return { ...friday };
+  if (i <= 3) { const f = wdStats[i]; return { mid: friday.mid / f.factor, lo: friday.mid / f.hi, hi: friday.mid / f.lo, factorInfo: f }; }
+  const f = weStats[i - 5];
+  return { mid: friday.mid * f.factor, lo: friday.mid * f.lo, hi: friday.mid * f.hi, factorInfo: f };
+}
+
+// Bouwt de 7 dagen (ma..zo) van de lopende week op. Per dag onafhankelijk
+// van elkaar, potentieel alle drie tegelijk gevuld:
+// - official: al gepubliceerde Global Charts-waarde (definitief);
+// - known: eigen-counter-dagtotaal x UCG-factor-range, voor elke dag die al
+//   een eigen dagtotaal heeft (ongeacht of er ook al iets anders bekend is);
+// - weekpattern: schatting via het weekpatroon, verankerd op de LAATSTE dag
+//   (ma..zo) met een echte waarde (official of known) en van daaruit naar
+//   alle ANDERE dagen doorgerekend -- ook dagen die zelf al bekend zijn, zodat
+//   je kan zien of de twee methoden overlappen (en later, of de officiele
+//   Global Charts-waarde in die overlap valt).
 function weekForecastData(artistKey) {
   const hist = analysisData?.ucg_factor?.[artistKey];
   const gcByDate = new Map((hist?.points || []).map(p => [p.date, p.global_charts]));
@@ -1521,52 +1540,31 @@ function weekForecastData(artistKey) {
   const wdStats = weekdayFactorStats(artistKey);
   const weStats = weekendFactorStats(artistKey);
 
-  const out = days.map((key) => {
-    const gcVal = gcByDate.get(key);
-    if (gcVal != null) return { key, tier: 'official', mid: gcVal, lo: gcVal, hi: gcVal };
-    const ownVal = ownByDate.get(key);
+  const out = days.map((key) => ({ key, official: null, known: null, weekpattern: null }));
+  out.forEach((d, i) => {
+    const gcVal = gcByDate.get(d.key);
+    if (gcVal != null) d.official = gcVal;
+    const ownVal = ownByDate.get(d.key);
     if (ownVal != null) {
-      return {
-        key, tier: 'known', ownVal,
+      d.known = {
+        ownVal,
         mid: ownVal * midFactor,
         lo: minFactor != null ? ownVal * minFactor : null,
         hi: maxFactor != null ? ownVal * maxFactor : null,
       };
     }
-    return { key, tier: 'forecast', mid: null, lo: null, hi: null };
   });
 
-  // Vrijdag als anker: is zelf al bekend (official/known), anders voorspeld
-  // vanaf de laatst bekende ma-do-dag.
-  if (out[4].tier === 'forecast') {
-    let anchorIdx = -1;
-    for (let i = 3; i >= 0; i--) { if (out[i].tier !== 'forecast') { anchorIdx = i; break; } }
-    if (anchorIdx >= 0) {
-      const f = wdStats[anchorIdx];
-      const base = out[anchorIdx].mid;
-      out[4] = { ...out[4], mid: base * f.factor, lo: base * f.lo, hi: base * f.hi, basedOn: days[anchorIdx], factorInfo: f };
-    }
-  }
+  let anchorIdx = -1;
+  for (let i = 6; i >= 0; i--) { if (out[i].official != null || out[i].known != null) { anchorIdx = i; break; } }
 
-  if (out[4].mid != null) {
-    // Voor de tooltip: verwijs altijd naar de oorspronkelijke bekende dag
-    // waarop de vrijdag-schatting zelf gebaseerd is (of vrijdag zelf, als
-    // die al bekend/officieel was) -- niet naar vrijdag's eigen (evt. zelf
-    // ook al voorspelde) datum, anders lijkt het of vrijdag al vaststond.
-    const rootAnchor = out[4].basedOn || out[4].key;
-    // Overige nog niet verstreken ma-do-dagen terugrekenen vanaf vrijdag.
-    [0, 1, 2, 3].forEach((i) => {
-      if (out[i].tier === 'forecast' && out[i].mid == null) {
-        const f = wdStats[i];
-        out[i] = { ...out[i], mid: out[4].mid / f.factor, lo: out[4].mid / f.hi, hi: out[4].mid / f.lo, factorInfo: f, basedOn: rootAnchor, derivedFromFriday: true };
-      }
-    });
-    // Za/zo vooruitrekenen vanaf vrijdag.
-    [5, 6].forEach((i, j) => {
-      if (out[i].tier === 'forecast' && out[i].mid == null) {
-        const f = weStats[j];
-        out[i] = { ...out[i], mid: out[4].mid * f.factor, lo: out[4].mid * f.lo, hi: out[4].mid * f.hi, factorInfo: f, basedOn: rootAnchor, derivedFromFriday: true };
-      }
+  if (anchorIdx >= 0) {
+    const anchorVal = out[anchorIdx].official != null ? out[anchorIdx].official : out[anchorIdx].known.mid;
+    const friday = fridayFromDay(anchorIdx, anchorVal, wdStats, weStats);
+    out.forEach((d, i) => {
+      if (i === anchorIdx) return; // zichzelf -- geen onafhankelijke tweede schatting
+      const est = dayFromFriday(i, friday, wdStats, weStats);
+      d.weekpattern = { ...est, basedOn: days[anchorIdx] };
     });
   }
 
@@ -1586,8 +1584,8 @@ function renderWeekForecastChart() {
 
   const data = weekForecastData(activeArtist);
   const todayKey = todayKeyNow();
-  const withVals = data.filter(d => d.mid != null);
-  if (!withVals.length) {
+  const hasAny = data.some(d => d.known || d.weekpattern || d.official != null);
+  if (!hasAny) {
     el.innerHTML = '<div class="log-empty">Nog geen enkele dag deze week bekend -- kom later terug voor een voorspelling.</div>';
     return;
   }
@@ -1596,8 +1594,14 @@ function renderWeekForecastChart() {
   const H = 190, padL = 46, padR = 10, padT = 10, padB = 26;
   const slot = (W - padL - padR) / 7;
   const xOf = i => padL + slot * (i + 0.5);
+  const xOffset = Math.min(9, slot * 0.16);
 
-  const allVals = withVals.flatMap(d => [d.lo, d.mid, d.hi]).filter(v => v != null);
+  const allVals = [];
+  data.forEach((d) => {
+    if (d.known) { if (d.known.lo != null) allVals.push(d.known.lo); if (d.known.hi != null) allVals.push(d.known.hi); allVals.push(d.known.mid); }
+    if (d.weekpattern) { allVals.push(d.weekpattern.lo, d.weekpattern.hi); }
+    if (d.official != null) allVals.push(d.official);
+  });
   let y0 = Math.min(...allVals), y1 = Math.max(...allVals);
   const pad = (y1 - y0) * 0.18 || y1 * 0.05 || 1;
   y0 = Math.max(0, y0 - pad); y1 += pad;
@@ -1608,29 +1612,38 @@ function renderWeekForecastChart() {
     return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yOf(v) + 3).toFixed(1)}" text-anchor="end">${fmt(Math.round(v / 1000) * 1000)}</text>`;
   }).join('');
 
-  const tierColor = { official: 'var(--green)', known: 'var(--accent)', forecast: 'var(--accent2)' };
+  // Puur een min-max-band (geen middelpunt-stip) -- valt terug op een klein
+  // puntje alleen als er geen band beschikbaar is (bv. nog geen UCG-
+  // spreiding voor deze artiest).
+  const band = (x, lo, mid, hi, color, dashed) => {
+    if (lo != null && hi != null && hi > lo) {
+      const yLo = yOf(lo), yHi = yOf(hi);
+      const capW = Math.min(12, slot * 0.26);
+      const op = dashed ? 0.8 : 0.95;
+      const dash = dashed ? 'stroke-dasharray="3 2"' : '';
+      return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2" ${dash} opacity="${op}"/>
+        <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yLo.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2" opacity="${op}"/>
+        <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yHi.toFixed(1)}" stroke="${color}" stroke-width="2.2" opacity="${op}"/>`;
+    }
+    if (mid != null) return `<circle cx="${x.toFixed(1)}" cy="${yOf(mid).toFixed(1)}" r="3" style="fill:${color}"/>`;
+    return '';
+  };
+
   const marks = data.map((d, i) => {
-    if (d.mid == null) return '';
     const x = xOf(i);
     const isToday = d.key === todayKey;
-    const color = tierColor[d.tier];
-    const dashed = d.tier === 'forecast';
     const todayLine = isToday ? `<rect x="${(x - slot / 2).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${H - padT - padB}" fill="var(--border)" opacity="0.3"/>` : '';
-    let whisker = '';
-    if (d.lo != null && d.hi != null && d.hi > d.lo) {
-      const yLo = yOf(d.lo), yHi = yOf(d.hi);
-      const capW = Math.min(14, slot * 0.35);
-      const op = dashed ? 0.65 : 0.9;
-      const dash = dashed ? 'stroke-dasharray="3 2"' : '';
-      whisker = `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="1.6" ${dash} opacity="${op}"/>
-        <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yLo.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="1.6" opacity="${op}"/>
-        <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yHi.toFixed(1)}" stroke="${color}" stroke-width="1.6" opacity="${op}"/>`;
+    const both = d.known && d.weekpattern;
+    const knownX = both ? x - xOffset : x;
+    const wpX = both ? x + xOffset : x;
+    let g = todayLine;
+    if (d.known) g += band(knownX, d.known.lo, d.known.mid, d.known.hi, 'var(--accent)', false);
+    if (d.weekpattern) g += band(wpX, d.weekpattern.lo, d.weekpattern.mid, d.weekpattern.hi, 'var(--accent2)', true);
+    if (d.official != null) {
+      const y = yOf(d.official);
+      g += `<rect x="${(x - 3.6).toFixed(1)}" y="${(y - 3.6).toFixed(1)}" width="7.2" height="7.2" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--green)"/>`;
     }
-    const yMid = yOf(d.mid);
-    const dot = d.tier === 'official'
-      ? `<rect x="${(x - 3.4).toFixed(1)}" y="${(yMid - 3.4).toFixed(1)}" width="6.8" height="6.8" transform="rotate(45 ${x.toFixed(1)} ${yMid.toFixed(1)})" style="fill:${color}"/>`
-      : `<circle cx="${x.toFixed(1)}" cy="${yMid.toFixed(1)}" r="3.6" style="${dashed ? `fill:var(--bg);stroke:${color};stroke-width:1.8` : `fill:${color}`}"/>`;
-    return `${todayLine}${whisker}${dot}`;
+    return g;
   }).join('');
 
   const xAxis = data.map((d, i) => {
@@ -1640,9 +1653,9 @@ function renderWeekForecastChart() {
 
   el.innerHTML = `
     <div class="ucg-legend">
+      <span><i style="background:var(--accent)"></i>eigen counter &times; UCG (min&ndash;max)</span>
+      <span><i style="background:var(--accent2)"></i>weekpatroon (min&ndash;max)</span>
       <span><i style="background:var(--green);border-radius:2px"></i>officieel (Global Charts)</span>
-      <span><i style="background:var(--accent)"></i>bekend (eigen counter &times; UCG)</span>
-      <span><i style="background:var(--bg);border:1.8px solid var(--accent2)"></i>voorspeld (weekpatroon)</span>
     </div>
     <svg class="ucg-svg" id="wf-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${marks}${xAxis}</svg>
     <div class="ucg-tip" id="wf-tip"></div>
@@ -1654,23 +1667,21 @@ function renderWeekForecastChart() {
     const r = svgEl.getBoundingClientRect(), box = el.getBoundingClientRect();
     const idx = Math.max(0, Math.min(6, Math.floor((clientX - r.left - padL) / slot)));
     const d = data[idx];
-    if (!d || d.mid == null) { tip.style.display = 'none'; return; }
+    if (!d) { tip.style.display = 'none'; return; }
     const dayLabel = new Date(d.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
-    let detail;
-    if (d.tier === 'official') {
-      detail = `Officiële Global Charts-waarde: <b>${fmt(floor1000(d.mid))}</b>`;
-    } else if (d.tier === 'known') {
-      const band = (d.lo != null && d.hi != null) ? `<b>${fmt(floor1000(d.lo))}–${fmt(floor1000(d.hi))}</b> (huidige UCG-instelling: ${fmt(floor1000(d.mid))})` : `<b>${fmt(floor1000(d.mid))}</b>`;
-      detail = `Eigen counter <b>${fmt(floor1000(d.ownVal))}</b> &times; UCG-factor &rarr; ${band}`;
-    } else if (d.factorInfo) {
-      const f = d.factorInfo;
-      const basis = d.basedOn ? ptShortLabel(d.basedOn + 'T12:00:00Z') : '';
-      const via = d.derivedFromFriday ? ', afgeleid van de vrijdag-schatting' : '';
-      detail = `Voorspeld via weekpatroon (o.b.v. ${esc(basis)}${via}): factor ${f.factor.toFixed(3)} (${f.own ? 'eigen' : 'gepoold'}, n=${f.n}) &rarr; <b>${fmt(floor1000(d.lo))}–${fmt(floor1000(d.hi))}</b>`;
-    } else {
-      detail = 'Nog geen voorspelling mogelijk (nog geen enkele dag deze week bekend).';
+    const lines = [];
+    if (d.official != null) lines.push(`Officieel (Global Charts): <b>${fmt(floor1000(d.official))}</b>`);
+    if (d.known) {
+      const kBand = (d.known.lo != null && d.known.hi != null) ? `<b>${fmt(floor1000(d.known.lo))}–${fmt(floor1000(d.known.hi))}</b>` : `<b>${fmt(floor1000(d.known.mid))}</b>`;
+      lines.push(`Eigen counter <b>${fmt(floor1000(d.known.ownVal))}</b> &times; UCG &rarr; ${kBand}`);
     }
-    tip.innerHTML = `<b>${esc(dayLabel)}</b><br>${detail}`;
+    if (d.weekpattern) {
+      const f = d.weekpattern.factorInfo;
+      const basis = ptShortLabel(d.weekpattern.basedOn + 'T12:00:00Z');
+      lines.push(`Weekpatroon (o.b.v. ${esc(basis)}${f ? `, factor ${f.factor.toFixed(3)} ${f.own ? 'eigen' : 'gepoold'} n=${f.n}` : ''}) &rarr; <b>${fmt(floor1000(d.weekpattern.lo))}–${fmt(floor1000(d.weekpattern.hi))}</b>`);
+    }
+    if (!lines.length) lines.push('Nog geen data of voorspelling voor deze dag.');
+    tip.innerHTML = `<b>${esc(dayLabel)}</b><br>${lines.join('<br>')}`;
     tip.style.display = 'block';
     const tw = tip.offsetWidth;
     tip.style.left = Math.max(0, Math.min(xOf(idx) + 12 + (r.left - box.left), box.width - tw - 4)) + 'px';
@@ -1695,14 +1706,17 @@ function renderUcgHistory() {
   // eronder.
   const { hist, excluded: excludedDates, incl: inclStats, excl: exclStats } = stats;
 
-  // "Naar vrijdag"-kolom: verhouding t.o.v. vrijdag diezelfde (ma-zo-)week,
+  // "Weekpatroon"-kolom: verhouding t.o.v. vrijdag diezelfde (ma-zo-)week,
   // puur op basis van de officiele Global Charts-cijfers -- los van de
-  // UCG-factor en (bewust) niet gefilterd op releasedagen. Ma-do: vrijdag /
-  // deze dag (>1, "hoeveel hoger wordt het nog"). Za/zo: deze dag / vrijdag
-  // ervoor (<1, meestal ~0,9x). Vrijdag zelf altijd 1,00 -- niet zinvol, dus
-  // een streepje.
+  // UCG-factor. Bewust NIET gefilterd op releasedagen (op verzoek: laat ook
+  // zien wat een release met de verhouding doet). Ma-do: vrijdag / deze dag
+  // (>1, "hoeveel hoger wordt het nog"). Za/zo: deze dag / vrijdag ervoor
+  // (<1, meestal ~0,9x). Vrijdag zelf altijd 1,00 -- niet zinvol, dus een
+  // streepje. De WEL-gefilterde versie (excl. releaseweken) is exact de
+  // factorenset die de weekgrafiek hierboven ook echt gebruikt -- zie de
+  // samenvattingsregel verderop.
   const gcByDate = new Map(hist.points.map(q => [q.date, q.global_charts]));
-  const toFridayRatio = (p) => {
+  const weekPatternRatio = (p) => {
     const dow = new Date(p.date + 'T12:00:00Z').getUTCDay(); // 0=zo, 1=ma .. 6=za
     if (dow === 5 || !p.global_charts) return null;
     const fridayKey = dow >= 1 && dow <= 4 ? addDaysToDateKey(p.date, 5 - dow)
@@ -1712,7 +1726,6 @@ function renderUcgHistory() {
     if (fv == null) return null;
     return dow <= 4 ? fv / p.global_charts : p.global_charts / fv;
   };
-  const toFridayStats = computeUcgStats(hist.points.slice(-UCG_ROLLING_WINDOW_DAYS).map(toFridayRatio).filter(v => v != null));
 
   const pointRow = (p) => {
     const isRelease = predictionReleaseDays.has(p.date);
@@ -1725,13 +1738,13 @@ function renderUcgHistory() {
       : isDayAfter
       ? ' <span class="est-tag" title="Dag na een release -- uitgesloten van de excl.-statistiek hiernaast">na release</span>'
       : '';
-    const ratio = toFridayRatio(p);
+    const ratio = weekPatternRatio(p);
     return `<tr>
     <td>${ptDateLabel(p.date + 'T12:00:00Z')}${tag}</td>
     <td>${fmt(floor1000(p.own_counter))}</td>
     <td>${fmt(floor1000(p.global_charts))}</td>
     <td>${p.factor.toFixed(2)}</td>
-    <td class="ucg-friday-col" data-tooltip="Ma-do: vrijdag / deze dag (officiele Global Charts-cijfers, ongefilterd -- ook releasedagen tellen mee). Za/zo: deze dag / vrijdag ervoor, zelfde week.">${ratio == null ? '<span class="neu">—</span>' : ratio.toFixed(2)}</td>
+    <td class="ucg-weekpattern-col" data-tooltip="Ma-do: vrijdag / deze dag (officiele Global Charts-cijfers, ongefilterd -- ook releasedagen tellen mee). Za/zo: deze dag / vrijdag ervoor, zelfde week.">${ratio == null ? '<span class="neu">—</span>' : ratio.toFixed(2)}</td>
   </tr>`;
   };
 
@@ -1757,11 +1770,21 @@ function renderUcgHistory() {
     <td>${label}</td>
     <td>${exclStats ? fn(exclStats) : '—'}</td>
     <td>${inclStats ? fn(inclStats) : '—'}</td>
-    <td class="ucg-friday-col">${toFridayStats ? fn(toFridayStats) : '—'}</td>
   </tr>`;
 
+  // Simpele samenvattingsregel i.p.v. een dichte tabel: de zes factoren die
+  // de weekgrafiek hierboven daadwerkelijk gebruikt (dus WEL excl.
+  // releaseweken, net als de Excl.-kolom hiernaast) -- ma t/m zo, elk t.o.v.
+  // vrijdag dezelfde week.
+  const wdStatsSummary = weekdayFactorStats(activeArtist);
+  const weStatsSummary = weekendFactorStats(activeArtist);
+  const summaryLabels = ['ma', 'di', 'wo', 'do', 'za', 'zo'];
+  const summaryFactors = [...wdStatsSummary, ...weStatsSummary];
+  const weekPatternSummary = summaryFactors.every(f => f.n === 0) ? '' : `
+    <div class="ucg-line neu" style="margin-top:6px">Weekpatroon (t.o.v. vrijdag, excl. releaseweken -- de factoren die de weekgrafiek hierboven gebruikt): ${summaryLabels.map((lab, i) => `${lab} <b>${summaryFactors[i].factor.toFixed(2)}</b>${summaryFactors[i].own ? '' : '<span class="est-tag" title="Te weinig eigen schone weken -- gepoolde factor over alle 16 artiesten">gepoold</span>'}`).join(' · ')}</div>`;
+
   el.innerHTML = `<table class="log-table prediction-stats-table">
-    <thead><tr><th>Statistiek</th><th>Excl. releasedagen, laatste 14d</th><th>Incl. releasedagen, laatste 14d</th><th class="ucg-friday-col" data-tooltip="Verhouding t.o.v. vrijdag (zie kolom 'Naar vrijdag' hieronder), laatste 14 dagen, ongefilterd op releasedagen">Naar vrijdag, laatste 14d</th></tr></thead>
+    <thead><tr><th>Statistiek</th><th>Excl. releasedagen, laatste 14d</th><th>Incl. releasedagen, laatste 14d</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
       ${statRow('Gem. (min–max)', s => `<b>${s.avg.toFixed(2)}</b> <span class="neu">(${s.min.toFixed(2)}–${s.max.toFixed(2)})</span>`)}
@@ -1769,8 +1792,9 @@ function renderUcgHistory() {
       ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
     </tbody>
   </table>
-  <table class="log-table prediction-history-table">
-    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th><th class="ucg-friday-col" data-tooltip="Ma-do: vrijdag / deze dag. Za/zo: deze dag / vrijdag ervoor, zelfde week. Officiele Global Charts-cijfers, ongefilterd op releasedagen.">Naar vrijdag</th></tr></thead>
+  ${weekPatternSummary}
+  <table class="log-table prediction-history-table" style="margin-top:10px">
+    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th><th class="ucg-weekpattern-col" data-tooltip="Ma-do: vrijdag / deze dag. Za/zo: deze dag / vrijdag ervoor, zelfde week. Officiele Global Charts-cijfers, ongefilterd op releasedagen.">Weekpatroon</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
