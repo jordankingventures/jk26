@@ -255,12 +255,13 @@ def get_video_details(ids):
         data = yt_get("videos", {"id": ",".join(chunk), "part": "snippet,statistics,contentDetails"})
         for item in data.get("items", []):
             videos.append({
-                "id":               item["id"],
-                "title":            item["snippet"]["title"],
-                "thumbnail":        item["snippet"].get("thumbnails", {}).get("default", {}).get("url", ""),
-                "published_at":     item["snippet"].get("publishedAt", ""),
-                "views":            int(item["statistics"].get("viewCount", 0)),
-                "duration_seconds": parse_duration_seconds(item.get("contentDetails", {}).get("duration")),
+                "id":                 item["id"],
+                "title":              item["snippet"]["title"],
+                "thumbnail":          item["snippet"].get("thumbnails", {}).get("default", {}).get("url", ""),
+                "published_at":       item["snippet"].get("publishedAt", ""),
+                "views":              int(item["statistics"].get("viewCount", 0)),
+                "duration_seconds":   parse_duration_seconds(item.get("contentDetails", {}).get("duration")),
+                "live_broadcast":     item["snippet"].get("liveBroadcastContent", "none"),
             })
     return videos
 
@@ -271,6 +272,19 @@ def is_short(video):
     onderscheid. Onbekende duur (None) wordt niet als Short behandeld."""
     d = video.get("duration_seconds")
     return d is not None and d <= 60
+
+
+def is_live(video):
+    """Actieve of aankomende livestreams (bv. een doorlopend '24/7 STATION'-
+    kanaal) tellen niet mee -- hun viewcount is een oplopend kijkersaantal,
+    geen dagelijkse videoviews, en kan in een paar dagen tientallen miljoenen
+    halen terwijl YouTube's eigen Global Charts dat niet op dezelfde manier
+    meetelt (zie de UCG-factor-analyse: Taylor Swift's "The Encore STATION"
+    veroorzaakte zo een kunstmatige piek van ~8M op 26 sep 2026). Zodra een
+    stream stopt en een gewone afgesloten video wordt (liveBroadcastContent
+    "none"), telt hij weer gewoon mee -- met zijn dan-actuele viewcount als
+    nieuwe baseline, net als elke net ontdekte video."""
+    return video.get("live_broadcast", "none") != "none"
 
 
 def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
@@ -336,11 +350,11 @@ def save_snapshot(videos, official_total):
         except:
             pass
 
-    # Shorts (<=60s) tellen niet mee in de totalen -- geen "echte" kijkpiek,
-    # zouden de cijfers vervuilen. Blijven wel gewoon zichtbaar in de
-    # videolijst (data["videos"] hieronder gebruikt nog altijd de volledige,
-    # ongefilterde `videos`-lijst).
-    counted = [v for v in videos if not is_short(v)]
+    # Shorts (<=60s) en actieve livestreams tellen niet mee in de totalen --
+    # geen "echte" kijkpiek, zouden de cijfers vervuilen. Blijven wel gewoon
+    # zichtbaar in de videolijst (data["videos"] hieronder gebruikt nog
+    # altijd de volledige, ongefilterde `videos`-lijst).
+    counted = [v for v in videos if not is_short(v) and not is_live(v)]
 
     pub_total  = sum(v["views"] for v in counted)
     now_utc    = datetime.now(timezone.utc)
