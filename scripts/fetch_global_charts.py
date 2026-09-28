@@ -40,14 +40,30 @@ ANALYSIS_FILE = "data/analysis_data.json"
 # hier en daar exact hetzelfde blok uren dekt.
 DAY_BOUNDARY_TZ = timezone(timedelta(hours=-8))
 
-# Eerste (halve) dag dat de eigen counter voor een artiest live stond: de
-# counter mist dan een deel van de dag terwijl Global Charts de hele dag
-# telt, dus de UCG-factor van die dag is kunstmatig hoog. Wordt nooit
-# opgeslagen. (Fase 1 begon al voor de historie in analysis_data.json.)
-PARTIAL_FIRST_DAY = {
-    key: "2026-09-07"
-    for key in ("fuerzaregida", "future", "kanye", "katseye", "kendrick",
-                "olivia", "postmalone", "tatemcrae", "weeknd")
+# Datums die bewust NOOIT worden opgeslagen in de UCG-factor-historie, met
+# reden erbij (die reden wordt ook meegeschreven naar analysis_data.json,
+# zodat 'ie zichtbaar blijft voor wie het bestand inspecteert). Twee soorten
+# tot nu toe:
+#  - eerste (halve) dag dat de eigen counter voor een artiest live stond: de
+#    counter mist dan een deel van de dag terwijl Global Charts de hele dag
+#    telt, dus de factor is kunstmatig hoog. (Fase 1 begon al voor de
+#    historie in analysis_data.json.)
+#  - een specifieke bekende datafout: Taylor Swift's "The Life of a Showgirl:
+#    The Encore STATION" is een 24/7-livestream die van 24 t/m 26 sep 2026
+#    als gewone video werd meegeteld (voordat fetch_views.py's is_live()-
+#    filter er was) en het dagtotaal met tientallen miljoenen opblies. Niet
+#    terug te rekenen naar een gecorrigeerd dagtotaal (geen per-video-
+#    snapshots uit het verleden bewaard), dus deze 3 dagen worden helemaal
+#    niet opgeslagen i.p.v. een geschat cijfer te tonen.
+EXCLUDED_DATES = {
+    **{key: {"2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."}
+       for key in ("fuerzaregida", "future", "kanye", "katseye", "kendrick",
+                   "olivia", "postmalone", "tatemcrae", "weeknd")},
+    "taylor": {
+        d: "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld "
+           "en blies het dagtotaal kunstmatig op (zie fetch_views.py's is_live()-fix)."
+        for d in ("2026-09-24", "2026-09-25", "2026-09-26")
+    },
 }
 
 ARTISTS = {
@@ -147,12 +163,14 @@ def main():
 
         counter_by_date = own_counter_by_date(info["data_file"])
         existing_points = analysis["ucg_factor"].get(key, {}).get("points", [])
+        excluded = EXCLUDED_DATES.get(key, {})
         points_by_date = {p["date"]: p for p in existing_points}
-        points_by_date.pop(PARTIAL_FIRST_DAY.get(key), None)
+        for d in excluded:
+            points_by_date.pop(d, None)
 
         updated = 0
         for date, gc_raw in gc_by_date.items():
-            if date == PARTIAL_FIRST_DAY.get(key):
+            if date in excluded:
                 continue
             counter_raw = counter_by_date.get(date)
             if counter_raw is None:
@@ -176,6 +194,7 @@ def main():
             "min": min(factors) if factors else None,
             "max": max(factors) if factors else None,
             "avg": sum(factors) / len(factors) if factors else None,
+            "excluded_dates": excluded,
         }
         print(f"  {updated} dagen bijgewerkt binnen het venster, {len(points)} dagen totaal.")
 

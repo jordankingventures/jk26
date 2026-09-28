@@ -248,29 +248,16 @@
           "own_counter": 12085000,
           "global_charts": 14811000,
           "factor": 1.225568887050062
-        },
-        {
-          "date": "2026-09-24",
-          "own_counter": 13080000,
-          "global_charts": 15527000,
-          "factor": 1.1870795107033638
-        },
-        {
-          "date": "2026-09-25",
-          "own_counter": 29721000,
-          "global_charts": 28210000,
-          "factor": 0.9491605262272468
-        },
-        {
-          "date": "2026-09-26",
-          "own_counter": 39692000,
-          "global_charts": 31735000,
-          "factor": 0.7995313917162149
         }
       ],
-      "min": 0.7995313917162149,
+      "min": 1.145822483446172,
       "max": 1.3128205128205128,
-      "avg": 1.2036685179888893
+      "avg": 1.2201376429966901,
+      "excluded_dates": {
+        "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (zie fetch_views.py's is_live()-fix).",
+        "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (zie fetch_views.py's is_live()-fix).",
+        "2026-09-26": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (zie fetch_views.py's is_live()-fix)."
+      }
     },
     "drake": {
       "points": [
@@ -541,7 +528,8 @@
       ],
       "min": 1.0183307039290812,
       "max": 1.2725324078799634,
-      "avg": 1.1791919984490666
+      "avg": 1.1791919984490666,
+      "excluded_dates": {}
     },
     "wallen": {
       "points": [
@@ -812,7 +800,8 @@
       ],
       "min": 1.0788276907529055,
       "max": 1.2332798287854467,
-      "avg": 1.1164806713395385
+      "avg": 1.1164806713395385,
+      "excluded_dates": {}
     },
     "badbunny": {
       "points": [
@@ -1083,7 +1072,8 @@
       ],
       "min": 1.5689803969917395,
       "max": 1.753676924978371,
-      "avg": 1.6315221018145836
+      "avg": 1.6315221018145836,
+      "excluded_dates": {}
     },
     "ariana": {
       "points": [
@@ -1354,7 +1344,8 @@
       ],
       "min": 1.168424468602953,
       "max": 1.3815168071117696,
-      "avg": 1.2673207416161758
+      "avg": 1.2673207416161758,
+      "excluded_dates": {}
     },
     "youngboy": {
       "points": [
@@ -1625,7 +1616,8 @@
       ],
       "min": 1.0248181429182712,
       "max": 1.135753176043557,
-      "avg": 1.071717253414623
+      "avg": 1.071717253414623,
+      "excluded_dates": {}
     },
     "bieber": {
       "points": [
@@ -1896,7 +1888,8 @@
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.445842131753721
+      "avg": 1.445842131753721,
+      "excluded_dates": {}
     },
     "fuerzaregida": {
       "points": [
@@ -2017,7 +2010,10 @@
       ],
       "min": 1.8115084700188222,
       "max": 2.0459057071960296,
-      "avg": 1.9138168514561105
+      "avg": 1.9138168514561105,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "future": {
       "points": [
@@ -2138,7 +2134,10 @@
       ],
       "min": 1.3861924686192468,
       "max": 1.5302083333333334,
-      "avg": 1.457285751685987
+      "avg": 1.457285751685987,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "kanye": {
       "points": [
@@ -2259,7 +2258,10 @@
       ],
       "min": 1.1928934010152283,
       "max": 1.3776709401709402,
-      "avg": 1.2731687888266643
+      "avg": 1.2731687888266643,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "katseye": {
       "points": [
@@ -2380,7 +2382,10 @@
       ],
       "min": 1.9377782603974374,
       "max": 2.231873321603852,
-      "avg": 2.0791797347359964
+      "avg": 2.0791797347359964,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "kendrick": {
       "points": [
@@ -2501,7 +2506,10 @@
       ],
       "min": 1.10840160030482,
       "max": 1.2364990689013036,
-      "avg": 1.1758308487066098
+      "avg": 1.1758308487066098,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "olivia": {
       "points": [
@@ -2622,7 +2630,10 @@
       ],
       "min": 1.2035382090096662,
       "max": 1.3743439009027925,
-      "avg": 1.2797277513819914
+      "avg": 1.2797277513819914,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "postmalone": {
       "points": [
@@ -2743,7 +2754,10 @@
       ],
       "min": 1.1112850211300673,
       "max": 1.244602048857368,
-      "avg": 1.168073668136341
+      "avg": 1.168073668136341,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "tatemcrae": {
       "points": [
@@ -2864,7 +2878,10 @@
       ],
       "min": 1.26183970856102,
       "max": 1.408994708994709,
-      "avg": 1.3388816913921855
+      "avg": 1.3388816913921855,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     },
     "weeknd": {
       "points": [
@@ -2985,7 +3002,10 @@
       ],
       "min": 1.1888460989873058,
       "max": 1.3330507756209207,
-      "avg": 1.265666069845708
+      "avg": 1.265666069845708,
+      "excluded_dates": {
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+      }
     }
   }
 }
