@@ -1180,6 +1180,12 @@ function ucgStorageKey(artistKey) { return `ytTracker.ucgFactor.${artistKey}`; }
 function releaseExcludedDates(releaseDays) {
   const excluded = new Set();
   for (const d of releaseDays) {
+    // -1: getest bij Drake (16 sep) -- kijkersgroei loopt bij een grote
+    // release soms al een dag vóór de officiele video omhoog (pre-release
+    // hype/promotie elders), waardoor de factor daar al kunstmatig laag
+    // uitvalt. 0..+2: de release zelf en de vertraagde Global Charts-
+    // verwerking erna.
+    excluded.add(addDaysToDateKey(d, -1));
     excluded.add(d);
     excluded.add(addDaysToDateKey(d, 1));
     excluded.add(addDaysToDateKey(d, 2));
@@ -1191,12 +1197,20 @@ function releaseExcludedDates(releaseDays) {
 // gebaseerd op de actuele predictionReleaseDays (moet dus na
 // computeReleaseDays() voor deze artiest aangeroepen worden). Valt terug op
 // de incl.-statistiek als uitsluiten niets overlaat (te weinig datapunten).
+// Hoeveel recente dagen (na uitsluiting van releasedagen) meetellen voor het
+// gemiddelde/min/max -- niet alle historie. Een walk-forward-test op alle
+// artiesten liet zien dat een recent venster Global Charts iets nauwkeuriger
+// voorspelt dan het all-time gemiddelde (2,47% vs 2,58% afwijking): een
+// artiest se gedrag verschuift geleidelijk, en oude dagen van weken terug
+// blijven anders net zo zwaar meewegen als gisteren.
+const UCG_ROLLING_WINDOW_DAYS = 14;
+
 function getUcgStats(artistKey) {
   const hist = analysisData?.ucg_factor?.[artistKey];
   if (!hist) return null;
   const excluded = releaseExcludedDates(predictionReleaseDays);
-  const allFactors   = hist.points.map(p => p.factor);
-  const cleanFactors = hist.points.filter(p => !excluded.has(p.date)).map(p => p.factor);
+  const allFactors   = hist.points.slice(-UCG_ROLLING_WINDOW_DAYS).map(p => p.factor);
+  const cleanFactors = hist.points.filter(p => !excluded.has(p.date)).slice(-UCG_ROLLING_WINDOW_DAYS).map(p => p.factor);
   const incl = computeUcgStats(allFactors);
   const excl = computeUcgStats(cleanFactors) || incl;
   return { hist, excluded, incl, excl };
@@ -1374,17 +1388,21 @@ function renderUcgHistory() {
   const stats = getUcgStats(activeArtist);
   if (!stats) { el.innerHTML = '<div class="log-empty">Nog geen historische UCG-data voor deze artiest.</div>'; return; }
 
-  // De UCG-factor valt vlak na een release-dag artificieel laag uit (zie
-  // notitie in de bron-Excel), tot ~2 dagen erna. Die dagen tellen niet mee
+  // De UCG-factor valt kunstmatig laag uit rond een release -- soms al een
+  // dag ervoor (pre-release hype/promotie), en tot ~2 dagen erna doordat
+  // Global Charts nieuwe views vertraagd verwerkt. Die dagen tellen niet mee
   // in de "excl."-statistiek, maar blijven gewoon zichtbaar in de tabel
   // eronder.
   const { hist, excluded: excludedDates, incl: inclStats, excl: exclStats } = stats;
 
   const pointRow = (p) => {
     const isRelease = predictionReleaseDays.has(p.date);
-    const isDayAfter = !isRelease && excludedDates.has(p.date);
+    const isDayBefore = !isRelease && predictionReleaseDays.has(addDaysToDateKey(p.date, 1));
+    const isDayAfter = !isRelease && !isDayBefore && excludedDates.has(p.date);
     const tag = isRelease
       ? ` <span class="badge release day-badge" data-tooltip="${RELEASE_DAY_TOOLTIP}">🎵 nieuwe video</span>`
+      : isDayBefore
+      ? ' <span class="est-tag" title="Dag vóór een release -- uitgesloten van de excl.-statistiek hiernaast">voor release</span>'
       : isDayAfter
       ? ' <span class="est-tag" title="Dag na een release -- uitgesloten van de excl.-statistiek hiernaast">na release</span>'
       : '';
@@ -1421,7 +1439,7 @@ function renderUcgHistory() {
   </tr>`;
 
   el.innerHTML = `<table class="log-table prediction-stats-table">
-    <thead><tr><th>Statistiek</th><th>Excl. releasedagen (+2 dagen)</th><th>Incl. releasedagen</th></tr></thead>
+    <thead><tr><th>Statistiek</th><th>Excl. releasedagen, laatste 14d</th><th>Incl. releasedagen, laatste 14d</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
       ${statRow('Gem. (min–max)', s => `<b>${s.avg.toFixed(2)}</b> <span class="neu">(${s.min.toFixed(2)}–${s.max.toFixed(2)})</span>`)}
@@ -1451,12 +1469,14 @@ function renderUcgChart() {
   const mean = stats.excl.avg, sd = stats.excl.stdev;
   const P = stats.hist.points;
   const pts = P.map((p, i) => {
-    const prior = P.slice(0, i).filter(q => !excl.has(q.date)).map(q => q.factor);
-    const m = prior.length >= 5 ? prior.reduce((a, b) => a + b, 0) / prior.length : null;
-    return { ...p, excluded: excl.has(p.date), isRelease: predictionReleaseDays.has(p.date), pred: m, err: m == null ? null : m / p.factor - 1 };
+    const priorVals = P.slice(0, i).filter(q => !excl.has(q.date)).slice(-UCG_ROLLING_WINDOW_DAYS).map(q => q.factor);
+    const m = priorVals.length >= 5 ? priorVals.reduce((a, b) => a + b, 0) / priorVals.length : null;
+    const isRelease = predictionReleaseDays.has(p.date);
+    const isDayBefore = !isRelease && predictionReleaseDays.has(addDaysToDateKey(p.date, 1));
+    return { ...p, excluded: excl.has(p.date), isRelease, isDayBefore, pred: m, err: m == null ? null : m / p.factor - 1 };
   });
-  const tag = p => p.isRelease ? ' &middot; 🎵 releasedag' : (p.excluded ? ' &middot; dag na release' : '');
-  const p_tag = p => p.isRelease ? ' 🎵' : (p.excluded ? ' (na release)' : '');
+  const tag = p => p.isRelease ? ' &middot; 🎵 releasedag' : (p.isDayBefore ? ' &middot; dag vóór release' : (p.excluded ? ' &middot; dag na release' : ''));
+  const p_tag = p => p.isRelease ? ' 🎵' : (p.isDayBefore ? ' (voor release)' : (p.excluded ? ' (na release)' : ''));
   const pct = (v, d = 1) => (v * 100).toFixed(d).replace('.', ',') + '%';
   const shortDate = k => { const [, m, d] = k.split('-'); return `${+d}/${+m}`; };
 
