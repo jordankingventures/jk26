@@ -300,6 +300,12 @@
     .prediction-th-factor { font-size: 0.6rem; font-weight: 400; color: var(--muted); text-transform: none; letter-spacing: normal; }
     .prediction-stats-table th, .prediction-stats-table td,
     .prediction-history-table th, .prediction-history-table td { padding: 4px 12px; font-size: 0.72rem; }
+    /* "Naar vrijdag"-kolom (weekpatroon) -- zelfde accent2-kleur als "voorspeld"
+       in de weekgrafiek, met een getinte achtergrond zodat de hele kolom in
+       een oogopslag opvalt tussen de rest van de tabel. */
+    td.ucg-friday-col, th.ucg-friday-col { background: rgba(252, 92, 125, 0.1); }
+    td.ucg-friday-col { color: var(--accent2); font-weight: 700; font-variant-numeric: tabular-nums; }
+    th.ucg-friday-col { color: var(--accent2); }
     #prediction-days, #ucg-history { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
     /* Mobiel */
@@ -1347,9 +1353,10 @@ function renderPredictionDays() {
   }).join('');
 
   const minFactorTh = minFactor != null ? `<span class="prediction-th-factor">(${minFactor.toFixed(2)})</span>` : '';
+  const inclFactorTh = `<span class="prediction-th-factor">(${factor.toFixed(2)})</span>`;
   const maxFactorTh = maxFactor != null ? `<span class="prediction-th-factor">(${maxFactor.toFixed(2)})</span>` : '';
   daysEl.innerHTML = `<table class="log-table">
-    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG${minFactorTh}</th><th>Incl. UCG</th><th>Max UCG${maxFactorTh}</th></tr></thead>
+    <thead><tr><th>Dag (UTC-8)</th><th>Eigen counter</th><th>Min UCG${minFactorTh}</th><th>Incl. UCG${inclFactorTh}</th><th>Max UCG${maxFactorTh}</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>${missing ? '<div class="log-empty">Let op: voor één of meer dagen was geen betrouwbaar dagtotaal beschikbaar.</div>' : ''}`;
 }
@@ -1688,18 +1695,24 @@ function renderUcgHistory() {
   // eronder.
   const { hist, excluded: excludedDates, incl: inclStats, excl: exclStats } = stats;
 
-  // "Naar vrijdag"-kolom: hoeveel keer hoger vrijdag die week uitkwam t.o.v.
-  // deze dag, puur op basis van de officiele Global Charts-cijfers -- los van
-  // de UCG-factor en (bewust, "even los van release data") niet gefilterd op
-  // releasedagen. Alleen te berekenen voor ma-do (dow 1-4), en alleen als
-  // vrijdag van diezelfde week al een Global Charts-waarde heeft.
+  // "Naar vrijdag"-kolom: verhouding t.o.v. vrijdag diezelfde (ma-zo-)week,
+  // puur op basis van de officiele Global Charts-cijfers -- los van de
+  // UCG-factor en (bewust) niet gefilterd op releasedagen. Ma-do: vrijdag /
+  // deze dag (>1, "hoeveel hoger wordt het nog"). Za/zo: deze dag / vrijdag
+  // ervoor (<1, meestal ~0,9x). Vrijdag zelf altijd 1,00 -- niet zinvol, dus
+  // een streepje.
   const gcByDate = new Map(hist.points.map(q => [q.date, q.global_charts]));
   const toFridayRatio = (p) => {
-    const dow = new Date(p.date + 'T12:00:00Z').getUTCDay(); // 1=ma .. 4=do
-    if (dow < 1 || dow > 4 || !p.global_charts) return null;
-    const fv = gcByDate.get(addDaysToDateKey(p.date, 5 - dow));
-    return fv != null ? fv / p.global_charts : null;
+    const dow = new Date(p.date + 'T12:00:00Z').getUTCDay(); // 0=zo, 1=ma .. 6=za
+    if (dow === 5 || !p.global_charts) return null;
+    const fridayKey = dow >= 1 && dow <= 4 ? addDaysToDateKey(p.date, 5 - dow)
+      : dow === 6 ? addDaysToDateKey(p.date, -1)
+      : addDaysToDateKey(p.date, -2); // zondag (dow 0): vrijdag daarvoor, zelfde week
+    const fv = gcByDate.get(fridayKey);
+    if (fv == null) return null;
+    return dow <= 4 ? fv / p.global_charts : p.global_charts / fv;
   };
+  const toFridayStats = computeUcgStats(hist.points.slice(-UCG_ROLLING_WINDOW_DAYS).map(toFridayRatio).filter(v => v != null));
 
   const pointRow = (p) => {
     const isRelease = predictionReleaseDays.has(p.date);
@@ -1718,7 +1731,7 @@ function renderUcgHistory() {
     <td>${fmt(floor1000(p.own_counter))}</td>
     <td>${fmt(floor1000(p.global_charts))}</td>
     <td>${p.factor.toFixed(2)}</td>
-    <td data-tooltip="Vrijdag die week / deze dag, o.b.v. de officiele Global Charts-cijfers (ongefilterd -- ook releasedagen tellen mee)">${ratio == null ? '<span class="neu">—</span>' : ratio.toFixed(2)}</td>
+    <td class="ucg-friday-col" data-tooltip="Ma-do: vrijdag / deze dag (officiele Global Charts-cijfers, ongefilterd -- ook releasedagen tellen mee). Za/zo: deze dag / vrijdag ervoor, zelfde week.">${ratio == null ? '<span class="neu">—</span>' : ratio.toFixed(2)}</td>
   </tr>`;
   };
 
@@ -1744,10 +1757,11 @@ function renderUcgHistory() {
     <td>${label}</td>
     <td>${exclStats ? fn(exclStats) : '—'}</td>
     <td>${inclStats ? fn(inclStats) : '—'}</td>
+    <td class="ucg-friday-col">${toFridayStats ? fn(toFridayStats) : '—'}</td>
   </tr>`;
 
   el.innerHTML = `<table class="log-table prediction-stats-table">
-    <thead><tr><th>Statistiek</th><th>Excl. releasedagen, laatste 14d</th><th>Incl. releasedagen, laatste 14d</th></tr></thead>
+    <thead><tr><th>Statistiek</th><th>Excl. releasedagen, laatste 14d</th><th>Incl. releasedagen, laatste 14d</th><th class="ucg-friday-col" data-tooltip="Verhouding t.o.v. vrijdag (zie kolom 'Naar vrijdag' hieronder), laatste 14 dagen, ongefilterd op releasedagen">Naar vrijdag, laatste 14d</th></tr></thead>
     <tbody>
       ${statRow('Aantal dagen', s => s.n)}
       ${statRow('Gem. (min–max)', s => `<b>${s.avg.toFixed(2)}</b> <span class="neu">(${s.min.toFixed(2)}–${s.max.toFixed(2)})</span>`)}
@@ -1756,7 +1770,7 @@ function renderUcgHistory() {
     </tbody>
   </table>
   <table class="log-table prediction-history-table">
-    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th><th data-tooltip="Vrijdag die week / deze dag (officiele Global Charts-cijfers, los van releasedata)">Naar vrijdag</th></tr></thead>
+    <thead><tr><th>Datum</th><th>Eigen counter</th><th>Global Charts</th><th>Factor</th><th class="ucg-friday-col" data-tooltip="Ma-do: vrijdag / deze dag. Za/zo: deze dag / vrijdag ervoor, zelfde week. Officiele Global Charts-cijfers, ongefilterd op releasedagen.">Naar vrijdag</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
