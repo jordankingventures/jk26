@@ -86,6 +86,14 @@
     }
     .log-header h2 { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
     .log-empty { padding: 16px; color: var(--muted); font-size: 0.8rem; }
+    /* Inklapbare .log-wrap-secties (als <details>) -- zelfde chevron-patroon
+       als de Video's-tabel hieronder, generiek gemaakt zodat beide het
+       hergebruiken. */
+    summary { list-style: none; cursor: pointer; }
+    summary::-webkit-details-marker { display: none; }
+    summary.log-header { justify-content: flex-start; gap: 8px; }
+    .summary-chevron { display: inline-block; color: var(--muted); font-size: 0.7rem; transition: transform .15s; }
+    details[open] > summary .summary-chevron { transform: rotate(90deg); }
 
     #log-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .log-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
@@ -159,13 +167,10 @@
     /* Video table (inklapbaar) */
     .video-details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
     .video-summary {
-      display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
       padding: 10px 16px; background: var(--surface2);
     }
-    .video-summary::-webkit-details-marker { display: none; }
     .video-summary h2 { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-    .summary-chevron { display: inline-block; color: var(--muted); font-size: 0.7rem; transition: transform .15s; }
-    .video-details[open] .summary-chevron { transform: rotate(90deg); }
     .video-details[open] .video-summary { border-bottom: 1px solid var(--border); }
 
     .section-header { display: flex; align-items: center; justify-content: flex-end; margin: 12px 16px 10px; gap: 10px; flex-wrap: wrap; }
@@ -404,12 +409,13 @@
 
 <div id="log-view">
   <!-- Log -->
-  <div class="log-wrap">
-    <div class="log-header">
+  <details class="log-wrap" open>
+    <summary class="log-header">
+      <span class="summary-chevron">▸</span>
       <h2>Refresh log</h2>
-    </div>
+    </summary>
     <div id="log-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
-  </div>
+  </details>
 
   <!-- Video table -->
   <details class="video-details" id="video-details">
@@ -453,31 +459,34 @@
 </div>
 
 <div id="prediction-view" style="display:none">
-  <div class="log-wrap">
-    <div class="log-header">
+  <details class="log-wrap" open>
+    <summary class="log-header">
+      <span class="summary-chevron">▸</span>
       <h2>Deze week (maandag t/m vandaag, UTC-8)</h2>
-    </div>
+    </summary>
     <div class="prediction-controls">
       <span class="prediction-result-label">UCG-factor</span>
       <input type="range" id="ucg-slider" min="1" max="1.5" step="0.01" value="1" oninput="onUcgSliderInput()">
       <input type="number" id="ucg-number" min="1" max="5" step="0.01" value="1" oninput="onUcgNumberInput()">
     </div>
     <div id="prediction-days"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
-  </div>
+  </details>
 
-  <div class="log-wrap">
-    <div class="log-header">
+  <details class="log-wrap" open>
+    <summary class="log-header">
+      <span class="summary-chevron">▸</span>
       <h2>Deze week: bekend &amp; voorspeld</h2>
-    </div>
+    </summary>
     <div id="week-forecast-chart" class="ucg-chart-wrap"><div class="log-empty">Data ophalen...</div></div>
-  </div>
+  </details>
 
-  <div class="log-wrap">
-    <div class="log-header">
+  <details class="log-wrap" open>
+    <summary class="log-header">
+      <span class="summary-chevron">▸</span>
       <h2>UCG-factor: nauwkeurigheid &amp; variatie</h2>
-    </div>
+    </summary>
     <div id="ucg-chart" class="ucg-chart-wrap"><div class="log-empty">Data ophalen...</div></div>
-  </div>
+  </details>
 
   <div class="log-wrap">
     <div class="log-header">
