@@ -1595,10 +1595,11 @@ function renderWeekForecastChart() {
   const slot = (W - padL - padR) / 7;
   const xOf = i => padL + slot * (i + 0.5);
   const xOffset = Math.min(9, slot * 0.16);
-  // Compacte notatie (bv. "12.3M") -- ook op de assen en in de hover, i.p.v.
+  // Compacte notatie (bv. "12.34M") -- ook op de assen en in de hover, i.p.v.
   // volledige getallen: dat was te veel info voor wat hier vooral een
-  // vorm-vergelijking moet zijn (overlappen de banden, ja/nee).
-  const fmtM = v => v == null ? '—' : (v / 1e6).toFixed(1) + 'M';
+  // vorm-vergelijking moet zijn (overlappen de banden, ja/nee). Twee
+  // decimalen voor wat meer precisie dan op de hele miljoen.
+  const fmtM = v => v == null ? '—' : (v / 1e6).toFixed(2) + 'M';
 
   const allVals = [];
   data.forEach((d) => {
