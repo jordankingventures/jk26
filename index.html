@@ -1591,10 +1591,14 @@ function renderWeekForecastChart() {
   }
 
   const W = Math.max(280, (el.clientWidth || 600) - 24);
-  const H = 190, padL = 46, padR = 10, padT = 10, padB = 26;
+  const H = 200, padL = 40, padR = 10, padT = 20, padB = 26;
   const slot = (W - padL - padR) / 7;
   const xOf = i => padL + slot * (i + 0.5);
   const xOffset = Math.min(9, slot * 0.16);
+  // Compacte notatie (bv. "12.3M") -- ook op de assen en in de hover, i.p.v.
+  // volledige getallen: dat was te veel info voor wat hier vooral een
+  // vorm-vergelijking moet zijn (overlappen de banden, ja/nee).
+  const fmtM = v => v == null ? '—' : (v / 1e6).toFixed(1) + 'M';
 
   const allVals = [];
   data.forEach((d) => {
@@ -1603,19 +1607,23 @@ function renderWeekForecastChart() {
     if (d.official != null) allVals.push(d.official);
   });
   let y0 = Math.min(...allVals), y1 = Math.max(...allVals);
-  const pad = (y1 - y0) * 0.18 || y1 * 0.05 || 1;
+  const pad = (y1 - y0) * 0.24 || y1 * 0.08 || 1;
   y0 = Math.max(0, y0 - pad); y1 += pad;
   const yOf = v => padT + (1 - (v - y0) / (y1 - y0)) * (H - padT - padB);
 
   const grid = [0, 1, 2, 3].map(k => {
     const v = y0 + (y1 - y0) * k / 3;
-    return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yOf(v) + 3).toFixed(1)}" text-anchor="end">${fmt(Math.round(v / 1000) * 1000)}</text>`;
+    return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yOf(v) + 3).toFixed(1)}" text-anchor="end">${fmtM(v)}</text>`;
   }).join('');
 
-  // Puur een min-max-band (geen middelpunt-stip) -- valt terug op een klein
-  // puntje alleen als er geen band beschikbaar is (bv. nog geen UCG-
-  // spreiding voor deze artiest).
-  const band = (x, lo, mid, hi, color, dashed) => {
+  // Puur een min-max-band (geen middelpunt-stip), met de waarden bij de
+  // uiteinden erbij. `anchor` bepaalt of het label op x zelf centreert, of
+  // naar buiten leest (zodat twee banden naast elkaar, voor dezelfde dag,
+  // hun labels niet over elkaar heen laten vallen).
+  const band = (x, lo, mid, hi, color, dashed, anchor) => {
+    const ta = anchor || 'middle';
+    const tx = ta === 'end' ? x - 4 : ta === 'start' ? x + 4 : x;
+    const label = (ly, v) => `<text x="${tx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${ta}" style="fill:${color};font-size:8.5px;font-weight:600">${fmtM(v)}</text>`;
     if (lo != null && hi != null && hi > lo) {
       const yLo = yOf(lo), yHi = yOf(hi);
       const capW = Math.min(12, slot * 0.26);
@@ -1623,9 +1631,10 @@ function renderWeekForecastChart() {
       const dash = dashed ? 'stroke-dasharray="3 2"' : '';
       return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2" ${dash} opacity="${op}"/>
         <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yLo.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2" opacity="${op}"/>
-        <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yHi.toFixed(1)}" stroke="${color}" stroke-width="2.2" opacity="${op}"/>`;
+        <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yHi.toFixed(1)}" stroke="${color}" stroke-width="2.2" opacity="${op}"/>
+        ${label(yHi - 5, hi)}${label(yLo + 12, lo)}`;
     }
-    if (mid != null) return `<circle cx="${x.toFixed(1)}" cy="${yOf(mid).toFixed(1)}" r="3" style="fill:${color}"/>`;
+    if (mid != null) return `<circle cx="${x.toFixed(1)}" cy="${yOf(mid).toFixed(1)}" r="3" style="fill:${color}"/>${label(yOf(mid) - 7, mid)}`;
     return '';
   };
 
@@ -1637,11 +1646,12 @@ function renderWeekForecastChart() {
     const knownX = both ? x - xOffset : x;
     const wpX = both ? x + xOffset : x;
     let g = todayLine;
-    if (d.known) g += band(knownX, d.known.lo, d.known.mid, d.known.hi, 'var(--accent)', false);
-    if (d.weekpattern) g += band(wpX, d.weekpattern.lo, d.weekpattern.mid, d.weekpattern.hi, 'var(--accent2)', true);
+    if (d.known) g += band(knownX, d.known.lo, d.known.mid, d.known.hi, 'var(--accent)', false, both ? 'end' : 'middle');
+    if (d.weekpattern) g += band(wpX, d.weekpattern.lo, d.weekpattern.mid, d.weekpattern.hi, 'var(--accent2)', true, both ? 'start' : 'middle');
     if (d.official != null) {
       const y = yOf(d.official);
-      g += `<rect x="${(x - 3.6).toFixed(1)}" y="${(y - 3.6).toFixed(1)}" width="7.2" height="7.2" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--green)"/>`;
+      g += `<rect x="${(x - 3.6).toFixed(1)}" y="${(y - 3.6).toFixed(1)}" width="7.2" height="7.2" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--green)"/>
+        <text x="${x.toFixed(1)}" y="${(y - 8).toFixed(1)}" text-anchor="middle" style="fill:var(--green);font-size:8.5px;font-weight:600">${fmtM(d.official)}</text>`;
     }
     return g;
   }).join('');
@@ -1670,15 +1680,15 @@ function renderWeekForecastChart() {
     if (!d) { tip.style.display = 'none'; return; }
     const dayLabel = new Date(d.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
     const lines = [];
-    if (d.official != null) lines.push(`Officieel (Global Charts): <b>${fmt(floor1000(d.official))}</b>`);
+    if (d.official != null) lines.push(`Officieel (Global Charts): <b>${fmtM(d.official)}</b>`);
     if (d.known) {
-      const kBand = (d.known.lo != null && d.known.hi != null) ? `<b>${fmt(floor1000(d.known.lo))}–${fmt(floor1000(d.known.hi))}</b>` : `<b>${fmt(floor1000(d.known.mid))}</b>`;
-      lines.push(`Eigen counter <b>${fmt(floor1000(d.known.ownVal))}</b> &times; UCG &rarr; ${kBand}`);
+      const kBand = (d.known.lo != null && d.known.hi != null) ? `<b>${fmtM(d.known.lo)}–${fmtM(d.known.hi)}</b>` : `<b>${fmtM(d.known.mid)}</b>`;
+      lines.push(`Eigen counter <b>${fmtM(d.known.ownVal)}</b> &times; UCG &rarr; ${kBand}`);
     }
     if (d.weekpattern) {
       const f = d.weekpattern.factorInfo;
       const basis = ptShortLabel(d.weekpattern.basedOn + 'T12:00:00Z');
-      lines.push(`Weekpatroon (o.b.v. ${esc(basis)}${f ? `, factor ${f.factor.toFixed(3)} ${f.own ? 'eigen' : 'gepoold'} n=${f.n}` : ''}) &rarr; <b>${fmt(floor1000(d.weekpattern.lo))}–${fmt(floor1000(d.weekpattern.hi))}</b>`);
+      lines.push(`Weekpatroon (o.b.v. ${esc(basis)}${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.lo)}–${fmtM(d.weekpattern.hi)}</b>`);
     }
     if (!lines.length) lines.push('Nog geen data of voorspelling voor deze dag.');
     tip.innerHTML = `<b>${esc(dayLabel)}</b><br>${lines.join('<br>')}`;
@@ -1780,8 +1790,9 @@ function renderUcgHistory() {
   const weStatsSummary = weekendFactorStats(activeArtist);
   const summaryLabels = ['ma', 'di', 'wo', 'do', 'za', 'zo'];
   const summaryFactors = [...wdStatsSummary, ...weStatsSummary];
+  const anyPooled = summaryFactors.some(f => !f.own);
   const weekPatternSummary = summaryFactors.every(f => f.n === 0) ? '' : `
-    <div class="ucg-line neu" style="margin-top:6px">Weekpatroon (t.o.v. vrijdag, excl. releaseweken -- de factoren die de weekgrafiek hierboven gebruikt): ${summaryLabels.map((lab, i) => `${lab} <b>${summaryFactors[i].factor.toFixed(2)}</b>${summaryFactors[i].own ? '' : '<span class="est-tag" title="Te weinig eigen schone weken -- gepoolde factor over alle 16 artiesten">gepoold</span>'}`).join(' · ')}</div>`;
+    <div class="ucg-line neu" style="margin-top:6px" data-tooltip="Factor t.o.v. vrijdag dezelfde week, excl. releaseweken -- dezelfde factoren die de weekgrafiek hierboven gebruikt.${anyPooled ? ' * = gepoold (te weinig eigen schone weken, factor over alle 16 artiesten).' : ''}">Weekpatroon: ${summaryLabels.map((lab, i) => `${lab} <b>${summaryFactors[i].factor.toFixed(2)}</b>${summaryFactors[i].own ? '' : '*'}`).join(' · ')}</div>`;
 
   el.innerHTML = `<table class="log-table prediction-stats-table">
     <thead><tr><th>Statistiek</th><th>Excl. releasedagen, laatste 14d</th><th>Incl. releasedagen, laatste 14d</th></tr></thead>
