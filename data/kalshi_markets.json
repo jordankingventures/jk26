@@ -1,7 +1,7 @@
 {
   "series_ticker": "KXYTVIEWSW",
   "monthly_series_ticker": "KXYTVIEWSHIGH",
-  "fetched_at": "2026-09-28T13:15:31Z",
+  "fetched_at": "2026-09-28T13:20:35Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -138,10 +138,10 @@
               "ticker": "KXYTVIEWSHIGH-ARI26OCT-16.0M",
               "floor_strike": 16000000,
               "label": "Above 16M",
-              "yes_bid": 0.04,
+              "yes_bid": 0.03,
               "yes_ask": 0.54,
               "no_bid": 0.46,
-              "no_ask": 0.96
+              "no_ask": 0.97
             },
             {
               "ticker": "KXYTVIEWSHIGH-ARI26OCT-16.5M",
@@ -193,8 +193,8 @@
               "floor_strike": 19000000,
               "label": "Above 19M",
               "yes_bid": 0.01,
-              "yes_ask": 0.19,
-              "no_bid": 0.81,
+              "yes_ask": 0.17,
+              "no_bid": 0.83,
               "no_ask": 0.99
             },
             {
@@ -373,8 +373,8 @@
           "floor_strike": 29500000,
           "label": "Above 29.5M",
           "yes_bid": 0.01,
-          "yes_ask": 0.44,
-          "no_bid": 0.56,
+          "yes_ask": 0.29,
+          "no_bid": 0.71,
           "no_ask": 0.99
         },
         {
@@ -471,8 +471,8 @@
               "floor_strike": 29500000,
               "label": "Above 29.5M",
               "yes_bid": 0.02,
-              "yes_ask": 0.94,
-              "no_bid": 0.06,
+              "yes_ask": 0.98,
+              "no_bid": 0.02,
               "no_ask": 0.98
             },
             {
@@ -552,8 +552,8 @@
               "floor_strike": 34000000,
               "label": "Above 34M",
               "yes_bid": 0.01,
-              "yes_ask": 0.14,
-              "no_bid": 0.86,
+              "yes_ask": 0.12,
+              "no_bid": 0.88,
               "no_ask": 0.99
             }
           ]
@@ -830,8 +830,8 @@
               "floor_strike": 24000000,
               "label": "Above 24M",
               "yes_bid": 0.02,
-              "yes_ask": 0.22,
-              "no_bid": 0.78,
+              "yes_ask": 0.21,
+              "no_bid": 0.79,
               "no_ask": 0.98
             },
             {
@@ -1439,8 +1439,8 @@
               "floor_strike": 26000000,
               "label": "Above 26M",
               "yes_bid": 0.02,
-              "yes_ask": 0.17,
-              "no_bid": 0.83,
+              "yes_ask": 0.19,
+              "no_bid": 0.81,
               "no_ask": 0.98
             },
             {
@@ -1663,8 +1663,8 @@
               "floor_strike": 6000000,
               "label": "Above 6M",
               "yes_bid": 0.04,
-              "yes_ask": 0.26,
-              "no_bid": 0.74,
+              "yes_ask": 0.25,
+              "no_bid": 0.75,
               "no_ask": 0.96
             },
             {
@@ -1923,8 +1923,8 @@
               "floor_strike": 5750000,
               "label": "Above 5.75M",
               "yes_bid": 0.02,
-              "yes_ask": 0.4,
-              "no_bid": 0.6,
+              "yes_ask": 0.39,
+              "no_bid": 0.61,
               "no_ask": 0.98
             },
             {
@@ -1950,8 +1950,8 @@
               "floor_strike": 6500000,
               "label": "Above 6.5M",
               "yes_bid": 0.02,
-              "yes_ask": 0.28,
-              "no_bid": 0.72,
+              "yes_ask": 0.27,
+              "no_bid": 0.73,
               "no_ask": 0.98
             },
             {
@@ -1959,8 +1959,8 @@
               "floor_strike": 6750000,
               "label": "Above 6.75M",
               "yes_bid": 0.02,
-              "yes_ask": 0.18,
-              "no_bid": 0.82,
+              "yes_ask": 0.17,
+              "no_bid": 0.83,
               "no_ask": 0.98
             },
             {
@@ -1968,8 +1968,8 @@
               "floor_strike": 7000000,
               "label": "Above 7M",
               "yes_bid": 0.02,
-              "yes_ask": 0.18,
-              "no_bid": 0.82,
+              "yes_ask": 0.17,
+              "no_bid": 0.83,
               "no_ask": 0.98
             },
             {
