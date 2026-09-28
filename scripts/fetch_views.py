@@ -221,15 +221,23 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
     return ids
 
 
-def get_recent_video_ids(uploads_playlist_id, count=10):
+def get_recent_video_ids(uploads_playlist_id, count=50):
     """
     Lichte check op de nieuwste uploads van één kanaal (kost altijd maar 1
     API-unit, ongeacht 'count' -- playlistItems.list rekent per call, niet
-    per resultaat). Draait elke run, los van de dagelijkse cache in
-    get_video_ids(), zodat een net-verschenen video (bv. een vrijdagochtend-
-    release) binnen het uur ontdekt wordt in plaats van pas bij de eerst-
-    volgende dagelijkse full-scan -- tot 24 uur later, waarbij zijn hele
-    groei tot dan toe onterecht als "al bestaand" zou worden weggebaseline'd.
+    per resultaat, dus 50 i.p.v. 10 is net zo goedkoop; 50 is ook het
+    maximum dat de API toestaat). Draait elke run, los van de dagelijkse
+    cache in get_video_ids(), zodat een net-verschenen video (bv. een
+    vrijdagochtend-release) binnen het uur ontdekt wordt in plaats van pas
+    bij de eerstvolgende dagelijkse full-scan -- tot 24 uur later, waarbij
+    zijn hele groei tot dan toe onterecht als "al bestaand" zou worden
+    weggebaseline'd.
+
+    Was eerst 10: bij Taylor Swift's albumrelease (24-25 sep 2026, een
+    livestream gevolgd door 32 nummers binnen ~4,5 uur) werd de livestream
+    daardoor uit de "10 nieuwste" geduwd voordat een run 'm zag, en pas 30-40
+    uur later gevonden bij de volgende dagelijkse full-scan. Met 50 blijft
+    zo'n release ruim binnen bereik van de lichte check.
     """
     data = yt_get("playlistItems", {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": count})
     return [item["contentDetails"]["videoId"] for item in data.get("items", [])]
