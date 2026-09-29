@@ -49,20 +49,28 @@ DAY_BOUNDARY_TZ = timezone(timedelta(hours=-8))
 #    telt, dus de factor is kunstmatig hoog. (Fase 1 begon al voor de
 #    historie in analysis_data.json.)
 #  - een specifieke bekende datafout: Taylor Swift's "The Life of a Showgirl:
-#    The Encore STATION" is een 24/7-livestream die van 24 t/m 26 sep 2026
-#    als gewone video werd meegeteld (voordat fetch_views.py's is_live()-
-#    filter er was) en het dagtotaal met tientallen miljoenen opblies. Niet
-#    terug te rekenen naar een gecorrigeerd dagtotaal (geen per-video-
-#    snapshots uit het verleden bewaard), dus deze 3 dagen worden helemaal
-#    niet opgeslagen i.p.v. een geschat cijfer te tonen.
+#    The Encore STATION" is een 24/7-livestream die van 24 t/m 27 sep 2026
+#    als gewone video werd meegeteld en het dagtotaal met tientallen miljoenen
+#    opblies. fetch_views.py's is_live()-filter (28 sep 2026, ~16:55 UTC)
+#    sluit 'm sindsdien uit; 27 sep viel volledig VOOR die fix (hele dag met
+#    de oude code opgehaald), dus nog steeds besmet. 28 sep zelf is wel
+#    schoon: de fix ging midden op de dag live en de baseline-correctie in
+#    fetch_views.py (symmetrische verwijdering uit day_baseline zodra een
+#    video niet meer in de scan zit) trekt de al opgebouwde ochtend-groei van
+#    de livestream er met terugwerkende kracht weer uit -- geverifieerd via
+#    een vloeiende views_today-reeks zonder sprong rond het omslagmoment.
+#    Niet terug te rekenen naar een gecorrigeerd dagtotaal voor de wel-
+#    besmette dagen (geen per-video-snapshots uit het verleden bewaard), dus
+#    die dagen worden helemaal niet opgeslagen i.p.v. een geschat cijfer.
 EXCLUDED_DATES = {
     **{key: {"2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."}
        for key in ("fuerzaregida", "future", "kanye", "katseye", "kendrick",
                    "olivia", "postmalone", "tatemcrae", "weeknd")},
     "taylor": {
         d: "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld "
-           "en blies het dagtotaal kunstmatig op (zie fetch_views.py's is_live()-fix)."
-        for d in ("2026-09-24", "2026-09-25", "2026-09-26")
+           "en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds "
+           "28 sep 2026 ~16:55 UTC)."
+        for d in ("2026-09-24", "2026-09-25", "2026-09-26", "2026-09-27")
     },
 }
 
