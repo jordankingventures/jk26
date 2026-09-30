@@ -1516,18 +1516,18 @@ function dayFromFriday(i, friday, wdStats, weStats) {
   return { mid: friday.mid * f.factor, lo: friday.mid * f.lo, hi: friday.mid * f.hi, factorInfo: f };
 }
 
-// Bouwt de 7 dagen (ma..zo) van de lopende week op. Per dag maar EEN van
-// drieen, nooit meer dan een tegelijk (simpel houden -- geen dubbele banden
-// meer om te vergelijken):
-// - official: al gepubliceerde Global Charts-waarde (definitief);
-// - known: de live counter heeft deze dag al afgerond -- eigen-counter x
-//   UCG-factor-range. Hier hoeft geen weekpatroon-schatting overheen, die
-//   dag ligt al (vrijwel) vast;
-// - weekpattern: nog geen van beide boven -- geschat via het weekpatroon,
-//   verankerd op het LAATST BESCHIKBARE officiele Global Charts-punt (kan
-//   uit een eerdere week komen; bewust nooit de live counter/UCG-methode --
-//   die twee moeten onafhankelijk blijven) en vandaaruit doorgerekend naar
-//   de gevraagde weekdag.
+// Bouwt de 7 dagen (ma..zo) van de lopende week op:
+// - known: de live counter heeft deze dag afgerond -- eigen-counter x
+//   UCG-factor-range. Blijft staan ook als official er al is, zodat je kan
+//   zien of de officiele waarde binnen of buiten die range valt;
+// - official: al gepubliceerde Global Charts-waarde (definitief) -- kan
+//   samen met known voorkomen (zie hierboven);
+// - weekpattern: alleen als een dag nog GEEN known/official heeft -- een
+//   ENKELE puntwaarde (geen range), verankerd op het LAATST BESCHIKBARE
+//   officiele Global Charts-punt (kan uit een eerdere week komen; bewust
+//   nooit de live counter/UCG-methode -- die twee moeten onafhankelijk
+//   blijven) en vandaaruit doorgerekend naar de gevraagde weekdag, met de
+//   weekpatroon-factor -- zelfde cijfer als in de spreiding & historie-tabel.
 function weekForecastData(artistKey) {
   const hist = analysisData?.ucg_factor?.[artistKey];
   const gcByDate = new Map((hist?.points || []).map(p => [p.date, p.global_charts]));
@@ -1545,7 +1545,7 @@ function weekForecastData(artistKey) {
   const out = days.map((key) => ({ key, official: null, known: null, weekpattern: null }));
   out.forEach((d) => {
     const gcVal = gcByDate.get(d.key);
-    if (gcVal != null) { d.official = gcVal; return; }
+    if (gcVal != null) d.official = gcVal;
     const ownVal = ownByDate.get(d.key);
     if (ownVal != null) {
       d.known = {
@@ -1603,7 +1603,7 @@ function renderWeekForecastChart() {
   const allVals = [];
   data.forEach((d) => {
     if (d.known) { if (d.known.lo != null) allVals.push(d.known.lo); if (d.known.hi != null) allVals.push(d.known.hi); allVals.push(d.known.mid); }
-    if (d.weekpattern) { allVals.push(d.weekpattern.lo, d.weekpattern.hi); }
+    if (d.weekpattern) allVals.push(d.weekpattern.mid);
     if (d.official != null) allVals.push(d.official);
   });
   let y0 = Math.min(...allVals), y1 = Math.max(...allVals);
@@ -1616,35 +1616,37 @@ function renderWeekForecastChart() {
     return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yOf(v) + 3).toFixed(1)}" text-anchor="end">${fmtAxis(v)}</text>`;
   }).join('');
 
-  // Puur een min-max-band (geen middelpunt-stip), met de waarden bij de
-  // uiteinden erbij. Elke dag heeft er nu nog maar een (official, known of
-  // weekpattern), dus altijd gecentreerd op x -- geen naast-elkaar-gedoe meer.
-  const band = (x, lo, mid, hi, color, dashed) => {
+  // Min-max-band met de waarden bij de uiteinden (known) -- of een losse
+  // puntwaarde zonder range (weekpattern: lo/hi worden niet meegegeven).
+  const band = (x, lo, mid, hi, color) => {
     const label = (ly, v) => `<text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" style="fill:${color};font-size:9px;font-weight:600">${fmtM(v)}</text>`;
     if (lo != null && hi != null && hi > lo) {
       const yLo = yOf(lo), yHi = yOf(hi);
       const capW = Math.min(16, slot * 0.32);
-      const dash = dashed ? 'stroke-dasharray="3 2"' : '';
-      return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2" ${dash}/>
+      return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2"/>
         <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yLo.toFixed(1)}" y2="${yLo.toFixed(1)}" stroke="${color}" stroke-width="2.2"/>
         <line x1="${(x - capW / 2).toFixed(1)}" x2="${(x + capW / 2).toFixed(1)}" y1="${yHi.toFixed(1)}" y2="${yHi.toFixed(1)}" stroke="${color}" stroke-width="2.2"/>
         ${label(yHi - 5, hi)}${label(yLo + 12, lo)}`;
     }
-    if (mid != null) return `<circle cx="${x.toFixed(1)}" cy="${yOf(mid).toFixed(1)}" r="3" style="fill:${color}"/>${label(yOf(mid) - 7, mid)}`;
+    if (mid != null) return `<circle cx="${x.toFixed(1)}" cy="${yOf(mid).toFixed(1)}" r="3.2" style="fill:${color}"/>${label(yOf(mid) - 7, mid)}`;
     return '';
   };
 
+  // Official blijft bewust ook zichtbaar op dagen die al "known" zijn -- dan
+  // zie je in een oogopslag of het officiele cijfer binnen of buiten de
+  // eigen-counter-range viel.
   const marks = data.map((d, i) => {
     const x = xOf(i);
     const isToday = d.key === todayKey;
     const todayLine = isToday ? `<rect x="${(x - slot / 2).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${H - padT - padB}" fill="var(--border)" opacity="0.3"/>` : '';
     let g = todayLine;
-    if (d.known) g += band(x, d.known.lo, d.known.mid, d.known.hi, 'var(--accent)', false);
-    else if (d.weekpattern) g += band(x, d.weekpattern.lo, d.weekpattern.mid, d.weekpattern.hi, 'var(--accent2)', true);
-    else if (d.official != null) {
+    if (d.known) g += band(x, d.known.lo, d.known.mid, d.known.hi, 'var(--accent)');
+    else if (d.weekpattern) g += band(x, null, d.weekpattern.mid, null, 'var(--accent2)');
+    if (d.official != null) {
       const y = yOf(d.official);
+      const ly = d.known ? y + 14 : y - 8; // bij een known-band staat het waarde-label van de band al bij het uiteinde -- het officiele label iets lager zetten zodat ze niet overlappen
       g += `<rect x="${(x - 3.6).toFixed(1)}" y="${(y - 3.6).toFixed(1)}" width="7.2" height="7.2" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--green)"/>
-        <text x="${x.toFixed(1)}" y="${(y - 8).toFixed(1)}" text-anchor="middle" style="fill:var(--green);font-size:9px;font-weight:600">${fmtM(d.official)}</text>`;
+        <text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" style="fill:var(--green);font-size:9px;font-weight:600">${fmtM(d.official)}</text>`;
     }
     return g;
   }).join('');
@@ -1657,7 +1659,7 @@ function renderWeekForecastChart() {
   el.innerHTML = `
     <div class="ucg-legend">
       <span><i style="background:var(--accent)"></i>eigen counter &times; UCG (min&ndash;max)</span>
-      <span><i style="background:var(--accent2)"></i>weekpatroon (min&ndash;max)</span>
+      <span><i style="background:var(--accent2)"></i>weekpatroon</span>
       <span><i style="background:var(--green);border-radius:2px"></i>officieel (Global Charts)</span>
     </div>
     <svg class="ucg-svg" id="wf-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${marks}${xAxis}</svg>
@@ -1673,18 +1675,23 @@ function renderWeekForecastChart() {
     if (!d) { tip.style.display = 'none'; return; }
     const dayLabel = new Date(d.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
     const lines = [];
-    if (d.official != null) {
-      lines.push(`Officieel (Global Charts): <b>${fmtM(d.official)}</b>`);
-    } else if (d.known) {
+    if (d.known) {
       const kBand = (d.known.lo != null && d.known.hi != null) ? `<b>${fmtM(d.known.lo)}–${fmtM(d.known.hi)}</b>` : `<b>${fmtM(d.known.mid)}</b>`;
       lines.push(`Live counter afgerond -- eigen counter <b>${fmtM(d.known.ownVal)}</b> &times; UCG &rarr; ${kBand}`);
-    } else if (d.weekpattern) {
+    }
+    if (d.official != null) {
+      let verdict = '';
+      if (d.known && d.known.lo != null && d.known.hi != null) {
+        verdict = d.official >= d.known.lo && d.official <= d.known.hi ? ' <span class="pos">(binnen de range)</span>' : ' <span class="neg">(buiten de range)</span>';
+      }
+      lines.push(`Officieel (Global Charts): <b>${fmtM(d.official)}</b>${verdict}`);
+    }
+    if (!d.known && !d.official && d.weekpattern) {
       const f = d.weekpattern.factorInfo;
       const basis = ptShortLabel(d.weekpattern.basedOn + 'T12:00:00Z');
-      lines.push(`Weekpatroon (verankerd op laatst bekende Global Charts-dag, ${esc(basis)}${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.lo)}–${fmtM(d.weekpattern.hi)}</b>`);
-    } else {
-      lines.push('Nog geen data of voorspelling voor deze dag.');
+      lines.push(`Weekpatroon (verankerd op laatst bekende Global Charts-dag, ${esc(basis)}${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.mid)}</b>`);
     }
+    if (!lines.length) lines.push('Nog geen data of voorspelling voor deze dag.');
     tip.innerHTML = `<b>${esc(dayLabel)}</b><br>${lines.join('<br>')}`;
     tip.style.display = 'block';
     const tw = tip.offsetWidth;
