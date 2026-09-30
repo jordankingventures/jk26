@@ -1542,10 +1542,16 @@ function weekForecastData(artistKey) {
   const wdStats = weekdayFactorStats(artistKey);
   const weStats = weekendFactorStats(artistKey);
 
+  const todayKey = todayKeyNow();
   const out = days.map((key) => ({ key, official: null, known: null, weekpattern: null }));
   out.forEach((d) => {
     const gcVal = gcByDate.get(d.key);
     if (gcVal != null) d.official = gcVal;
+    // Vandaag zelf overslaan: de live counter heeft de dag nog niet afgerond,
+    // dus vroeg op de dag is die nog kunstmatig laag (en trekt de as scheef).
+    // Val voor vandaag terug op het weekpatroon, net als een nog niet
+    // verstreken dag.
+    if (d.key === todayKey) return;
     const ownVal = ownByDate.get(d.key);
     if (ownVal != null) {
       d.known = {
