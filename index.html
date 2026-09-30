@@ -1650,9 +1650,14 @@ function renderWeekForecastChart() {
     else if (d.weekpattern) g += band(x, null, d.weekpattern.mid, null, 'var(--accent2)');
     if (d.official != null) {
       const y = yOf(d.official);
-      const ly = d.known ? y + 14 : y - 8; // bij een known-band staat het waarde-label van de band al bij het uiteinde -- het officiele label iets lager zetten zodat ze niet overlappen
-      g += `<rect x="${(x - 3.6).toFixed(1)}" y="${(y - 3.6).toFixed(1)}" width="7.2" height="7.2" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--green)"/>
-        <text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" style="fill:var(--green);font-size:9px;font-weight:600">${fmtM(d.official)}</text>`;
+      // Staat er ook een known-band (met eigen lo/hi-labels middenop x), dan
+      // schuift het officiele puntje + label naar rechts -- anders vallen ze
+      // qua tekst al snel exact over elkaar heen zodra het officiele cijfer
+      // dicht bij de rand van de range ligt.
+      const ox = d.known ? Math.min(16, slot * 0.3) : 0;
+      const mx = x + ox;
+      g += `<rect x="${(mx - 3.6).toFixed(1)}" y="${(y - 3.6).toFixed(1)}" width="7.2" height="7.2" transform="rotate(45 ${mx.toFixed(1)} ${y.toFixed(1)})" style="fill:var(--green)"/>
+        <text x="${mx.toFixed(1)}" y="${(y - 8).toFixed(1)}" text-anchor="${d.known ? 'start' : 'middle'}" style="fill:var(--green);font-size:9px;font-weight:600">${fmtM(d.official)}</text>`;
     }
     return g;
   }).join('');
