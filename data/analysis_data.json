@@ -260,11 +260,17 @@
           "own_counter": 20204000,
           "global_charts": 23403000,
           "factor": 1.1583349831716492
+        },
+        {
+          "date": "2026-09-30",
+          "own_counter": 21250000,
+          "global_charts": 23639000,
+          "factor": 1.1124235294117648
         }
       ],
-      "min": 1.145822483446172,
+      "min": 1.1124235294117648,
       "max": 1.3128205128205128,
-      "avg": 1.2175920626163492,
+      "avg": 1.2152018686798813,
       "excluded_dates": {
         "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
@@ -2169,11 +2175,17 @@
           "own_counter": 10090000,
           "global_charts": 18979000,
           "factor": 1.8809712586719525
+        },
+        {
+          "date": "2026-09-30",
+          "own_counter": 10616000,
+          "global_charts": 19657000,
+          "factor": 1.8516390354182366
         }
       ],
       "min": 1.7902593767493935,
       "max": 2.0459057071960296,
-      "avg": 1.9063690863374976,
+      "avg": 1.9038813567502582,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -3199,11 +3211,17 @@
           "own_counter": 2006000,
           "global_charts": 2663000,
           "factor": 1.3275174476570288
+        },
+        {
+          "date": "2026-09-30",
+          "own_counter": 2001000,
+          "global_charts": 2625000,
+          "factor": 1.3118440779610194
         }
       ],
       "min": 1.26183970856102,
       "max": 1.408994708994709,
-      "avg": 1.338931360195052,
+      "avg": 1.3377536522718332,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
