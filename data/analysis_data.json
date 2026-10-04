@@ -272,11 +272,17 @@
           "own_counter": 18772000,
           "global_charts": 21931000,
           "factor": 1.1682825484764543
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 17856000,
+          "global_charts": 20596000,
+          "factor": 1.1534498207885304
         }
       ],
       "min": 1.1124235294117648,
       "max": 1.3128205128205128,
-      "avg": 1.2141592171198052,
+      "avg": 1.2128394476343427,
       "excluded_dates": {
         "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
@@ -579,11 +585,17 @@
           "own_counter": 11140000,
           "global_charts": 13419000,
           "factor": 1.2045780969479354
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 13651000,
+          "global_charts": 15085000,
+          "factor": 1.1050472492857666
         }
       ],
       "min": 1.0183307039290812,
       "max": 1.2725324078799634,
-      "avg": 1.1796691281014724,
+      "avg": 1.1781766905251585,
       "excluded_dates": {}
     },
     "wallen": {
@@ -881,11 +893,17 @@
           "own_counter": 4013000,
           "global_charts": 4522000,
           "factor": 1.126837777224022
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 4535000,
+          "global_charts": 5002000,
+          "factor": 1.1029768467475194
         }
       ],
       "min": 1.0788276907529055,
       "max": 1.2332798287854467,
-      "avg": 1.1175465222909375,
+      "avg": 1.1172551287800692,
       "excluded_dates": {}
     },
     "badbunny": {
@@ -1177,11 +1195,17 @@
           "own_counter": 15849000,
           "global_charts": 26294000,
           "factor": 1.659032115590889
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 17246000,
+          "global_charts": 27911000,
+          "factor": 1.6184042676562682
         }
       ],
       "min": 1.5689803969917395,
       "max": 1.753676924978371,
-      "avg": 1.6322384079735475,
+      "avg": 1.6319560785793175,
       "excluded_dates": {}
     },
     "ariana": {
@@ -1479,11 +1503,17 @@
           "own_counter": 10172000,
           "global_charts": 13622000,
           "factor": 1.3391663389697208
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 10582000,
+          "global_charts": 14134000,
+          "factor": 1.3356643356643356
         }
       ],
       "min": 1.168424468602953,
       "max": 1.3815168071117696,
-      "avg": 1.2728779074411314,
+      "avg": 1.2741336360055957,
       "excluded_dates": {}
     },
     "youngboy": {
@@ -1781,11 +1811,17 @@
           "own_counter": 6039000,
           "global_charts": 6639000,
           "factor": 1.0993541977148535
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 6753000,
+          "global_charts": 7230000,
+          "factor": 1.0706352732119058
         }
       ],
       "min": 1.0248181429182712,
       "max": 1.135753176043557,
-      "avg": 1.0726462903361864,
+      "avg": 1.0726060699937008,
       "excluded_dates": {}
     },
     "bieber": {
@@ -2083,11 +2119,17 @@
           "own_counter": 10018000,
           "global_charts": 14769000,
           "factor": 1.4742463565581954
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 10686000,
+          "global_charts": 15357000,
+          "factor": 1.4371139809096014
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.4478069659853605,
+      "avg": 1.4475931062838452,
       "excluded_dates": {}
     },
     "fuerzaregida": {
@@ -2229,11 +2271,17 @@
           "own_counter": 10901000,
           "global_charts": 20154000,
           "factor": 1.8488212090633886
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 11716000,
+          "global_charts": 21411000,
+          "factor": 1.8275008535336292
         }
       ],
       "min": 1.7902593767493935,
       "max": 2.0459057071960296,
-      "avg": 1.9014874372856116,
+      "avg": 1.8984046629626128,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -2383,11 +2431,17 @@
           "own_counter": 4128000,
           "global_charts": 6033000,
           "factor": 1.461482558139535
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 4602000,
+          "global_charts": 6547000,
+          "factor": 1.4226423294219905
         }
       ],
       "min": 1.3861924686192468,
       "max": 1.5302083333333334,
-      "avg": 1.456146467201355,
+      "avg": 1.4548063016901804,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -2537,11 +2591,17 @@
           "own_counter": 3685000,
           "global_charts": 4754000,
           "factor": 1.2900949796472185
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 3970000,
+          "global_charts": 4992000,
+          "factor": 1.2574307304785894
         }
       ],
       "min": 1.1928934010152283,
       "max": 1.3776709401709402,
-      "avg": 1.2746780775403985,
+      "avg": 1.2739881836579263,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -2691,11 +2751,17 @@
           "own_counter": 9364000,
           "global_charts": 17654000,
           "factor": 1.8853054250320376
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 10598000,
+          "global_charts": 20046000,
+          "factor": 1.8914889601811662
         }
       ],
       "min": 1.675373655538483,
       "max": 2.231873321603852,
-      "avg": 2.0235692491267416,
+      "avg": 2.0182860375689184,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -2845,11 +2911,17 @@
           "own_counter": 4884000,
           "global_charts": 5708000,
           "factor": 1.1687141687141687
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 5160000,
+          "global_charts": 5879000,
+          "factor": 1.1393410852713177
         }
       ],
       "min": 1.10840160030482,
       "max": 1.2364990689013036,
-      "avg": 1.174363924512258,
+      "avg": 1.1729630109426203,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -2999,11 +3071,17 @@
           "own_counter": 6133000,
           "global_charts": 7833000,
           "factor": 1.2771889776618295
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 6358000,
+          "global_charts": 7919000,
+          "factor": 1.2455174583202264
         }
       ],
       "min": 1.2035382090096662,
       "max": 1.3743439009027925,
-      "avg": 1.275934868655474,
+      "avg": 1.274718172242064,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -3153,11 +3231,17 @@
           "own_counter": 5816000,
           "global_charts": 6699000,
           "factor": 1.1518225584594224
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 6344000,
+          "global_charts": 7101000,
+          "factor": 1.1193253467843631
         }
       ],
       "min": 1.1112850211300673,
       "max": 1.244602048857368,
-      "avg": 1.1627421819602612,
+      "avg": 1.1610055085532252,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -3307,11 +3391,17 @@
           "own_counter": 2006000,
           "global_charts": 2691000,
           "factor": 1.3414755732801595
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 2049000,
+          "global_charts": 2685000,
+          "factor": 1.3103953147877012
         }
       ],
       "min": 1.26183970856102,
       "max": 1.408994708994709,
-      "avg": 1.3379087323138468,
+      "avg": 1.3368081956128008,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -3461,11 +3551,17 @@
           "own_counter": 13946000,
           "global_charts": 17752000,
           "factor": 1.2729097949232755
+        },
+        {
+          "date": "2026-10-02",
+          "own_counter": 14768000,
+          "global_charts": 18128000,
+          "factor": 1.227518959913326
         }
       ],
       "min": 1.1888460989873058,
       "max": 1.3330507756209207,
-      "avg": 1.2680393665764287,
+      "avg": 1.2664185503099046,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
