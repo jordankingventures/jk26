@@ -1528,14 +1528,26 @@ function dayFromFriday(i, friday, wdStats, weStats) {
 //   nooit de live counter/UCG-methode -- die twee moeten onafhankelijk
 //   blijven) en vandaaruit doorgerekend naar de gevraagde weekdag, met de
 //   weekpatroon-factor -- zelfde cijfer als in de spreiding & historie-tabel.
-function weekForecastData(artistKey) {
+// Gecombineerde schatting = 70% eigen counter x UCG + 30% weekpatroon. Getoetst
+// walk-forward op alle 16 artiesten (okt 2026, ~420 dagen): de fouten van de
+// twee methoden hangen nauwelijks samen (corr ~0,16), dus middelen scheelt
+// ~10% fout (2,27% -> 2,05% per dag; weekmax 2,63% -> 2,42%). Het weekpatroon
+// is als losse methode zwakker (~3,2%), vandaar maar 30%.
+const BLEND_WEEKPATTERN_WEIGHT = 0.3;
+// Weekpatroon-anker: gemiddelde van de laatste N officiele dagen i.p.v. alleen
+// de allerlaatste -- getoetst: 3,65% (1 anker) -> 3,19% (7 ankers) afwijking.
+const WP_ANCHOR_DAYS = 7;
+
+// `totals`: dagtotalen van de lopende week (zie getWeekToDateTotals); standaard
+// die van de Voorspelling-tab, de Kalshi-tab geeft z'n eigen mee.
+function weekForecastData(artistKey, totals = predictionDays) {
   const hist = analysisData?.ucg_factor?.[artistKey];
   const gcByDate = new Map((hist?.points || []).map(p => [p.date, p.global_charts]));
   const stats = getUcgStats(artistKey);
   const minFactor = stats ? stats.excl.min : null;
   const maxFactor = stats ? stats.excl.max : null;
   const fixedFactor = stats ? stats.excl.avg : 1;
-  const ownByDate = new Map(predictionDays.map(d => [d.key, d.total]));
+  const ownByDate = new Map(totals.map(d => [d.key, d.total]));
 
   const monday = mondayKeyOf(todayKeyNow());
   const days = [0, 1, 2, 3, 4, 5, 6].map(i => addDaysToDateKey(monday, i));
@@ -1563,17 +1575,34 @@ function weekForecastData(artistKey) {
     }
   });
 
-  const lastOfficial = hist?.points?.length ? hist.points[hist.points.length - 1] : null;
-  if (lastOfficial) {
-    const anchorDow = new Date(lastOfficial.date + 'T12:00:00Z').getUTCDay(); // 0=zo..6=za
-    const anchorIdx = (anchorDow + 6) % 7; // 0=ma..6=zo, zelfde as als `days`
-    const friday = fridayFromDay(anchorIdx, lastOfficial.global_charts, wdStats, weStats);
-    out.forEach((d, i) => {
-      if (d.official != null || d.known != null) return; // al een hard cijfer -- geen schatting nodig
-      const est = dayFromFriday(i, friday, wdStats, weStats);
-      d.weekpattern = { ...est, basedOn: lastOfficial.date };
+  // Weekpatroon-schatting voor dag i: elk van de laatste N officiele dagen
+  // (voor die dag) wordt via de weekdagfactoren naar dag i doorgerekend; het
+  // gemiddelde daarvan is de schatting. Bewust GEEN filter op releasedagen
+  // voor de ankers: getoetst is dat slechter (3,19% vs 3,03%, en na een
+  // release 5,3% vs 4,1%) -- het officiele niveau na een release is echt, en
+  // wegfilteren laat de schatting op het oude niveau hangen (bij Taylor ver
+  // onder het huidige niveau).
+  const officialPts = hist?.points || [];
+  const wpEstimate = (i, dateKey) => {
+    const anchors = officialPts.filter(p => p.date < dateKey).slice(-WP_ANCHOR_DAYS);
+    if (!anchors.length) return null;
+    const ests = anchors.map(p => {
+      const anchorIdx = (new Date(p.date + 'T12:00:00Z').getUTCDay() + 6) % 7; // 0=ma..6=zo
+      return dayFromFriday(i, fridayFromDay(anchorIdx, p.global_charts, wdStats, weStats), wdStats, weStats);
     });
-  }
+    const avg = (k) => ests.reduce((s, e) => s + e[k], 0) / ests.length;
+    return { mid: avg('mid'), lo: avg('lo'), hi: avg('hi'), factorInfo: ests[ests.length - 1].factorInfo, basedOn: anchors[anchors.length - 1].date, nAnchors: anchors.length };
+  };
+
+  out.forEach((d, i) => {
+    const wp = wpEstimate(i, d.key);
+    if (!wp) return;
+    d.wp = wp; // intern, voor de blend -- ook voor dagen die al known/official zijn
+    if (d.official == null && d.known == null) d.weekpattern = wp; // alleen daar tonen we 'm los
+    if (d.known) {
+      d.blend = { mid: (1 - BLEND_WEEKPATTERN_WEIGHT) * d.known.mid + BLEND_WEEKPATTERN_WEIGHT * wp.mid };
+    }
+  });
 
   return out;
 }
@@ -1610,6 +1639,7 @@ function renderWeekForecastChart() {
   data.forEach((d) => {
     if (d.known) { if (d.known.lo != null) allVals.push(d.known.lo); if (d.known.hi != null) allVals.push(d.known.hi); allVals.push(d.known.mid); }
     if (d.weekpattern) allVals.push(d.weekpattern.mid);
+    if (d.blend) allVals.push(d.blend.mid);
     if (d.official != null) allVals.push(d.official);
   });
   let y0 = Math.min(...allVals), y1 = Math.max(...allVals);
@@ -1648,6 +1678,13 @@ function renderWeekForecastChart() {
     let g = todayLine;
     if (d.known) g += band(x, d.known.lo, d.known.mid, d.known.hi, 'var(--accent)');
     else if (d.weekpattern) g += band(x, null, d.weekpattern.mid, null, 'var(--accent2)');
+    // Gecombineerde schatting: een dwarsstreepje binnen de band, label links
+    // ervan (rechts staat het officiele label).
+    if (d.blend) {
+      const by = yOf(d.blend.mid), bw = Math.min(20, slot * 0.4);
+      g += `<line x1="${(x - bw / 2).toFixed(1)}" x2="${(x + bw / 2).toFixed(1)}" y1="${by.toFixed(1)}" y2="${by.toFixed(1)}" stroke="var(--text)" stroke-width="2"/>
+        <text x="${(x - 19).toFixed(1)}" y="${(by + 3).toFixed(1)}" text-anchor="end" style="fill:var(--text);font-size:9px;font-weight:600">${fmtM(d.blend.mid)}</text>`;
+    }
     if (d.official != null) {
       const y = yOf(d.official);
       // Het vierkantje blijft op zijn echte plek (x); staat er ook een
@@ -1672,6 +1709,7 @@ function renderWeekForecastChart() {
     <div class="ucg-legend">
       <span><i style="background:var(--accent)"></i>eigen counter &times; UCG (min&ndash;max)</span>
       <span><i style="background:var(--accent2)"></i>weekpatroon</span>
+      <span><i style="background:var(--text);border-radius:1px;height:3px;vertical-align:2px"></i>gecombineerd (70/30)</span>
       <span><i style="background:var(--green);border-radius:2px"></i>officieel (Global Charts)</span>
     </div>
     <svg class="ucg-svg" id="wf-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${grid}${marks}${xAxis}</svg>
@@ -1691,17 +1729,23 @@ function renderWeekForecastChart() {
       const kBand = (d.known.lo != null && d.known.hi != null) ? `<b>${fmtM(d.known.lo)}–${fmtM(d.known.hi)}</b>` : `<b>${fmtM(d.known.mid)}</b>`;
       lines.push(`Live counter afgerond -- eigen counter <b>${fmtM(d.known.ownVal)}</b> &times; UCG &rarr; ${kBand}`);
     }
+    if (d.blend) {
+      lines.push(`Gecombineerd (70% UCG + 30% weekpatroon ${fmtM(d.wp.mid)}): <b>${fmtM(d.blend.mid)}</b>`);
+    }
     if (d.official != null) {
       let verdict = '';
       if (d.known && d.known.lo != null && d.known.hi != null) {
         verdict = d.official >= d.known.lo && d.official <= d.known.hi ? ' <span class="pos">(binnen de range)</span>' : ' <span class="neg">(buiten de range)</span>';
       }
+      if (d.blend) {
+        const dev = (d.blend.mid / d.official - 1) * 100;
+        verdict += ` <span class="neu">gecomb. ${dev > 0 ? '+' : ''}${dev.toFixed(1).replace('.', ',')}% t.o.v. officieel</span>`;
+      }
       lines.push(`Officieel (Global Charts): <b>${fmtM(d.official)}</b>${verdict}`);
     }
     if (!d.known && !d.official && d.weekpattern) {
       const f = d.weekpattern.factorInfo;
-      const basis = ptShortLabel(d.weekpattern.basedOn + 'T12:00:00Z');
-      lines.push(`Weekpatroon (verankerd op laatst bekende Global Charts-dag, ${esc(basis)}${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.mid)}</b>`);
+      lines.push(`Weekpatroon (gemiddelde van de laatste ${d.weekpattern.nAnchors} officiele dagen${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.mid)}</b>`);
     }
     if (!lines.length) lines.push('Nog geen data of voorspelling voor deze dag.');
     tip.innerHTML = `<b>${esc(dayLabel)}</b><br>${lines.join('<br>')}`;
@@ -2059,7 +2103,7 @@ function renderKalshiTab() {
     const stale = ageMin > 30;
     statusHtml = ` <span class="kalshi-fetched ${stale ? 'stale' : ''}" data-tooltip="Laatste keer dat de Kalshi-prijzen zijn opgehaald (ververst elke paar minuten)">Prijzen bijgewerkt ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} · ${ageTxt}</span>`;
   }
-  rangeEl.innerHTML = kalshiRangeRow('Week', week) + statusHtml;
+  rangeEl.innerHTML = kalshiRangeRow('Week', week) + kalshiBlendedWeekRow(activeArtist, getWeekToDateTotals(appData.log)) + statusHtml;
 
   // Maand: gebruikt voor alle al afgesloten dagen de officiele Global
   // Charts-waarde (geen UCG-factor-onzekerheid nodig -- die dagen liggen al
@@ -2093,6 +2137,25 @@ function kalshiRangeRow(label, range) {
     : `<span class="kalshi-range-value">${fmt(floor1000(range.min))} – ${fmt(floor1000(range.max))}</span>`;
   const meta = range.known ? ` <span class="kalshi-range-meta" data-tooltip="${esc(range.tooltip || '')}">${range.meta || ''}</span>` : '';
   return `<div class="kalshi-range-row"><span class="kalshi-range-label">${esc(label)}</span>${value}${meta}</div>`;
+}
+
+// Gecombineerde weekmax-schatting (puntwaarde): per dag het officiele cijfer
+// als dat er is, anders de gecombineerde schatting (70% eigen counter x UCG +
+// 30% weekpatroon) voor afgeronde dagen, anders het weekpatroon (vandaag en
+// toekomst) -- en daarvan het maximum. Staat naast de UCG-range, die
+// ongewijzigd blijft.
+function kalshiBlendedWeekRow(artistKey, totals) {
+  const row = (inner) => `<div class="kalshi-range-row"><span class="kalshi-range-label">Gecomb.</span>${inner}</div>`;
+  if (!analysisData?.ucg_factor?.[artistKey]) return row('<span class="neu">nog geen schatting beschikbaar</span>');
+  let best = null;
+  for (const d of weekForecastData(artistKey, totals)) {
+    const v = d.official != null ? d.official : d.blend ? d.blend.mid : d.weekpattern ? d.weekpattern.mid : null;
+    if (v != null && (!best || v > best.v)) best = { v, d, src: d.official != null ? 'officieel' : d.blend ? 'gecomb.' : 'weekpatroon' };
+  }
+  if (!best) return row('<span class="neu">nog geen schatting beschikbaar</span>');
+  const day = new Date(best.d.key + 'T12:00:00Z').toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const tip = '70% eigen counter x UCG + 30% weekpatroon voor afgeronde dagen, weekpatroon voor vandaag en de rest van de week, officieel waar al bekend -- het hoogste daarvan. Getoetst: ~10% minder fout dan UCG alleen.';
+  return row(`<span class="kalshi-range-value">${fmt(floor1000(best.v))}</span> <span class="kalshi-range-meta" data-tooltip="${esc(tip)}">piekdag ${day} · ${best.src}</span>`);
 }
 
 // Week-range: hoogste eigen-counter-dag deze week x excl.-releasedagen
