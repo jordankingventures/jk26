@@ -1857,7 +1857,6 @@ function renderUcgHistory() {
       ${statRow('Aantal dagen', s => s.n)}
       ${statRow('Gem. (min–max)', s => `<b>${s.avg.toFixed(2)}</b> <span class="neu">(${s.min.toFixed(2)}–${s.max.toFixed(2)})</span>`)}
       ${statRow('Variatiecoëfficiënt', s => s.cv.toFixed(1) + '%')}
-      ${statRow('Interval (gem. ± 1,5σ)', s => `${s.ciLow.toFixed(2)} – ${s.ciHigh.toFixed(2)}`)}
     </tbody>
   </table>
   ${weekPatternSummary}
@@ -1880,7 +1879,7 @@ function renderUcgChart() {
     return;
   }
   const excl = stats.excluded;
-  const mean = stats.excl.avg, sd = stats.excl.stdev;
+  const mean = stats.excl.avg;
   const P = stats.hist.points;
   const pts = P.map((p, i) => {
     const priorVals = P.slice(0, i).filter(q => !excl.has(q.date)).slice(-UCG_ROLLING_WINDOW_DAYS).map(q => q.factor);
@@ -1931,21 +1930,24 @@ function renderUcgChart() {
     return idx.map(i => `<text x="${xs[i].toFixed(1)}" y="${H - padB + 13}" text-anchor="middle">${shortDate(pts[i].date)}</text>`).join('');
   };
 
-  // Grafiek 1: factor per dag met gem. ± 1,5σ-band
+  // Grafiek 1: factor per dag met de min–max-band van de laatste 14 schone
+  // dagen -- exact dezelfde range als de Min/Max UCG-kolommen, de weekgrafiek
+  // en de Kalshi-tab gebruiken.
+  const bandLo = stats.excl.min, bandHi = stats.excl.max;
   const H1 = 100, top1 = 6, bot1 = 6;
-  const fvals = pts.map(p => p.factor).concat([mean - 1.5 * sd, mean + 1.5 * sd]);
+  const fvals = pts.map(p => p.factor).concat([bandLo, bandHi]);
   let y0 = Math.min(...fvals), y1 = Math.max(...fvals);
   const pad1 = (y1 - y0) * 0.08 || 0.02; y0 -= pad1; y1 += pad1;
   const yF = v => top1 + (1 - (v - y0) / (y1 - y0)) * (H1 - top1 - bot1);
   const grid1 = [0, 1, 2].map(k => { const v = y0 + (y1 - y0) * k / 2; return `<line class="grid" x1="${padL}" x2="${W - padR}" y1="${yF(v).toFixed(1)}" y2="${yF(v).toFixed(1)}"/><text x="${padL - 4}" y="${(yF(v) + 3).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`; }).join('');
   const dots1 = pts.map((p, i) => {
-    const out = !p.excluded && Math.abs(p.factor - mean) > 1.5 * sd;
+    const out = !p.excluded && (p.factor < bandLo || p.factor > bandHi);
     const st = p.excluded ? 'fill:var(--bg);stroke:var(--muted);stroke-width:1.5' : out ? 'fill:var(--accent2)' : 'fill:var(--accent)';
     return `<circle cx="${xs[i].toFixed(1)}" cy="${yF(p.factor).toFixed(1)}" r="${p.excluded || out ? 3.2 : 2.4}" style="${st}"/>`;
   }).join('');
   const svg1 = `<svg class="ucg-svg" id="ucg-svg1" width="${W}" height="${H1}" viewBox="0 0 ${W} ${H1}">
       ${grid1}
-      <rect class="band" x="${padL}" y="${yF(mean + 1.5 * sd).toFixed(1)}" width="${W - padL - padR}" height="${(yF(mean - 1.5 * sd) - yF(mean + 1.5 * sd)).toFixed(1)}"/>
+      <rect class="band" x="${padL}" y="${yF(bandHi).toFixed(1)}" width="${W - padL - padR}" height="${(yF(bandLo) - yF(bandHi)).toFixed(1)}"/>
       <line class="mean" x1="${padL}" x2="${W - padR}" y1="${yF(mean).toFixed(1)}" y2="${yF(mean).toFixed(1)}"/>
       <polyline class="line" points="${pts.map((p, i) => xs[i].toFixed(1) + ',' + yF(p.factor).toFixed(1)).join(' ')}"/>
       ${dots1}<text x="${padL + 4}" y="${top1 + 8}" style="font-weight:600">Factor per dag</text>
@@ -1973,7 +1975,7 @@ function renderUcgChart() {
 
   el.innerHTML = `
     ${accTable}${varTxt}
-    <div class="ucg-legend"><span><i style="background:var(--accent)"></i>dag</span><span><i style="background:var(--accent2)"></i>buiten gem. &plusmn; 1,5&sigma;</span><span><i style="background:var(--bg);border:1.5px solid var(--muted)"></i>release / na release</span><span>vlak = gem. &plusmn; 1,5&sigma;</span><span>fout: boven 0 = te hoog voorspeld</span></div>
+    <div class="ucg-legend"><span><i style="background:var(--accent)"></i>dag</span><span><i style="background:var(--accent2)"></i>buiten range</span><span><i style="background:var(--bg);border:1.5px solid var(--muted)"></i>release / na release</span><span>vlak = min&ndash;max laatste 14d</span><span>fout: boven 0 = te hoog voorspeld</span></div>
     ${svg1}
     ${svg2}
     <div class="ucg-tip" id="ucg-tip"></div>`;
