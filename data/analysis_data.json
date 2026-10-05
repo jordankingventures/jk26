@@ -278,11 +278,17 @@
           "own_counter": 17856000,
           "global_charts": 20596000,
           "factor": 1.1534498207885304
+        },
+        {
+          "date": "2026-10-03",
+          "own_counter": 15836000,
+          "global_charts": 18779000,
+          "factor": 1.1858423844405153
         }
       ],
       "min": 1.1124235294117648,
       "max": 1.3128205128205128,
-      "avg": 1.2128394476343427,
+      "avg": 1.212265042034474,
       "excluded_dates": {
         "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
@@ -899,11 +905,17 @@
           "own_counter": 4535000,
           "global_charts": 5002000,
           "factor": 1.1029768467475194
+        },
+        {
+          "date": "2026-10-03",
+          "own_counter": 4084000,
+          "global_charts": 4514000,
+          "factor": 1.1052889324191968
         }
       ],
       "min": 1.0788276907529055,
       "max": 1.2332798287854467,
-      "avg": 1.1172551287800692,
+      "avg": 1.1170204974788756,
       "excluded_dates": {}
     },
     "badbunny": {
@@ -2467,11 +2479,17 @@
           "own_counter": 4602000,
           "global_charts": 6547000,
           "factor": 1.4226423294219905
+        },
+        {
+          "date": "2026-10-03",
+          "own_counter": 4303000,
+          "global_charts": 6206000,
+          "factor": 1.4422495933069952
         }
       ],
       "min": 1.3861924686192468,
       "max": 1.5302083333333334,
-      "avg": 1.4548063016901804,
+      "avg": 1.4543233513677503,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -3623,11 +3641,17 @@
           "own_counter": 14768000,
           "global_charts": 18128000,
           "factor": 1.227518959913326
+        },
+        {
+          "date": "2026-10-03",
+          "own_counter": 14128000,
+          "global_charts": 17673000,
+          "factor": 1.2509201585503964
         }
       ],
       "min": 1.1888460989873058,
       "max": 1.3330507756209207,
-      "avg": 1.2664185503099046,
+      "avg": 1.2658224583191542,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
