@@ -1429,7 +1429,12 @@ const WEEKEND_POOLED_FACTOR = [
   { factor: 0.967, lo: 0.91, hi: 1.02 }, // zaterdag t.o.v. vrijdag
   { factor: 0.867, lo: 0.79, hi: 0.94 }, // zondag t.o.v. vrijdag
 ];
-const WD_MIN_ARTIST_WEEKS = 4; // minimum eigen schone weken voordat we de gepoolde factor loslaten
+// Minimum eigen schone weken voordat we de gepoolde factor loslaten. Walk-
+// forward getoetst (okt 2026, alle artiesten): drempel 2 geeft 2,65% afwijking
+// voor het losse weekpatroon tegen 2,89% bij de vorige drempel 4 en 3,03%
+// bij alleen gepoold; een zachte menging (k=1) was net iets beter (2,57%) maar
+// niet aantoonbaar. Hogere drempels (6+) waren niet beter dan alleen gepoold.
+const WD_MIN_ARTIST_WEEKS = 2;
 
 function mondayKeyOf(dateKey) {
   const [y, m, d] = dateKey.split('-').map(Number);
