@@ -1,5 +1,5 @@
 {
-  "note": "UCG-factor-historie automatisch bijgehouden door scripts/fetch_global_charts.py (GitHub Actions, dagelijks): eigen counter (data/<artiest>_data.json) vs. YouTube Global Charts (interne JSON-API van charts.youtube.com), per dag per artiest. Elke run legt alleen de laatste 2 dagen vast (de eerst beschikbare Global Charts-waarde -- dezelfde waarde waarop Kalshi resolveert), en laat oudere dagen ongemoeid zodat een latere Global Charts-herziening niet met terugwerkende kracht wordt overgenomen.",
+  "note": "UCG-factor-historie automatisch bijgehouden door scripts/fetch_global_charts.py (GitHub Actions, dagelijks): eigen counter (data/<artiest>_data.json) vs. YouTube Global Charts (interne JSON-API van charts.youtube.com), per dag per artiest. Elke run werkt de laatste 2 dagen bij (de eerst beschikbare Global Charts-waarde -- dezelfde waarde waarop Kalshi resolveert), en laat oudere dagen ongemoeid zodat een latere Global Charts-herziening niet met terugwerkende kracht wordt overgenomen. Ontbreken er dagen (bv. na mislukte runs), dan haalt een run die zelf verder terug tot de laatst opgeslagen dag en markeert die aangevulde dagen met backfill=true.",
   "ucg_factor": {
     "taylor": {
       "points": [
