@@ -3,6 +3,8 @@
 # data/analysis_data.json, commit en pusht het.
 #
 # Gebruik (vanuit de projectmap):  ./scripts/update_gc.sh
+#   ./scripts/update_gc.sh --clipboard   leest de JSON van je klembord (als Safari het
+#                                         bestand niet heeft kunnen downloaden)
 # Opties via omgevingsvariabelen:
 #   DOWNLOADS=/pad      map waarin gc*.json staat (standaard ~/Downloads)
 #   DRY_RUN=1           alleen verwerken, niet committen/pushen
@@ -10,12 +12,26 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 DOWNLOADS="${DOWNLOADS:-$HOME/Downloads}"
+CLIP_CMD="${CLIP_CMD:-pbpaste}"
 
-# Nieuwste gc*.json (Safari maakt bij een tweede download "gc 2.json" e.d.)
-FILE="$(ls -t "$DOWNLOADS"/gc*.json 2>/dev/null | head -1 || true)"
-if [ -z "$FILE" ]; then
-  echo "Geen gc*.json gevonden in $DOWNLOADS -- haal eerst de cijfers op met de bladwijzer/console (scripts/gc_bookmarklet.js)."
-  exit 1
+if [ "${1:-}" = "--clipboard" ]; then
+  # JSON van het klembord naar een bestand (bewaard als gc_klembord.json in de downloadmap)
+  mkdir -p "$DOWNLOADS"
+  FILE="$DOWNLOADS/gc_klembord.json"
+  $CLIP_CMD > "$FILE"
+  if ! python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert isinstance(d,dict) and d" "$FILE" 2>/dev/null; then
+    echo "Het klembord bevat geen geldige gc-JSON. Voer eerst het snippet uit in Safari (scripts/gc_bookmarklet.js) en probeer opnieuw."
+    rm -f "$FILE"
+    exit 1
+  fi
+else
+  # Nieuwste gc*.json (Safari maakt bij een tweede download "gc 2.json" e.d.)
+  FILE="$(ls -t "$DOWNLOADS"/gc*.json 2>/dev/null | head -1 || true)"
+  if [ -z "$FILE" ]; then
+    echo "Geen gc*.json gevonden in $DOWNLOADS -- haal eerst de cijfers op met de bladwijzer/console (scripts/gc_bookmarklet.js),"
+    echo "of probeer: ./scripts/update_gc.sh --clipboard (de JSON staat dan op je klembord)."
+    exit 1
+  fi
 fi
 AGE_MIN=$(( ( $(date +%s) - $(stat -f %m "$FILE" 2>/dev/null || stat -c %Y "$FILE") ) / 60 ))
 echo "Bestand: $FILE (${AGE_MIN} min oud)"
