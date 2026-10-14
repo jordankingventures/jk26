@@ -150,6 +150,56 @@ def floor1000(n):
     return (n // 1000) * 1000
 
 
+def merge_artist(analysis, key, info, gc_by_date, backfill=False):
+    """Voegt {datum: GC-waarde} voor een artiest samen met de bestaande punten in
+    `analysis` (zelfde logica als de dagelijkse run). Met backfill=True worden
+    bestaande punten NIET overschreven en nieuwe punten gemarkeerd met
+    "backfill": true (waarden die later dan de gebruikelijke 2-dagen-venster zijn
+    opgehaald, dus mogelijk al door YouTube herzien -- zie backfill_global_charts.py).
+    Retourneert (aantal toegevoegd/bijgewerkt, totaal aantal punten)."""
+    counter_by_date = own_counter_by_date(info["data_file"])
+    existing_points = analysis["ucg_factor"].get(key, {}).get("points", [])
+    excluded = EXCLUDED_DATES.get(key, {})
+    points_by_date = {p["date"]: p for p in existing_points}
+    for d in excluded:
+        points_by_date.pop(d, None)
+
+    updated = 0
+    for date, gc_raw in gc_by_date.items():
+        if date in excluded:
+            continue
+        if backfill and date in points_by_date:
+            continue
+        counter_raw = counter_by_date.get(date)
+        if counter_raw is None:
+            continue  # eigen counter heeft deze dag nog niet afgesloten
+        gc = floor1000(gc_raw)
+        counter = floor1000(counter_raw)
+        if counter == 0:
+            continue
+        point = {
+            "date": date,
+            "own_counter": counter,
+            "global_charts": gc,
+            "factor": gc / counter,
+        }
+        if backfill:
+            point["backfill"] = True
+        points_by_date[date] = point
+        updated += 1
+
+    points = sorted(points_by_date.values(), key=lambda p: p["date"])
+    factors = [p["factor"] for p in points]
+    analysis["ucg_factor"][key] = {
+        "points": points,
+        "min": min(factors) if factors else None,
+        "max": max(factors) if factors else None,
+        "avg": sum(factors) / len(factors) if factors else None,
+        "excluded_dates": excluded,
+    }
+    return updated, len(points)
+
+
 def main():
     analysis = json.loads(open(ANALYSIS_FILE).read()) if os.path.exists(ANALYSIS_FILE) else {"note": "", "ucg_factor": {}}
     analysis.setdefault("ucg_factor", {})
@@ -169,42 +219,8 @@ def main():
             print(f"  FOUT: {e}")
             continue
 
-        counter_by_date = own_counter_by_date(info["data_file"])
-        existing_points = analysis["ucg_factor"].get(key, {}).get("points", [])
-        excluded = EXCLUDED_DATES.get(key, {})
-        points_by_date = {p["date"]: p for p in existing_points}
-        for d in excluded:
-            points_by_date.pop(d, None)
-
-        updated = 0
-        for date, gc_raw in gc_by_date.items():
-            if date in excluded:
-                continue
-            counter_raw = counter_by_date.get(date)
-            if counter_raw is None:
-                continue  # eigen counter heeft deze dag nog niet afgesloten
-            gc = floor1000(gc_raw)
-            counter = floor1000(counter_raw)
-            if counter == 0:
-                continue
-            points_by_date[date] = {
-                "date": date,
-                "own_counter": counter,
-                "global_charts": gc,
-                "factor": gc / counter,
-            }
-            updated += 1
-
-        points = sorted(points_by_date.values(), key=lambda p: p["date"])
-        factors = [p["factor"] for p in points]
-        analysis["ucg_factor"][key] = {
-            "points": points,
-            "min": min(factors) if factors else None,
-            "max": max(factors) if factors else None,
-            "avg": sum(factors) / len(factors) if factors else None,
-            "excluded_dates": excluded,
-        }
-        print(f"  {updated} dagen bijgewerkt binnen het venster, {len(points)} dagen totaal.")
+        updated, total = merge_artist(analysis, key, info, gc_by_date)
+        print(f"  {updated} dagen bijgewerkt binnen het venster, {total} dagen totaal.")
 
     analysis["note"] = (
         "UCG-factor-historie automatisch bijgehouden door scripts/fetch_global_charts.py "
