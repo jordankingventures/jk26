@@ -11,6 +11,9 @@ Gebruik:
   python3 scripts/backfill_global_charts.py --fetch 2026-10-04
       probeert de waarden zelf op te halen vanaf die datum (alleen zinvol zodra
       het endpoint weer werkt).
+  Optie --fresh-window (bv. voor het wekelijkse Safari-bestand, zie
+  scripts/update_gc.sh): dagen binnen het gebruikelijke 2-dagen-venster tellen als
+  "vers" (bijgewerkt, zonder backfill-vlag), net als in de dagelijkse run.
 
 Regels:
  - Bestaande punten worden NOOIT overschreven.
@@ -23,16 +26,19 @@ Regels:
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from fetch_global_charts import ANALYSIS_FILE, ARTISTS, fetch_daily_views, merge_artist
+from fetch_global_charts import ANALYSIS_FILE, ARTISTS, WINDOW_DAYS, fetch_daily_views, merge_artist
 
 
 def main():
     args = sys.argv[1:]
+    fresh_window = "--fresh-window" in args
+    args = [a for a in args if a != "--fresh-window"]
     if not args:
         print(__doc__)
         sys.exit(1)
+    fresh_from = (datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)).strftime("%Y-%m-%d") if fresh_window else None
 
     analysis = json.loads(open(ANALYSIS_FILE).read())
     analysis.setdefault("ucg_factor", {})
@@ -60,7 +66,7 @@ def main():
         if not gc_by_date:
             print(f"[{key}] geen invoer, overgeslagen")
             continue
-        added, total = merge_artist(analysis, key, info, {d: int(v) for d, v in gc_by_date.items()}, fresh_from=None)
+        added, total = merge_artist(analysis, key, info, {d: int(v) for d, v in gc_by_date.items()}, fresh_from=fresh_from)
         total_added += added
         print(f"[{key}] {added} dagen aangevuld, {total} dagen totaal")
 
