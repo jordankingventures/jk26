@@ -60,7 +60,7 @@ def main():
         if not gc_by_date:
             print(f"[{key}] geen invoer, overgeslagen")
             continue
-        added, total = merge_artist(analysis, key, info, {d: int(v) for d, v in gc_by_date.items()}, backfill=True)
+        added, total = merge_artist(analysis, key, info, {d: int(v) for d, v in gc_by_date.items()}, fresh_from=None)
         total_added += added
         print(f"[{key}] {added} dagen aangevuld, {total} dagen totaal")
 

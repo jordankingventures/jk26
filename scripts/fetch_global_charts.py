@@ -34,6 +34,7 @@ from datetime import datetime, timedelta, timezone
 
 USER_AGENT = "Mozilla/5.0 (compatible; PersonalViewTracker/1.0)"
 WINDOW_DAYS = 2
+MAX_CATCHUP_DAYS = 18
 ANALYSIS_FILE = "data/analysis_data.json"
 
 # Zelfde vaste dag-grens als fetch_views.py's DAY_BOUNDARY_TZ, zodat een dag
@@ -150,12 +151,14 @@ def floor1000(n):
     return (n // 1000) * 1000
 
 
-def merge_artist(analysis, key, info, gc_by_date, backfill=False):
+def merge_artist(analysis, key, info, gc_by_date, fresh_from=None):
     """Voegt {datum: GC-waarde} voor een artiest samen met de bestaande punten in
-    `analysis` (zelfde logica als de dagelijkse run). Met backfill=True worden
-    bestaande punten NIET overschreven en nieuwe punten gemarkeerd met
-    "backfill": true (waarden die later dan de gebruikelijke 2-dagen-venster zijn
-    opgehaald, dus mogelijk al door YouTube herzien -- zie backfill_global_charts.py).
+    `analysis`. Datums vanaf `fresh_from` (het gebruikelijke 2-dagen-venster) zijn
+    "vers": die worden bijgewerkt en gewoon opgeslagen. Oudere datums worden alleen
+    AANGEVULD als ze nog ontbreken (bestaande punten blijven als eerst-beschikbare
+    waarde staan) en krijgen "backfill": true, omdat ze later zijn opgehaald en dus
+    mogelijk al door YouTube herzien zijn (zie ook backfill_global_charts.py, dat
+    fresh_from=None gebruikt: alles is dan backfill).
     Retourneert (aantal toegevoegd/bijgewerkt, totaal aantal punten)."""
     counter_by_date = own_counter_by_date(info["data_file"])
     existing_points = analysis["ucg_factor"].get(key, {}).get("points", [])
@@ -168,7 +171,8 @@ def merge_artist(analysis, key, info, gc_by_date, backfill=False):
     for date, gc_raw in gc_by_date.items():
         if date in excluded:
             continue
-        if backfill and date in points_by_date:
+        fresh = fresh_from is not None and date >= fresh_from
+        if not fresh and date in points_by_date:
             continue
         counter_raw = counter_by_date.get(date)
         if counter_raw is None:
@@ -183,7 +187,7 @@ def merge_artist(analysis, key, info, gc_by_date, backfill=False):
             "global_charts": gc,
             "factor": gc / counter,
         }
-        if backfill:
+        if not fresh:
             point["backfill"] = True
         points_by_date[date] = point
         updated += 1
@@ -206,9 +210,19 @@ def main():
 
     now = datetime.now(timezone.utc)
     end_date = now.strftime("%Y-%m-%d")
-    start_date = (now - timedelta(days=WINDOW_DAYS)).strftime("%Y-%m-%d")
+    fresh_from = (now - timedelta(days=WINDOW_DAYS)).strftime("%Y-%m-%d")
+    # Oudste datum waarvoor de eigen counter nog een afgesloten dagtotaal in het
+    # log heeft (het log houdt ~19 dagen bij) -- verder terug heeft ophalen geen zin.
+    earliest = (now - timedelta(days=MAX_CATCHUP_DAYS)).strftime("%Y-%m-%d")
 
     for key, info in ARTISTS.items():
+        # Venster loopt vanaf het gebruikelijke 2-dagen-venster, maar zo nodig
+        # verder terug tot de laatst opgeslagen dag, zodat een periode zonder
+        # geslaagde run (bv. HTTP 429) zichzelf herstelt zodra het weer werkt.
+        stored = analysis["ucg_factor"].get(key, {}).get("points", [])
+        last_date = stored[-1]["date"] if stored else None
+        start_date = min(fresh_from, last_date) if last_date else fresh_from
+        start_date = max(start_date, earliest)
         print(f"[{key}] Global Charts ophalen ({start_date} t/m {end_date})...")
         try:
             gc_by_date = fetch_daily_views(info["entity_id"], start_date, end_date)
@@ -219,17 +233,19 @@ def main():
             print(f"  FOUT: {e}")
             continue
 
-        updated, total = merge_artist(analysis, key, info, gc_by_date)
+        updated, total = merge_artist(analysis, key, info, gc_by_date, fresh_from=fresh_from)
         print(f"  {updated} dagen bijgewerkt binnen het venster, {total} dagen totaal.")
 
     analysis["note"] = (
         "UCG-factor-historie automatisch bijgehouden door scripts/fetch_global_charts.py "
         "(GitHub Actions, dagelijks): eigen counter (data/<artiest>_data.json) vs. YouTube "
         "Global Charts (interne JSON-API van charts.youtube.com), per dag per artiest. Elke "
-        f"run legt alleen de laatste {WINDOW_DAYS} dagen vast (de eerst beschikbare "
+        f"run werkt de laatste {WINDOW_DAYS} dagen bij (de eerst beschikbare "
         "Global Charts-waarde -- dezelfde waarde waarop Kalshi resolveert), en laat oudere "
         "dagen ongemoeid zodat een latere Global Charts-herziening niet met terugwerkende "
-        "kracht wordt overgenomen."
+        "kracht wordt overgenomen. Ontbreken er dagen (bv. na mislukte runs), dan haalt een "
+        "run die zelf verder terug tot de laatst opgeslagen dag en markeert die aangevulde "
+        "dagen met backfill=true."
     )
 
     with open(ANALYSIS_FILE, "w") as f:
