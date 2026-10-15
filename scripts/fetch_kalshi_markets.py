@@ -25,6 +25,7 @@ API_BASE = "https://api.elections.kalshi.com/trade-api/v2"
 SERIES_TICKER = "KXYTVIEWSW"
 MONTHLY_SERIES_TICKER = "KXYTVIEWSHIGH"
 OUT_FILE = "data/kalshi_markets.json"
+HISTORY_FILE = "data/kalshi_price_history.json"
 USER_AGENT = "Mozilla/5.0 (compatible; PersonalViewTracker/1.0)"
 
 # Event-ticker-prefix (bv. "TAY" in KXYTVIEWSW-TAY26SEP27) -> onze eigen
@@ -105,6 +106,11 @@ def bracket_from_market(m):
         "yes_ask": to_float(m.get("yes_ask_dollars")),
         "no_bid": to_float(m.get("no_bid_dollars")),
         "no_ask": to_float(m.get("no_ask_dollars")),
+        # Aantal shares dat op de beste ask staat (de kant die je koopt). De
+        # YES-ask-grootte komt rechtstreeks uit de markt; de NO-ask-grootte is
+        # de YES-bid-grootte (een NO-aankoop matcht tegen een YES-bod).
+        "yes_ask_size": to_float(m.get("yes_ask_size_fp")),
+        "no_ask_size": to_float(m.get("yes_bid_size_fp")),
     }
 
 
@@ -151,6 +157,48 @@ def fetch_monthly(artists):
             a["monthly"].sort(key=lambda x: x["close_time"] or "")
 
 
+def update_history(artists, fetched_at):
+    """
+    Houdt per open markt (week en maand) de YES-ask-historie bij in
+    data/kalshi_price_history.json, zodat je ook achteraf kunt zien welke
+    prijs er op welk moment (en voor hoeveel shares) beschikbaar was -- ook
+    als je de pagina niet open had. Alleen wijzigingen worden opgeslagen
+    ([unix-minuten, yes_ask, shares] telkens als prijs of grootte verandert),
+    en markten die niet meer open staan worden opgeruimd; zo blijft het
+    bestand klein (~enkele honderden kB aan het eind van een week).
+    """
+    try:
+        with open(HISTORY_FILE) as f:
+            history = json.load(f)
+    except (OSError, ValueError):
+        history = {"markets": {}}
+    old = history.get("markets", {})
+    minute = int(datetime.strptime(fetched_at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).timestamp() // 60)
+
+    markets = {}
+    for key, a in artists.items():
+        ladders = [("w", a.get("event_ticker"), a.get("brackets", []))]
+        ladders += [("m", m.get("event_ticker"), m.get("brackets", [])) for m in a.get("monthly", [])]
+        for kind, event, brackets in ladders:
+            for b in brackets:
+                ask = b.get("yes_ask")
+                if ask is None:
+                    continue
+                size = b.get("yes_ask_size")
+                size = int(size) if size is not None else None
+                entry = old.get(b["ticker"]) or {"artist": key, "kind": kind, "event": event, "strike": b.get("floor_strike"), "s": []}
+                series = entry["s"]
+                if not series or series[-1][1] != ask or series[-1][2] != size:
+                    series.append([minute, ask, size])
+                markets[b["ticker"]] = entry
+
+    history = {"updated": fetched_at, "markets": markets}
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f, separators=(",", ":"), ensure_ascii=False)
+        f.write("\n")
+    print(f"Historie: {len(markets)} markten, {sum(len(e['s']) for e in markets.values())} punten.")
+
+
 def main():
     events = fetch_events()
     markets = fetch_all_markets()
@@ -193,6 +241,8 @@ def main():
     with open(OUT_FILE, "w") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
         f.write("\n")
+
+    update_history(artists, out["fetched_at"])
 
     total_brackets = sum(len(a["brackets"]) for a in artists.values())
     print(f"{len(artists)} artiesten, {total_brackets} brackets totaal.")

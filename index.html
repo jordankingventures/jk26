@@ -46,6 +46,9 @@
     .tab[data-view="kalshi"] { color: var(--green); border-color: var(--green); }
     .tab[data-view="kalshi"]:hover { color: #0f0f13; background: var(--green); }
     .tab[data-view="kalshi"].active { color: #0f0f13; background: var(--green); border-color: var(--green); }
+    .tab[data-view="koopjes"] { color: var(--green); border-color: var(--green); }
+    .tab[data-view="koopjes"]:hover { color: #0f0f13; background: var(--green); }
+    .tab[data-view="koopjes"].active { color: #0f0f13; background: var(--green); border-color: var(--green); }
     .header-right { display: flex; align-items: center; gap: 8px; }
     .badge { font-size: 0.75rem; color: var(--muted); padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
     .badge.ok { color: var(--green); border-color: var(--green); }
@@ -258,6 +261,26 @@
     .ucg-line { font-size: 0.7rem; margin: 5px 0 0; line-height: 1.5; }
     .ucg-line b { color: var(--text); }
 
+
+    /* Koopjes-tab */
+    .koopjes-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 0.74rem; color: var(--muted); }
+    .koopjes-controls label { display: inline-flex; align-items: center; gap: 6px; }
+    .koopjes-controls select { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; font-size: 0.74rem; }
+    .koopjes-scroll { overflow-x: auto; }
+    .koopjes-table th, .koopjes-table td { padding: 4px 10px; font-size: 0.74rem; }
+    .koopjes-table td.r, .koopjes-table th.r { text-align: right; }
+    .koopjes-table tr.koopjes-artist td { background: var(--surface2); font-weight: 700; padding-top: 6px; padding-bottom: 6px; }
+    .koopjes-table tr.koopjes-artist .k-meta { font-weight: 400; color: var(--muted); font-size: 0.68rem; margin-left: 8px; }
+    .koopjes-table .k-sub { color: var(--muted); font-size: 0.66rem; margin-left: 5px; }
+    .k-kind { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 5px; margin-left: 6px; }
+    .k-cert { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; color: var(--green); margin-left: 4px; }
+    .k-section { padding: 10px 16px 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .k-note { padding: 6px 16px 10px; font-size: 0.68rem; color: var(--muted); line-height: 1.5; }
+    .k-spark { vertical-align: middle; }
+    .k-spark .k-line { fill: none; stroke: var(--accent); stroke-width: 1.3; }
+    .k-spark .k-low { fill: var(--accent2); }
+    .k-spark .k-base { stroke: var(--border); stroke-width: 1; }
+
     /* Kalshi-tab */
     .kalshi-range { padding: 10px 16px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--border); }
     .kalshi-range b { color: var(--text); }
@@ -398,6 +421,7 @@
     <button class="tab view-tab active" data-view="log" onclick="switchView('log')">Log</button>
     <button class="tab view-tab" data-view="prediction" onclick="switchView('prediction')">Voorspelling</button>
     <button class="tab view-tab" data-view="kalshi" onclick="switchView('kalshi')">Kalshi</button>
+    <button class="tab view-tab" data-view="koopjes" onclick="switchView('koopjes')">Koopjes</button>
     <!-- Tijdelijk verborgen op verzoek van Joris (nog niet klaar voor gebruik) -- logica/rendering blijft intact, alleen de tab-knop is uit. Terugzetten: style="display:none" hieronder verwijderen. -->
     <button class="tab view-tab" data-view="orders" onclick="switchView('orders')" style="display:none">Orders</button>
   </div>
@@ -496,6 +520,24 @@
     <div id="kalshi-m-range" class="kalshi-range kalshi-range-month"></div>
     <div id="kalshi-opportunities" class="kalshi-opportunities"></div>
     <div id="kalshi-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
+  </div>
+</div>
+
+<div id="koopjes-view" style="display:none">
+  <div class="log-wrap">
+    <div class="log-header">
+      <h2>Koopjes &mdash; YES onder je ondergrens</h2>
+    </div>
+    <div class="koopjes-controls">
+      <label>Max. prijs <select id="koopjes-maxask" onchange="setKoopjesFilter()">
+        <option value="0.90">$0,90</option><option value="0.95">$0,95</option><option value="0.97">$0,97</option><option value="0.98">$0,98</option><option value="0.99">$0,99</option>
+      </select></label>
+      <label>Min. shares <select id="koopjes-minsize" onchange="setKoopjesFilter()">
+        <option value="0">alle</option><option value="10">10+</option><option value="50">50+</option><option value="250">250+</option><option value="1000">1.000+</option>
+      </select></label>
+      <span id="koopjes-status"></span>
+    </div>
+    <div id="koopjes-body"><div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div></div>
   </div>
 </div>
 
@@ -1133,9 +1175,11 @@ function switchView(view) {
   document.getElementById('log-view').style.display = view === 'log' ? '' : 'none';
   document.getElementById('prediction-view').style.display = view === 'prediction' ? '' : 'none';
   document.getElementById('kalshi-view').style.display = view === 'kalshi' ? '' : 'none';
+  document.getElementById('koopjes-view').style.display = view === 'koopjes' ? '' : 'none';
   document.getElementById('orders-view').style.display = view === 'orders' ? '' : 'none';
   if (view === 'prediction' && appData) renderPrediction();
   if (view === 'kalshi' && appData) renderKalshiTab();
+  if (view === 'koopjes') openKoopjes();
   if (view === 'orders') renderOrders();
 }
 
@@ -2356,6 +2400,297 @@ function renderOrders() {
       ${table}
     </div>`;
   }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Koopjes-tab: snel overzicht van de beste YES-kansen over alle artiesten,
+// plus welke prijs er eerder deze week beschikbaar was (kalshi_price_history.json,
+// door fetch_kalshi_markets.yml elke 5 minuten bijgewerkt -- ook als deze
+// pagina dicht staat).
+//
+// Waarom alleen YES: "hoogste dagtotaal van de week" kan alleen stijgen
+// naarmate de week vordert. Een strike die nu al onder je ondergrens ligt
+// (hoogste eigen-counter-dag x laagste UCG-factor, of een al officieel
+// bekende dag) wordt dus nooit meer ongedaan gemaakt. Een NO zegt pas iets
+// zodra de piekdagen (vrijdag/zaterdag) geweest zijn.
+// ---------------------------------------------------------------------------
+let kalshiHistory = null;             // data/kalshi_price_history.json
+const koopjesData = {};               // artiest -> { data, at } voor artiesten die niet de actieve tab zijn
+let koopjesLoading = false;
+let koopjesTimer = null;
+const KOOPJES_REFRESH_MS = 5 * 60 * 1000;
+const KOOPJES_PER_ARTIST = 5;
+const KOOPJES_TOP_ALL = 10;
+const KOOPJES_SAFE_ASK = 0.90;        // vanaf deze YES-prijs "prijst de markt het als zeker" -- eerdere (opening)prijzen tellen niet als dip
+
+function koopjesFilter() {
+  let ask = 0.97, size = 10;
+  try {
+    ask = Number(localStorage.getItem('ytTracker.koopjes.maxAsk')) || 0.97;
+    const sv = localStorage.getItem('ytTracker.koopjes.minSize'); if (sv !== null) size = Number(sv) || 0;
+  } catch (e) { /* localStorage kan geblokkeerd zijn -- defaults */ }
+  return { maxAsk: ask, minSize: size };
+}
+function setKoopjesFilter() {
+  try {
+    localStorage.setItem('ytTracker.koopjes.maxAsk', document.getElementById('koopjes-maxask').value);
+    localStorage.setItem('ytTracker.koopjes.minSize', document.getElementById('koopjes-minsize').value);
+  } catch (e) { /* niet kritiek */ }
+  renderKoopjes();
+}
+
+async function loadKalshiHistory() {
+  try {
+    const resp = await fetch('data/kalshi_price_history.json?t=' + Date.now());
+    if (resp.ok) kalshiHistory = await resp.json();
+  } catch (err) { /* niet kritiek -- tab werkt dan zonder historie */ }
+}
+
+function koopjesDataFor(key) {
+  if (key === activeArtist && appData) return appData;
+  if (artistCache[key]?.appData) return artistCache[key].appData;
+  return koopjesData[key]?.data || null;
+}
+
+// Haalt de ontbrekende (of verouderde) artiestdata op, 4 tegelijk, en rendert
+// tussendoor zodat de eerste artiesten al zichtbaar zijn.
+async function loadKoopjesArtists() {
+  const todo = Object.keys(ARTISTS).filter(k => {
+    if (k === activeArtist && appData) return false;
+    if (artistCache[k]?.appData) return false;
+    const c = koopjesData[k];
+    return !c || Date.now() - c.at > 10 * 60 * 1000;
+  });
+  let i = 0;
+  const worker = async () => {
+    while (i < todo.length) {
+      const k = todo[i++];
+      try {
+        const resp = await fetch(ARTISTS[k].dataFile + '?t=' + Date.now());
+        if (resp.ok) koopjesData[k] = { data: await resp.json(), at: Date.now() };
+      } catch (err) { /* artiest valt dan weg uit het overzicht */ }
+      if (activeView === 'koopjes') renderKoopjes();
+    }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+}
+
+async function openKoopjes() {
+  const f = koopjesFilter();
+  document.getElementById('koopjes-maxask').value = String(f.maxAsk.toFixed(2));
+  document.getElementById('koopjes-minsize').value = String(f.minSize);
+  renderKoopjes();
+  if (koopjesLoading) return;
+  koopjesLoading = true;
+  try {
+    await Promise.all([loadKalshiMarkets(), loadKalshiHistory(), loadKoopjesArtists()]);
+  } finally { koopjesLoading = false; }
+  if (activeView === 'koopjes') renderKoopjes();
+  clearInterval(koopjesTimer);
+  koopjesTimer = setInterval(() => { if (activeView === 'koopjes') openKoopjes(); }, KOOPJES_REFRESH_MS);
+}
+
+const MONTHS_EN = { JAN: 1, FEB: 2, MAR: 3, APR: 4, MAY: 5, JUN: 6, JUL: 7, AUG: 8, SEP: 9, OCT: 10, NOV: 11, DEC: 12 };
+// 'KXYTVIEWSW-ARI26OCT18' -> '2026-10-18' (einddatum van de weekmarkt)
+function eventEndDate(eventTicker) {
+  const m = /(\d{2})([A-Z]{3})(\d{2})$/.exec(eventTicker || '');
+  if (!m || !MONTHS_EN[m[2]]) return null;
+  return `20${m[1]}-${String(MONTHS_EN[m[2]]).padStart(2, '0')}-${m[3]}`;
+}
+
+// Ondergrens per artiest: de waarde waar de weekpiek (of maandpiek) volgens
+// jou minstens boven zal komen. Voor de week: het hoogste van (hoogste eigen-
+// counter-dag x laagste UCG-factor) en (hoogste al officiele dag deze week).
+function koopjesArtistInfo(key, data) {
+  const market = kalshiMarkets?.artists?.[key];
+  if (!market || !data?.log?.length) return null;
+  const saved = predictionReleaseDays;
+  predictionReleaseDays = computeReleaseDays(data.videos);
+  try {
+    const stats = getUcgStats(key);
+    const minF = stats ? stats.excl.min : null, maxF = stats ? stats.excl.max : null;
+    const points = analysisData?.ucg_factor?.[key]?.points || [];
+    const info = { key, week: null, month: null, note: '' };
+
+    const totals = getWeekToDateTotals(data.log);
+    const weekStart = totals[0]?.key;
+    const weekEnd = weekStart ? addDaysToDateKey(weekStart, 6) : null;
+    if (market.brackets?.length && eventEndDate(market.event_ticker) === weekEnd) {
+      const range = kalshiWeekRange(totals, minF, maxF);
+      const off = points.filter(p => p.date >= weekStart).reduce((a, p) => (!a || p.global_charts > a.v) ? { v: p.global_charts, date: p.date } : a, null);
+      let floor = range.known ? range.min : null;
+      if (off && (floor == null || off.v > floor)) floor = off.v;
+      info.week = { brackets: market.brackets, floor, official: off ? off.v : null, model: range.known ? range.min : null };
+    } else if (market.brackets?.length) {
+      info.note = 'weekmarkt hoort nog bij de vorige week';
+    }
+
+    const monthKey = market.close_time ? new Date(new Date(market.close_time).getTime() - 3 * 86400000).toISOString().slice(0, 7) : null;
+    const monthly = (market.monthly || []).find(m => m.month && m.month === monthKey);
+    if (monthly?.brackets?.length) {
+      const range = kalshiMonthRange(key, monthly.month, data.log, minF, maxF);
+      const offs = points.filter(p => p.date.startsWith(monthly.month));
+      const offMax = offs.length ? Math.max(...offs.map(p => p.global_charts)) : null;
+      info.month = { brackets: monthly.brackets, floor: range.known ? range.min : null, official: offMax };
+    }
+    return info;
+  } finally {
+    predictionReleaseDays = saved;
+  }
+}
+
+// Prijsgeschiedenis van een markt: laagste YES-ask (en shares op dat moment)
+// sinds de markt voor het eerst >= $0,90 stond (de eerdere opening-prijzen
+// zijn geen echte dips), plus de reeks voor het mini-grafiekje.
+function koopjesHistory(ticker, currentAsk) {
+  const entry = kalshiHistory?.markets?.[ticker];
+  const s = entry?.s;
+  if (!s || !s.length) return null;
+  const nowMin = Math.floor(Date.now() / 60000);
+  const cutoff = nowMin - 7 * 1440;
+  const pts = s.filter(p => p[0] >= cutoff);
+  if (!pts.length) return null;
+  const firstSafe = pts.findIndex(p => p[1] >= KOOPJES_SAFE_ASK);
+  const considered = firstSafe >= 0 ? pts.slice(firstSafe) : pts;
+  let low = considered[0];
+  for (const p of considered) if (p[1] <= low[1]) low = p; // bij gelijk: meest recente
+  return { pts, low, nowMin, startedSafe: firstSafe >= 0 };
+}
+
+function koopjesSpark(h) {
+  const W = 84, H = 22, pad = 2;
+  const t0 = h.pts[0][0], t1 = Math.max(h.nowMin, h.pts[h.pts.length - 1][0]);
+  const x = t => pad + (W - 2 * pad) * (t1 === t0 ? 1 : (t - t0) / (t1 - t0));
+  const y = v => H - pad - (H - 2 * pad) * Math.max(0, Math.min(1, v));
+  let d = '';
+  h.pts.forEach((p, i) => { d += (i ? `H${x(p[0]).toFixed(1)}V${y(p[1]).toFixed(1)}` : `M${x(p[0]).toFixed(1)} ${y(p[1]).toFixed(1)}`); });
+  d += `H${x(t1).toFixed(1)}`;
+  return `<svg class="k-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><line class="k-base" x1="0" y1="${y(1)}" x2="${W}" y2="${y(1)}"/><path class="k-line" d="${d}"/><circle class="k-low" cx="${x(h.low[0]).toFixed(1)}" cy="${y(h.low[1]).toFixed(1)}" r="2.2"/></svg>`;
+}
+
+function koopjesRows(infos, filter) {
+  const rows = [];
+  const seen = new Map();
+  for (const info of infos) {
+    for (const kind of ['week', 'month']) {
+      const L = info[kind];
+      if (!L || L.floor == null) continue;
+      for (const b of L.brackets) {
+        if (b.floor_strike == null || b.yes_ask == null) continue;
+        if (!(b.floor_strike < L.floor)) continue; // alleen strikes die onder je ondergrens liggen
+        const hist = koopjesHistory(b.ticker, b.yes_ask);
+        rows.push({
+          artist: info.key, kind: kind === 'week' ? 'Wk' : 'Mnd', bracket: b,
+          ask: b.yes_ask, size: b.yes_ask_size,
+          margin: (L.floor - b.floor_strike) / L.floor,
+          certain: L.official != null && b.floor_strike < L.official,
+          hist,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+function koopjesRowHtml(r, withArtist) {
+  const priceStr = v => '$' + v.toFixed(2);
+  const sizeStr = v => v == null ? '?' : v < 1 ? '—' : fmt(Math.round(v));
+  const gain = 1 - r.ask, ret = r.ask > 0 ? gain / r.ask : null;
+  const h = r.hist;
+  let lowCell = '<span class="neu">—</span>';
+  if (h) {
+    const iso = new Date(h.low[0] * 60000).toISOString();
+    const when = `${ptShortLabel(iso)} ${ptTimeLabel(iso)}`;
+    const tip = `Laagste YES-prijs ${h.startedSafe ? 'sinds de markt dit voor het eerst als zeker prijsde (≥ $0,90)' : 'in de afgelopen 7 dagen'}: ${priceStr(h.low[1])}${h.low[2] != null ? ` voor ${fmt(Math.round(h.low[2]))} shares` : ' (aantal shares uit die periode onbekend)'}, ${when} (UTC-8).`;
+    lowCell = `<span data-tooltip="${esc(tip)}"><b>${priceStr(h.low[1])}</b> <span class="k-sub">${h.low[2] != null ? fmt(Math.round(h.low[2])) + ' sh' : ''} ${esc(when)}</span></span>`;
+  }
+  const certTip = 'Strike ligt onder een dag die Global Charts al officieel heeft gepubliceerd -- geen modelrisico meer.';
+  return `<tr class="kalshi-row-opp">
+    ${withArtist ? `<td>${esc(ARTISTS[r.artist].label)}</td>` : ''}
+    <td>${esc(r.bracket.label || fmt(r.bracket.floor_strike))}<span class="k-kind">${r.kind}</span>${r.certain ? `<span class="k-cert" data-tooltip="${esc(certTip)}">officieel</span>` : ''}</td>
+    <td class="r"><span class="kalshi-side kalshi-side-yes">${priceStr(r.ask)}</span></td>
+    <td class="r">${sizeStr(r.size)}</td>
+    <td class="r" data-tooltip="Winst per share als hij uitkomt: $1 − aankoopprijs">+${priceStr(gain)}${ret != null ? `<span class="k-sub">+${(ret * 100).toFixed(1).replace('.', ',')}%</span>` : ''}</td>
+    <td class="r" data-tooltip="Hoeveel je strike onder je ondergrens ligt (hoe groter, hoe veiliger)">${(r.margin * 100).toFixed(1).replace('.', ',')}%</td>
+    <td>${lowCell}</td>
+    <td>${h ? koopjesSpark(h) : ''}</td>
+  </tr>`;
+}
+
+function renderKoopjes() {
+  const bodyEl = document.getElementById('koopjes-body');
+  const statusEl = document.getElementById('koopjes-status');
+  if (!analysisData || !kalshiMarkets) {
+    bodyEl.innerHTML = '<div class="log-empty"><div class="spinner" style="margin:0 0 8px"></div>Data ophalen...</div>';
+    return;
+  }
+  const f = koopjesFilter();
+  const keys = Object.keys(ARTISTS);
+  const infos = [], missing = [];
+  for (const k of keys) {
+    const data = koopjesDataFor(k);
+    if (!data) { missing.push(k); continue; }
+    const info = koopjesArtistInfo(k, data);
+    if (info) infos.push(info);
+  }
+
+  let st = [];
+  if (kalshiMarkets.fetched_at) {
+    const ageMin = Math.max(0, Math.round((Date.now() - new Date(kalshiMarkets.fetched_at).getTime()) / 60000));
+    st.push(`Prijzen bijgewerkt ${esc(ptTimeLabel(kalshiMarkets.fetched_at))} (${ageMin} min geleden)`);
+  }
+  if (missing.length) st.push(`artiestdata geladen: ${keys.length - missing.length}/${keys.length}`);
+  if (kalshiHistory?.markets) {
+    const first = Math.min(...Object.values(kalshiHistory.markets).map(e => e.s?.[0]?.[0]).filter(v => v != null));
+    if (Number.isFinite(first)) st.push(`prijshistorie sinds ${esc(ptShortLabel(new Date(first * 60000).toISOString()))}`);
+  }
+  statusEl.innerHTML = st.join(' · ');
+
+  const all = koopjesRows(infos, f);
+  const ok = r => r.ask <= f.maxAsk && (f.minSize === 0 || (r.size != null && r.size >= f.minSize));
+  const byPrice = (a, b) => a.ask - b.ask || (b.size || 0) - (a.size || 0) || b.margin - a.margin; // goedkoopst eerst, bij gelijke prijs de meeste shares
+
+  const live = all.filter(ok).sort(byPrice);
+  const th = (withArtist) => `<thead><tr>${withArtist ? '<th>Artiest</th>' : ''}<th>Bracket (YES)</th><th class="r">Prijs</th><th class="r">Shares</th><th class="r">Winst</th><th class="r">Marge</th><th>Laagste deze week</th><th>Verloop</th></tr></thead>`;
+
+  // 1) Top over alle artiesten
+  let html = `<div class="k-section">Beste nu · top ${KOOPJES_TOP_ALL}</div>`;
+  html += live.length
+    ? `<div class="koopjes-scroll"><table class="log-table kalshi-table koopjes-table">${th(true)}<tbody>${live.slice(0, KOOPJES_TOP_ALL).map(r => koopjesRowHtml(r, true)).join('')}</tbody></table></div>`
+    : '<div class="kalshi-opp-empty">Op dit moment geen YES onder je ondergrens die binnen je filter valt.</div>';
+
+  // 2) Per artiest, top 5
+  const perArtist = new Map();
+  for (const r of live) { if (!perArtist.has(r.artist)) perArtist.set(r.artist, []); perArtist.get(r.artist).push(r); }
+  const order = [...perArtist.keys()]; // al op beste prijs gesorteerd doordat `live` gesorteerd is
+  html += `<div class="k-section">Per artiest · top ${KOOPJES_PER_ARTIST}</div>`;
+  if (order.length) {
+    const infoBy = Object.fromEntries(infos.map(i => [i.key, i]));
+    html += `<div class="koopjes-scroll"><table class="log-table kalshi-table koopjes-table">${th(false)}<tbody>${order.map(k => {
+      const rows = perArtist.get(k);
+      const w = infoBy[k]?.week;
+      const meta = w?.floor != null ? `ondergrens week ${fmt(floor1000(w.floor))}${w.official != null ? ` · officieel max ${fmt(floor1000(w.official))}` : ''} · ${rows.length} koopje${rows.length === 1 ? '' : 's'}` : '';
+      return `<tr class="koopjes-artist"><td colspan="7">${esc(ARTISTS[k].label)}<span class="k-meta">${esc(meta)}</span></td></tr>` +
+        rows.slice(0, KOOPJES_PER_ARTIST).map(r => koopjesRowHtml(r, false)).join('');
+    }).join('')}</tbody></table></div>`;
+  } else {
+    html += '<div class="kalshi-opp-empty">Geen koopjes binnen je filter.</div>';
+  }
+  const none = infos.filter(i => !perArtist.has(i.key)).map(i => ARTISTS[i.key].label);
+  if (none.length) html += `<div class="k-note">Geen koopje: ${esc(none.join(', '))}.</div>`;
+
+  // 3) Gemiste kansen: bracket staat onder je ondergrens, was eerder deze week
+  // (veel) goedkoper, maar is nu weer duurder dan je filter.
+  const missed = all.filter(r => r.hist && r.hist.low[1] <= f.maxAsk && r.ask > r.hist.low[1] + 0.01 && !ok(r))
+    .filter(r => f.minSize === 0 || r.hist.low[2] == null || r.hist.low[2] >= f.minSize)
+    .sort((a, b) => a.hist.low[1] - b.hist.low[1] || (b.hist.low[2] || 0) - (a.hist.low[2] || 0) || b.margin - a.margin).slice(0, KOOPJES_TOP_ALL);
+  html += `<div class="k-section">Eerder deze week goedkoper beschikbaar geweest · top ${KOOPJES_TOP_ALL}</div>`;
+  html += missed.length
+    ? `<div class="koopjes-scroll"><table class="log-table kalshi-table koopjes-table">${th(true)}<tbody>${missed.map(r => koopjesRowHtml(r, true)).join('')}</tbody></table></div>`
+    : '<div class="kalshi-opp-empty">Nog geen prijsdips gezien op strikes die onder je ondergrens liggen.</div>';
+
+  html += `<div class="k-note">YES-koopje = strike onder je ondergrens (hoogste eigen-counter-dag × laagste UCG-factor, of een al officieel gepubliceerde dag). De weekpiek kan alleen stijgen, dus zo'n YES blijft staan; een NO zegt pas iets na vrijdag/zaterdag. Prijs en shares zijn de beste ask (alleen dat niveau, niet de diepte erachter). "Laagste deze week" telt vanaf het moment dat de markt de strike voor het eerst op ≥ $0,90 zette. Tijden in UTC-8, geschiedenis wordt elke 5 minuten vastgelegd (ook als deze pagina dicht staat). Het model is geen garantie: een lage marge betekent dat je ondergrens-schatting net aan de goede kant zit.</div>`;
+  bodyEl.innerHTML = html;
 }
 
 loadData();
