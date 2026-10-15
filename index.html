@@ -1539,8 +1539,8 @@ function dayFromFriday(i, friday, wdStats, weStats) {
 // ~10% fout (2,27% -> 2,05% per dag; weekmax 2,63% -> 2,42%). Het weekpatroon
 // is als losse methode zwakker (~3,2%), vandaar maar 30%.
 const BLEND_WEEKPATTERN_WEIGHT = 0.3;
-// Weekpatroon-anker: gemiddelde van de laatste N officiele dagen i.p.v. alleen
-// de allerlaatste -- getoetst: 3,65% (1 anker) -> 3,19% (7 ankers) afwijking.
+// Weekpatroon-anker: gemiddelde van de laatste N dagen i.p.v. alleen de
+// allerlaatste -- getoetst: 3,65% (1 anker) -> 3,19% (7 ankers) afwijking.
 const WP_ANCHOR_DAYS = 7;
 
 // `totals`: dagtotalen van de lopende week (zie getWeekToDateTotals); standaard
@@ -1580,30 +1580,61 @@ function weekForecastData(artistKey, totals = predictionDays) {
     }
   });
 
-  // Weekpatroon-schatting voor dag i: elk van de laatste N officiele dagen
-  // (voor die dag) wordt via de weekdagfactoren naar dag i doorgerekend; het
-  // gemiddelde daarvan is de schatting. Bewust GEEN filter op releasedagen
-  // voor de ankers: getoetst is dat slechter (3,19% vs 3,03%, en na een
-  // release 5,3% vs 4,1%) -- het officiele niveau na een release is echt, en
-  // wegfilteren laat de schatting op het oude niveau hangen (bij Taylor ver
-  // onder het huidige niveau).
+  // Weekpatroon-schatting voor dag i: elk van de laatste N ankerdagen wordt
+  // via de weekdagfactoren naar dag i doorgerekend; het gemiddelde daarvan is
+  // de schatting. Bewust GEEN filter op releasedagen voor de ankers: getoetst
+  // is dat slechter (3,19% vs 3,03%, en na een release 5,3% vs 4,1%) -- het
+  // officiele niveau na een release is echt, en wegfilteren laat de schatting
+  // op het oude niveau hangen (bij Taylor ver onder het huidige niveau).
+  //
+  // Ankers: alleen officiele dagen (officialAnchors, loopt ~2 dagen achter)
+  // of, voor vandaag en de toekomst, "verse" ankers (freshAnchors): de laatste
+  // 7 dagen t/m gisteren, officieel waar dat er al is en anders de eigen
+  // counter x UCG-factor. Walk-forward getoetst (okt 2026, alle artiesten):
+  // verse ankers verlagen de fout van de dag-voor-dag-schatting met ~0,4-0,5
+  // procentpunt (2,82% -> 2,33% voor de volgende dag, 3,72% -> 3,28% op 5
+  // dagen) en die van de weekmax met ~0,4-0,7 pp (95%-BI sluit 0 uit).
   const officialPts = hist?.points || [];
-  const wpEstimate = (i, dateKey) => {
-    const anchors = officialPts.filter(p => p.date < dateKey).slice(-WP_ANCHOR_DAYS);
+  const wpEstimate = (i, dateKey, fresh) => {
+    const anchors = fresh || officialPts.filter(p => p.date < dateKey).slice(-WP_ANCHOR_DAYS).map(p => ({ date: p.date, v: p.global_charts, src: 'officieel' }));
     if (!anchors.length) return null;
     const ests = anchors.map(p => {
       const anchorIdx = (new Date(p.date + 'T12:00:00Z').getUTCDay() + 6) % 7; // 0=ma..6=zo
-      return dayFromFriday(i, fridayFromDay(anchorIdx, p.global_charts, wdStats, weStats), wdStats, weStats);
+      return dayFromFriday(i, fridayFromDay(anchorIdx, p.v, wdStats, weStats), wdStats, weStats);
     });
     const avg = (k) => ests.reduce((s, e) => s + e[k], 0) / ests.length;
-    return { mid: avg('mid'), lo: avg('lo'), hi: avg('hi'), factorInfo: ests[ests.length - 1].factorInfo, basedOn: anchors[anchors.length - 1].date, nAnchors: anchors.length };
+    return {
+      mid: avg('mid'), lo: avg('lo'), hi: avg('hi'), factorInfo: ests[ests.length - 1].factorInfo,
+      basedOn: anchors[anchors.length - 1].date, nAnchors: anchors.length,
+      nOwn: anchors.filter(a => a.src === 'eigen').length,
+    };
   };
 
+  // Verse ankers: de laatste WP_ANCHOR_DAYS dagen t/m gisteren (vandaag is nog
+  // niet afgerond). Alleen voor de actieve artiest, want alleen daarvan is
+  // het eigen-counter-log geladen. Minimaal 3 ankers, anders val terug op de
+  // officiele ankers.
+  let freshAnchors = null;
+  if (artistKey === activeArtist && appData?.log?.length) {
+    const keys = [];
+    for (let z = WP_ANCHOR_DAYS; z >= 1; z--) keys.push(addDaysToDateKey(todayKey, -z));
+    const ownByKey = new Map(getTotalsForKeys(appData.log, keys).map(t => [t.key, t.total]));
+    const pts = keys.map(k => {
+      const gc = gcByDate.get(k);
+      if (gc != null) return { date: k, v: gc, src: 'officieel' };
+      const o = ownByKey.get(k);
+      return o != null ? { date: k, v: o * fixedFactor, src: 'eigen' } : null;
+    }).filter(Boolean);
+    if (pts.length >= 3) freshAnchors = pts;
+  }
+
   out.forEach((d, i) => {
-    const wp = wpEstimate(i, d.key);
+    const wp = wpEstimate(i, d.key, null);
     if (!wp) return;
-    d.wp = wp; // intern, voor de blend -- ook voor dagen die al known/official zijn
-    if (d.official == null && d.known == null) d.weekpattern = wp; // alleen daar tonen we 'm los
+    d.wp = wp; // intern, voor de blend -- ook voor dagen die al known/official zijn (bewust officiele ankers: niet circulair met de eigen counter van die dag zelf)
+    if (d.official == null && d.known == null) { // alleen daar tonen we 'm los
+      d.weekpattern = (freshAnchors && wpEstimate(i, d.key, freshAnchors)) || wp;
+    }
     if (d.known) {
       d.blend = { mid: (1 - BLEND_WEEKPATTERN_WEIGHT) * d.known.mid + BLEND_WEEKPATTERN_WEIGHT * wp.mid };
     }
@@ -1750,7 +1781,7 @@ function renderWeekForecastChart() {
     }
     if (!d.known && !d.official && d.weekpattern) {
       const f = d.weekpattern.factorInfo;
-      lines.push(`Weekpatroon (gemiddelde van de laatste ${d.weekpattern.nAnchors} officiele dagen${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.mid)}</b>`);
+      lines.push(`Weekpatroon (gemiddelde van de laatste ${d.weekpattern.nAnchors} dagen${d.weekpattern.nOwn ? `: ${d.weekpattern.nAnchors - d.weekpattern.nOwn} officieel + ${d.weekpattern.nOwn} via eigen counter x UCG` : ', officieel'}${f ? `, factor ${f.factor.toFixed(2)} ${f.own ? 'eigen' : 'gepoold'}` : ''}) &rarr; <b>${fmtM(d.weekpattern.mid)}</b>`);
     }
     if (!lines.length) lines.push('Nog geen data of voorspelling voor deze dag.');
     tip.innerHTML = `<b>${esc(dayLabel)}</b><br>${lines.join('<br>')}`;
