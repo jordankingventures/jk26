@@ -1,0 +1,30 @@
+name: Verwerk Global Charts-upload
+
+on:
+  # Handmatig geupload bestand data/incoming/gc.json (GitHub-website: Add file
+  # -> Upload files). Elke keer dezelfde bestandsnaam: het bestand wordt na
+  # verwerking door deze workflow weer verwijderd. Handig omdat het automatisch
+  # ophalen sinds okt 2026 HTTP 429 krijgt -- zie scripts/gc_bookmarklet.js.
+  push:
+    branches: [main]
+    paths:
+      - "data/incoming/gc.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Nooit twee verwerkingen tegelijk (ze schrijven naar hetzelfde bestand).
+concurrency:
+  group: process-gc-upload
+  cancel-in-progress: false
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verwerk upload
+        run: bash scripts/process_gc_upload.sh
