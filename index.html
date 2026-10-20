@@ -1540,8 +1540,12 @@ function dayFromFriday(i, friday, wdStats, weStats) {
 // is als losse methode zwakker (~3,2%), vandaar maar 30%.
 const BLEND_WEEKPATTERN_WEIGHT = 0.3;
 // Weekpatroon-anker: gemiddelde van de laatste N dagen i.p.v. alleen de
-// allerlaatste -- getoetst: 3,65% (1 anker) -> 3,19% (7 ankers) afwijking.
-const WP_ANCHOR_DAYS = 7;
+// allerlaatste -- getoetst: 3,65% (1 anker) -> 3,19% (7 ankers) afwijking. Met
+// de verse ankers (zie weekForecastData) opnieuw getoetst op 537 dagen: 5
+// ankers is beter dan 7 (volgende dag 2,87% -> 2,71%, 3 en 5 dagen vooruit
+// -0,1 pp, weekmax na ma/di -0,3 pp; 95%-BI sluit 0 uit); 3-4 ankers zijn
+// gelijkwaardig, 10 ankers duidelijk slechter.
+const WP_ANCHOR_DAYS = 5;
 
 // `totals`: dagtotalen van de lopende week (zie getWeekToDateTotals); standaard
 // die van de Voorspelling-tab, de Kalshi-tab geeft z'n eigen mee.
