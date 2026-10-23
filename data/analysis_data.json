@@ -1689,11 +1689,17 @@
           "own_counter": 14495000,
           "global_charts": 23684000,
           "factor": 1.6339427388754744
+        },
+        {
+          "date": "2026-10-21",
+          "own_counter": 15154000,
+          "global_charts": 24407000,
+          "factor": 1.61059786195064
         }
       ],
       "min": 1.5689803969917395,
       "max": 1.753676924978371,
-      "avg": 1.6336633041979418,
+      "avg": 1.6333290224262418,
       "excluded_dates": {}
     },
     "ariana": {
@@ -4371,11 +4377,17 @@
           "own_counter": 4460000,
           "global_charts": 5216000,
           "factor": 1.169506726457399
+        },
+        {
+          "date": "2026-10-21",
+          "own_counter": 4596000,
+          "global_charts": 5282000,
+          "factor": 1.149260226283725
         }
       ],
       "min": 1.10840160030482,
       "max": 1.2364990689013036,
-      "avg": 1.166439482075102,
+      "avg": 1.1660490444434797,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
