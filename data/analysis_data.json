@@ -3063,11 +3063,17 @@
           "own_counter": 10222000,
           "global_charts": 14970000,
           "factor": 1.4644883584425747
+        },
+        {
+          "date": "2026-10-23",
+          "own_counter": 10860000,
+          "global_charts": 15750000,
+          "factor": 1.4502762430939227
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.4488744277244134,
+      "avg": 1.4488941716028572,
       "excluded_dates": {}
     },
     "fuerzaregida": {
@@ -5703,11 +5709,17 @@
           "own_counter": 15384000,
           "global_charts": 19096000,
           "factor": 1.2412896515860634
+        },
+        {
+          "date": "2026-10-23",
+          "own_counter": 15511000,
+          "global_charts": 19222000,
+          "factor": 1.2392495648249628
         }
       ],
       "min": 1.1888460989873058,
       "max": 1.3330507756209207,
-      "avg": 1.2553602280906697,
+      "avg": 1.2550099962805457,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
