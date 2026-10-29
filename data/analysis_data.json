@@ -3153,11 +3153,31 @@
           "own_counter": 10688000,
           "global_charts": 15501000,
           "factor": 1.450318113772455
+        },
+        {
+          "date": "2026-10-25",
+          "own_counter": 9484000,
+          "global_charts": 13846000,
+          "factor": 1.4599325179249263,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-26",
+          "own_counter": 9898000,
+          "global_charts": 14228000,
+          "factor": 1.4374621135582946,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-27",
+          "own_counter": 10179000,
+          "global_charts": 14739000,
+          "factor": 1.44798113763631
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.448913948577435,
+      "avg": 1.4488957342225979,
       "excluded_dates": {}
     },
     "fuerzaregida": {
