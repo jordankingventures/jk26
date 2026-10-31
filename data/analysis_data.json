@@ -3673,11 +3673,17 @@
           "global_charts": 21510000,
           "factor": 1.8383044184257755,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 12150000,
+          "global_charts": 21964000,
+          "factor": 1.8077366255144034
         }
       ],
       "min": 1.7902593767493935,
       "max": 2.0459057071960296,
-      "avg": 1.875536271689031,
+      "avg": 1.874232432339519,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
