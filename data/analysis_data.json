@@ -4345,13 +4345,22 @@
           "global_charts": 4930000,
           "factor": 1.3063063063063063,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 3895000,
+          "global_charts": 5052000,
+          "factor": 1.2970474967907575,
+          "backfill": true
         }
       ],
       "min": 1.1928934010152283,
       "max": 1.3776709401709402,
-      "avg": 1.2746116301024797,
+      "avg": 1.2750430890772542,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-10-30": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
     },
     "katseye": {
@@ -5673,11 +5682,24 @@
           "global_charts": 5934000,
           "factor": 1.1200453001132502,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 5515000,
+          "global_charts": 6104000,
+          "factor": 1.1067996373526745,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 5867000,
+          "global_charts": 6458000,
+          "factor": 1.100732912902676
         }
       ],
-      "min": 1.1028349082823792,
+      "min": 1.100732912902676,
       "max": 1.244602048857368,
-      "avg": 1.1499436305141162,
+      "avg": 1.1482010888014202,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
