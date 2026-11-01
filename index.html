@@ -263,10 +263,6 @@
     .tab .dh.warn { background: #f5a623; }
     .tab .dh.bad { background: var(--accent2); color: #fff; }
     .tab.active .dh.warn { background: #ffd27a; }
-    .dh-banner { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; font-size: 0.78rem; line-height: 1.5; border: 1px solid; }
-    .dh-banner b { display: block; margin-bottom: 2px; }
-    .dh-banner.warn { color: #f5a623; border-color: #f5a623; background: rgba(245,166,35,.08); }
-    .dh-banner.bad { color: var(--accent2); border-color: var(--accent2); background: rgba(252,92,125,.09); }
     /* de tooltip-stijl zet cursor: help; op de artiestknoppen houden we de gewone cursor van een tabblad */
     .tab[data-tooltip] { cursor: pointer; }
 
@@ -466,7 +462,6 @@
 </div>
 
 <div id="prediction-view" style="display:none">
-  <div class="dh-banner-slot"></div>
   <details class="log-wrap" open>
     <summary class="log-header">
       <h2>Deze week (maandag t/m vandaag, UTC-8)</h2>
@@ -502,7 +497,6 @@
 </div>
 
 <div id="kalshi-view" style="display:none">
-  <div class="dh-banner-slot"></div>
   <div class="log-wrap">
     <div class="log-header">
       <h2>Kalshi &mdash; live marktprijzen (week &amp; maand)</h2>
@@ -2502,15 +2496,6 @@ function renderDataHealth() {
     badge.title = flagged.map(k => `${ARTISTS[k].label}: ${dataHealthSummary(k)}`).join('\n');
     badge.style.cursor = 'pointer';
   }
-
-  // 3) banner bovenaan de Voorspelling- en Kalshi-tab voor de actieve artiest
-  const h = dataHealth(activeArtist);
-  let html = '';
-  if (h && h.level !== 'ok') {
-    const title = h.level === 'bad' ? 'Data komt niet meer binnen' : 'Gaten in de data deze week';
-    html = `<div class="dh-banner ${h.level}"><b>⚠ ${esc(title)} — ${esc(ARTISTS[activeArtist].label)}</b>${esc(dataHealthSummary(activeArtist))}. Weekmax-schattingen en Kalshi-ranges steunen op deze metingen en kunnen daardoor te laag of onbetrouwbaar zijn: neem geen posities op basis hiervan zonder de data te controleren.</div>`;
-  }
-  document.querySelectorAll('.dh-banner-slot').forEach(el => { el.innerHTML = html; });
 }
 
 loadData();
