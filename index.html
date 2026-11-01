@@ -258,6 +258,17 @@
     .ucg-line { font-size: 0.7rem; margin: 5px 0 0; line-height: 1.5; }
     .ucg-line b { color: var(--text); }
 
+    /* Data-gezondheid: waarschuwing als metingen van een artiest ontbreken */
+    .tab .dh { display: inline-block; margin-left: 6px; min-width: 14px; height: 14px; line-height: 14px; border-radius: 999px; font-size: 0.62rem; font-weight: 800; text-align: center; vertical-align: 1px; color: #0f0f13; }
+    .tab .dh.warn { background: #f5a623; }
+    .tab .dh.bad { background: var(--accent2); color: #fff; }
+    .tab.active .dh.warn { background: #ffd27a; }
+    .dh-banner { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; font-size: 0.78rem; line-height: 1.5; border: 1px solid; }
+    .dh-banner b { display: block; margin-bottom: 2px; }
+    .dh-banner.warn { color: #f5a623; border-color: #f5a623; background: rgba(245,166,35,.08); }
+    .dh-banner.bad { color: var(--accent2); border-color: var(--accent2); background: rgba(252,92,125,.09); }
+    .dh-banner .dh-others { display: block; margin-top: 4px; opacity: .85; }
+
     /* Kalshi-tab */
     .kalshi-range { padding: 10px 16px; font-size: 0.78rem; color: var(--muted); border-bottom: 1px solid var(--border); }
     .kalshi-range b { color: var(--text); }
@@ -339,6 +350,7 @@
 <header>
   <h1><span id="artist-name">Taylor Swift</span><span class="subtitle">View Tracker</span></h1>
   <div class="header-right">
+    <span class="badge err" id="badge-health" style="display:none" onclick="switchView('kalshi')"></span>
     <span class="badge" id="badge-updated">Laden...</span>
     <button class="info-btn" onclick="toggleInfoModal(true)" title="Hoe werkt deze tracker?">ℹ</button>
   </div>
@@ -453,6 +465,7 @@
 </div>
 
 <div id="prediction-view" style="display:none">
+  <div class="dh-banner-slot"></div>
   <details class="log-wrap" open>
     <summary class="log-header">
       <h2>Deze week (maandag t/m vandaag, UTC-8)</h2>
@@ -488,6 +501,7 @@
 </div>
 
 <div id="kalshi-view" style="display:none">
+  <div class="dh-banner-slot"></div>
   <div class="log-wrap">
     <div class="log-header">
       <h2>Kalshi &mdash; live marktprijzen (week &amp; maand)</h2>
@@ -715,6 +729,7 @@ function switchArtist(key) {
 
   document.querySelectorAll('#artist-tabs .tab').forEach(btn => btn.classList.toggle('active', btn.dataset.artist === key));
   document.getElementById('artist-name').textContent = ARTISTS[key].label;
+  renderDataHealth();
   collapsedOrderDays = null; // andere artiest kan andere datums hebben -- opnieuw op de default (alleen nieuwste open) laten initialiseren
   if (activeView === 'orders') renderOrders();
 
@@ -2393,9 +2408,119 @@ function renderOrders() {
   }).join('');
 }
 
+// ---------------------------------------------------------------------------
+// Data-gezondheid: komt de data van een artiest wel binnen? Per artiest een
+// klein bestand data/<artiest>_status.json (door fetch_views.py bijgewerkt) met
+// de tijdstippen van de recente metingen. Hieruit halen we twee dingen:
+//  - 'bad': de laatste meting is al > 3 verwachte intervallen oud (de data
+//    komt nu niet binnen);
+//  - 'warn': er zaten deze week gaten van >= 2 gemiste metingen achter elkaar
+//    in (de weekmax en de eigen dagtotalen zijn dan minder betrouwbaar).
+// Zo trek je in de Kalshi-tab geen conclusies op een week met ontbrekende data.
+// ---------------------------------------------------------------------------
+let dataStatus = {};
+const DH_GAP_FACTOR = 2.5; // een gat telt vanaf 2,5 x het gebruikelijke interval (bij 2 uur: 5 uur = 2 gemiste metingen)
+const DH_BAD_FACTOR = 3;   // laatste meting ouder dan 3 x het interval = 'komt niet meer binnen'
+
+async function loadDataStatus() {
+  await Promise.all(Object.keys(ARTISTS).map(async k => {
+    try {
+      const r = await fetch(`data/${k}_status.json?t=${Date.now()}`);
+      if (r.ok) dataStatus[k] = await r.json();
+    } catch (e) { /* geen statusbestand: geen waarschuwing voor deze artiest */ }
+  }));
+  renderDataHealth();
+}
+
+function dataHealth(key) {
+  const st = dataStatus[key];
+  if (!st?.ts?.length) return null;
+  const pts = st.ts.map(m => m * 60000).sort((a, b) => a - b);
+  const now = Date.now();
+  const recent = pts.slice(-49), diffs = [];
+  for (let i = 1; i < recent.length; i++) diffs.push(recent[i] - recent[i - 1]);
+  diffs.sort((a, b) => a - b);
+  const med = diffs.length ? diffs[Math.floor(diffs.length / 2)] : 120 * 60000;
+  const expected = Math.min(180 * 60000, Math.max(30 * 60000, med));
+  const weekStart = new Date(mondayKeyOf(todayKeyNow()) + 'T08:00:00Z').getTime(); // maandag 00:00 UTC-8
+  const before = pts.filter(t => t < weekStart).pop();
+  const seq = (before != null ? [before] : []).concat(pts.filter(t => t >= weekStart), [now]);
+  const gaps = [];
+  let missed = 0;
+  for (let i = 1; i < seq.length; i++) {
+    const a = seq[i - 1], b = seq[i], total = b - a;
+    if (total > DH_GAP_FACTOR * expected) {
+      gaps.push({ from: Math.max(a, weekStart), to: b, ms: b - Math.max(a, weekStart), ongoing: i === seq.length - 1 });
+      missed += Math.max(0, Math.round(total / expected) - 1);
+    }
+  }
+  const last = pts[pts.length - 1];
+  const tail = now - last;
+  const level = tail > DH_BAD_FACTOR * expected ? 'bad' : gaps.length ? 'warn' : 'ok';
+  return { level, last, tail, expected, gaps, missed };
+}
+
+function fmtHours(ms) {
+  const h = ms / 3600000;
+  return h < 10 ? h.toFixed(1).replace('.', ',') + ' u' : Math.round(h) + ' u';
+}
+function dhWhen(ms) { const iso = new Date(ms).toISOString(); return `${ptShortLabel(iso)} ${ptTimeLabel(iso)}`; }
+
+function dataHealthSummary(key) {
+  const h = dataHealth(key);
+  if (!h || h.level === 'ok') return '';
+  const biggest = h.gaps.reduce((m, g) => Math.max(m, g.ms), 0);
+  const parts = [`laatste meting ${dhWhen(h.last)} (${fmtHours(h.tail)} geleden)`];
+  if (h.gaps.length) parts.push(`deze week ~${h.missed} metingen gemist in ${h.gaps.length} gat${h.gaps.length === 1 ? '' : 'en'} (grootste ${fmtHours(biggest)})`);
+  return parts.join(' · ');
+}
+
+function renderDataHealth() {
+  const flagged = Object.keys(ARTISTS).filter(k => { const h = dataHealth(k); return h && h.level !== 'ok'; });
+
+  // 1) markering op de artiestknoppen
+  document.querySelectorAll('#artist-tabs .tab').forEach(btn => {
+    const k = btn.dataset.artist, h = dataHealth(k);
+    let dot = btn.querySelector('.dh');
+    if (!h || h.level === 'ok') {
+      if (dot) dot.remove();
+      btn.removeAttribute('data-tooltip');
+      return;
+    }
+    if (!dot) { dot = document.createElement('span'); btn.appendChild(dot); }
+    dot.className = 'dh ' + h.level;
+    dot.textContent = '!';
+    btn.setAttribute('data-tooltip', 'Let op: ' + dataHealthSummary(k));
+  });
+
+  // 2) badge in de kop
+  const badge = document.getElementById('badge-health');
+  if (badge) {
+    badge.style.display = flagged.length ? '' : 'none';
+    badge.textContent = `⚠ data onvolledig: ${flagged.length}`;
+    badge.title = flagged.map(k => `${ARTISTS[k].label}: ${dataHealthSummary(k)}`).join('\n');
+    badge.style.cursor = 'pointer';
+  }
+
+  // 3) banner bovenaan de Voorspelling- en Kalshi-tab voor de actieve artiest
+  const h = dataHealth(activeArtist);
+  const others = flagged.filter(k => k !== activeArtist).map(k => ARTISTS[k].label);
+  let html = '';
+  if (h && h.level !== 'ok') {
+    const title = h.level === 'bad' ? 'Data komt niet meer binnen' : 'Gaten in de data deze week';
+    html = `<div class="dh-banner ${h.level}"><b>⚠ ${esc(title)} — ${esc(ARTISTS[activeArtist].label)}</b>${esc(dataHealthSummary(activeArtist))}. Weekmax-schattingen en Kalshi-ranges steunen op deze metingen en kunnen daardoor te laag of onbetrouwbaar zijn: neem geen posities op basis hiervan zonder de data te controleren.${others.length ? `<span class="dh-others">Ook onvolledig: ${esc(others.join(', '))}.</span>` : ''}</div>`;
+  } else if (others.length) {
+    html = `<div class="dh-banner warn"><b>⚠ Let op: data onvolledig voor andere artiesten</b>${esc(others.join(', '))} (zie de ! op hun knop).</div>`;
+  }
+  document.querySelectorAll('.dh-banner-slot').forEach(el => { el.innerHTML = html; });
+}
+
 loadData();
 loadAnalysisData();
 loadKalshiMarkets();
+loadDataStatus();
+setInterval(loadDataStatus, 5 * 60 * 1000);
+setInterval(renderDataHealth, 60 * 1000);
 loadKalshiState();
 </script>
 </body>

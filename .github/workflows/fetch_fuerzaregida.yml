@@ -25,7 +25,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/fuerzaregida_data.json data/fuerzaregida_video_ids.json
+          git add data/fuerzaregida_data.json data/fuerzaregida_video_ids.json data/fuerzaregida_status.json
           if git diff --staged --quiet; then
             echo "Geen wijzigingen om te committen"
             exit 0

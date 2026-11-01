@@ -19,6 +19,8 @@ import urllib.request
 import urllib.parse
 from datetime import datetime, timedelta, timezone
 
+from data_status import write_status
+
 API_KEY = os.environ["YOUTUBE_API_KEY"]
 # Daggrens voor "vandaag"/dagtotalen. Per 31 augustus 2026 (00:00 UTC-8, dus
 # 2026-08-31T08:00:00Z) omgezet van "echte" (met zomertijd meebewegende)
@@ -222,6 +224,21 @@ def search_recent_video_ids(channel_id, count=50):
     return [item["id"]["videoId"] for item in data.get("items", []) if item.get("id", {}).get("videoId")]
 
 
+# Zoeken kost 100 units per call; voor kanalen zonder uploads-playlist doen we dat
+# 3x per dag (eerste run van de dag + om de ~8 uur), zodat een nieuwe track
+# binnen een paar uur gevonden wordt maar het quotum (10.000/dag voor alle
+# artiesten samen) niet opraakt: 8 kanalen x 3 x 100 = 2.400 units per dag.
+SEARCH_MIN_INTERVAL = timedelta(hours=7.9)
+
+
+def search_due(entry):
+    try:
+        last = datetime.strptime(entry["searched_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except (KeyError, TypeError, ValueError):
+        return True
+    return datetime.now(timezone.utc) - last >= SEARCH_MIN_INTERVAL
+
+
 def ids_without_uploads_playlist(channel_id, cache):
     """
     Terugvaloptie voor een kanaal waarvan de uploads-playlist niet (meer)
@@ -231,7 +248,7 @@ def ids_without_uploads_playlist(channel_id, cache):
     die artiest geen enkele meting meer binnen.
     Werkwijze: de laatst bekende video-ID's van dit kanaal blijven gevolgd (uit de
     cache van de laatste geslaagde volledige scan), aangevuld met de nieuwste
-    uploads via search.list (1x per dag, 100 units) zodat een nieuwe track toch
+    uploads via search.list (3x per dag, 100 units per keer) zodat een nieuwe track toch
     ontdekt wordt. Mislukt ook dat, dan gaan we door met de bekende ID's.
     """
     ids = list((cache.get(channel_id) or {}).get("ids", []))
@@ -243,6 +260,11 @@ def ids_without_uploads_playlist(channel_id, cache):
         print(f"  [{channel_id}] Geen uploads-playlist; terugval: {len(known)} bekende ID's + {len(new)} nieuw via zoeken")
     except Exception as e:
         print(f"  [{channel_id}] Geen uploads-playlist; zoeken mislukt ({e}) -- verder met {len(ids)} bekende ID's")
+    # Ook bij een mislukte poging het tijdstip vastleggen: voorkomt dat een
+    # kapotte zoekactie elke run opnieuw (100 units) wordt geprobeerd.
+    today = datetime.now(DAY_BOUNDARY_TZ).strftime("%Y-%m-%d")
+    cache[channel_id] = {"date": today, "ids": ids, "uploads_missing": True,
+                         "searched_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
     return ids
 
 
@@ -252,6 +274,8 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
 
     cached = cache.get(channel_id)
     if cached and cached.get("date") == today:
+        if cached.get("uploads_missing") and search_due(cached):
+            return ids_without_uploads_playlist(channel_id, cache)  # volgende zoekronde van vandaag
         print(f"  [{channel_id}] Video IDs uit cache: {len(cached['ids'])}")
         return cached["ids"]
 
@@ -270,7 +294,7 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
             if not page_token:
                 break
     except PlaylistNotFound:
-        ids = ids_without_uploads_playlist(channel_id, cache)
+        return ids_without_uploads_playlist(channel_id, cache)  # zet de cache zelf (incl. zoektijdstip)
 
     cache[channel_id] = {"date": today, "ids": ids}
     print(f"  [{channel_id}] Video IDs opgehaald: {len(ids)}")
@@ -300,7 +324,7 @@ def get_recent_video_ids(uploads_playlist_id, count=50):
     try:
         data = yt_get("playlistItems", {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": count})
     except PlaylistNotFound:
-        return []  # zie ids_without_uploads_playlist(): nieuwe uploads worden dan 1x per dag via zoeken gevonden
+        return []  # zie ids_without_uploads_playlist(): nieuwe uploads worden dan 3x per dag via zoeken gevonden
     return [item["contentDetails"]["videoId"] for item in data.get("items", [])]
 
 
@@ -508,6 +532,9 @@ def save_snapshot(videos, official_total):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
     print(f"  Opgeslagen in {DATA_FILE}")
+    # Klein statusbestand voor de pagina: tijdstippen van de recente metingen,
+    # zodat ontbrekende metingen zichtbaar worden (zie scripts/data_status.py).
+    write_status(DATA_FILE, data["log"])
 
 
 if __name__ == "__main__":
