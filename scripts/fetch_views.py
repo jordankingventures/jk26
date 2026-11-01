@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 import urllib.parse
 from datetime import datetime, timedelta, timezone
@@ -173,11 +174,27 @@ DATA_FILE  = None
 CACHE_FILE = None
 
 
+class PlaylistNotFound(Exception):
+    """De uploads-playlist van een kanaal bestaat niet (meer) volgens de API."""
+
+
 def yt_get(endpoint, params):
     params["key"] = API_KEY
     url = f"https://www.googleapis.com/youtube/v3/{endpoint}?" + urllib.parse.urlencode(params)
-    with urllib.request.urlopen(url, timeout=15) as resp:
-        data = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        # De foutmelding van de API zit in de body; zonder deze regel zie je in
+        # de Actions-log alleen "HTTP Error 404" en niet wat er echt aan de hand is.
+        try:
+            body = e.read().decode("utf-8", "replace")
+        except Exception:
+            body = ""
+        print(f"  YouTube API HTTP {e.code} op {endpoint}: {body[:400]}")
+        if e.code == 404 and "playlistNotFound" in body:
+            raise PlaylistNotFound(params.get("playlistId", "")) from e
+        raise
     if "error" in data:
         raise RuntimeError(data["error"]["message"])
     return data
@@ -189,10 +206,44 @@ def get_channels_info(channel_ids):
     info = {}
     for item in data["items"]:
         info[item["id"]] = {
-            "uploads_playlist_id": item["contentDetails"]["relatedPlaylists"]["uploads"],
+            # Kan ontbreken: sinds 31 okt 2026 verdwijnt bij sommige "Topic"-kanalen
+            # de uploads-playlist (de API geeft dan playlistNotFound) -- zie
+            # get_video_ids().
+            "uploads_playlist_id": item["contentDetails"].get("relatedPlaylists", {}).get("uploads"),
             "official_view_count": int(item["statistics"]["viewCount"]),
         }
     return info
+
+
+def search_recent_video_ids(channel_id, count=50):
+    """Nieuwste uploads van een kanaal via search.list (kost 100 units per call,
+    dus alleen als noodoplossing voor kanalen zonder bruikbare uploads-playlist)."""
+    data = yt_get("search", {"channelId": channel_id, "part": "id", "type": "video", "order": "date", "maxResults": count})
+    return [item["id"]["videoId"] for item in data.get("items", []) if item.get("id", {}).get("videoId")]
+
+
+def ids_without_uploads_playlist(channel_id, cache):
+    """
+    Terugvaloptie voor een kanaal waarvan de uploads-playlist niet (meer)
+    bestaat -- sinds 31 okt 2026 het geval bij de "Topic"-kanalen van een deel
+    van de artiesten ("The playlist does not exist" op youtube.com/playlist
+    ?list=UU...). Zonder deze terugval crashte het hele script en kwam er voor
+    die artiest geen enkele meting meer binnen.
+    Werkwijze: de laatst bekende video-ID's van dit kanaal blijven gevolgd (uit de
+    cache van de laatste geslaagde volledige scan), aangevuld met de nieuwste
+    uploads via search.list (1x per dag, 100 units) zodat een nieuwe track toch
+    ontdekt wordt. Mislukt ook dat, dan gaan we door met de bekende ID's.
+    """
+    ids = list((cache.get(channel_id) or {}).get("ids", []))
+    try:
+        found = search_recent_video_ids(channel_id)
+        known = set(ids)
+        new = [v for v in found if v not in known]
+        ids += new
+        print(f"  [{channel_id}] Geen uploads-playlist; terugval: {len(known)} bekende ID's + {len(new)} nieuw via zoeken")
+    except Exception as e:
+        print(f"  [{channel_id}] Geen uploads-playlist; zoeken mislukt ({e}) -- verder met {len(ids)} bekende ID's")
+    return ids
 
 
 def get_video_ids(channel_id, uploads_playlist_id, cache):
@@ -205,16 +256,21 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
         return cached["ids"]
 
     ids, page_token = [], None
-    while True:
-        params = {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": 50}
-        if page_token:
-            params["pageToken"] = page_token
-        data = yt_get("playlistItems", params)
-        for item in data.get("items", []):
-            ids.append(item["contentDetails"]["videoId"])
-        page_token = data.get("nextPageToken")
-        if not page_token:
-            break
+    try:
+        if not uploads_playlist_id:
+            raise PlaylistNotFound(channel_id)
+        while True:
+            params = {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": 50}
+            if page_token:
+                params["pageToken"] = page_token
+            data = yt_get("playlistItems", params)
+            for item in data.get("items", []):
+                ids.append(item["contentDetails"]["videoId"])
+            page_token = data.get("nextPageToken")
+            if not page_token:
+                break
+    except PlaylistNotFound:
+        ids = ids_without_uploads_playlist(channel_id, cache)
 
     cache[channel_id] = {"date": today, "ids": ids}
     print(f"  [{channel_id}] Video IDs opgehaald: {len(ids)}")
@@ -239,7 +295,12 @@ def get_recent_video_ids(uploads_playlist_id, count=50):
     uur later gevonden bij de volgende dagelijkse full-scan. Met 50 blijft
     zo'n release ruim binnen bereik van de lichte check.
     """
-    data = yt_get("playlistItems", {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": count})
+    if not uploads_playlist_id:
+        return []
+    try:
+        data = yt_get("playlistItems", {"playlistId": uploads_playlist_id, "part": "contentDetails", "maxResults": count})
+    except PlaylistNotFound:
+        return []  # zie ids_without_uploads_playlist(): nieuwe uploads worden dan 1x per dag via zoeken gevonden
     return [item["contentDetails"]["videoId"] for item in data.get("items", [])]
 
 
@@ -473,7 +534,9 @@ if __name__ == "__main__":
     all_ids = []
     id_to_channel = {}
     for c in CHANNELS:
-        info = channels_info[c["id"]]
+        # Ontbreekt een kanaal in de channels.list-respons (verwijderd/verborgen),
+        # dan volgen we alleen zijn bekende video's uit de cache i.p.v. te crashen.
+        info = channels_info.get(c["id"]) or {"uploads_playlist_id": None, "official_view_count": 0}
         ids  = get_video_ids(c["id"], info["uploads_playlist_id"], cache)
 
         # Elke run (niet alleen bij de dagelijkse full-scan) even de nieuwste

@@ -75,6 +75,17 @@ EXCLUDED_DATES = {
     },
 }
 
+# Uitval van het ophalen van de eigen views (31 okt 2026): bij deze artiesten
+# ontbrak de uploads-playlist van het Topic-kanaal en crashte fetch_views.py
+# (zie ids_without_uploads_playlist). De eerste run na de uitval schrijft de
+# hele groei over het gat op de laatste, afgebroken dag -- die dagtotalen
+# kloppen dus niet.
+_GAT = "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+for _key, _dates in {"ariana": ("2026-10-30", "2026-10-31"), "kanye": ("2026-10-30", "2026-10-31"),
+                     "drake": ("2026-10-31",), "badbunny": ("2026-10-31",), "bieber": ("2026-10-31",),
+                     "fuerzaregida": ("2026-10-31",), "katseye": ("2026-10-31",), "kendrick": ("2026-10-31",)}.items():
+    EXCLUDED_DATES.setdefault(_key, {}).update({_d: _GAT for _d in _dates})
+
 ARTISTS = {
     "taylor":      {"entity_id": "/m/0dl567",     "data_file": "data/taylor_data.json"},
     "drake":        {"entity_id": "/m/05mt_q",     "data_file": "data/drake_data.json"},
