@@ -2509,8 +2509,6 @@ function renderDataHealth() {
   if (h && h.level !== 'ok') {
     const title = h.level === 'bad' ? 'Data komt niet meer binnen' : 'Gaten in de data deze week';
     html = `<div class="dh-banner ${h.level}"><b>⚠ ${esc(title)} — ${esc(ARTISTS[activeArtist].label)}</b>${esc(dataHealthSummary(activeArtist))}. Weekmax-schattingen en Kalshi-ranges steunen op deze metingen en kunnen daardoor te laag of onbetrouwbaar zijn: neem geen posities op basis hiervan zonder de data te controleren.${others.length ? `<span class="dh-others">Ook onvolledig: ${esc(others.join(', '))}.</span>` : ''}</div>`;
-  } else if (others.length) {
-    html = `<div class="dh-banner warn"><b>⚠ Let op: data onvolledig voor andere artiesten</b>${esc(others.join(', '))} (zie de ! op hun knop).</div>`;
   }
   document.querySelectorAll('.dh-banner-slot').forEach(el => { el.innerHTML = html; });
 }
