@@ -451,11 +451,24 @@
           "global_charts": 14346000,
           "factor": 1.2066616199848599,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 12106000,
+          "global_charts": 14415000,
+          "factor": 1.1907318684949613,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 11829000,
+          "global_charts": 14276000,
+          "factor": 1.2068644855862711
         }
       ],
       "min": 1.1013500784929355,
       "max": 1.3128205128205128,
-      "avg": 1.2065962516542124,
+      "avg": 1.206385492880872,
       "excluded_dates": {
         "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
@@ -938,12 +951,27 @@
           "global_charts": 12237000,
           "factor": 1.1699971316569462,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 10877000,
+          "global_charts": 12551000,
+          "factor": 1.153902730532316,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 11342000,
+          "global_charts": 13175000,
+          "factor": 1.1616117086933522
         }
       ],
       "min": 1.0183307039290812,
       "max": 1.2725324078799634,
-      "avg": 1.1649383869081682,
-      "excluded_dates": {}
+      "avg": 1.1647542544134162,
+      "excluded_dates": {
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+      }
     },
     "wallen": {
       "points": [
@@ -1419,11 +1447,24 @@
           "global_charts": 4123000,
           "factor": 1.113421550094518,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 3798000,
+          "global_charts": 4204000,
+          "factor": 1.1068983675618747,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 4025000,
+          "global_charts": 4497000,
+          "factor": 1.1172670807453415
         }
       ],
       "min": 1.0788276907529055,
       "max": 1.2332798287854467,
-      "avg": 1.1143581135053071,
+      "avg": 1.114299770188597,
       "excluded_dates": {}
     },
     "badbunny": {
@@ -1900,12 +1941,27 @@
           "global_charts": 25410000,
           "factor": 1.6339785222815253,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 16142000,
+          "global_charts": 26374000,
+          "factor": 1.6338743650105316,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 17444000,
+          "global_charts": 28570000,
+          "factor": 1.6378124283421234
         }
       ],
       "min": 1.5689803969917395,
       "max": 1.753676924978371,
-      "avg": 1.6337459407651629,
-      "excluded_dates": {}
+      "avg": 1.633799721685962,
+      "excluded_dates": {
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+      }
     },
     "ariana": {
       "points": [
@@ -2381,12 +2437,22 @@
           "global_charts": 13718000,
           "factor": 1.33352775347526,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 10572000,
+          "global_charts": 13901000,
+          "factor": 1.3148883844116535,
+          "backfill": true
         }
       ],
       "min": 1.168424468602953,
       "max": 1.386380537554446,
-      "avg": 1.29648675700011,
-      "excluded_dates": {}
+      "avg": 1.296725739174286,
+      "excluded_dates": {
+        "2026-10-30": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+      }
     },
     "youngboy": {
       "points": [
@@ -2862,11 +2928,24 @@
           "global_charts": 6387000,
           "factor": 1.0899317406143345,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 6093000,
+          "global_charts": 6594000,
+          "factor": 1.0822255046774987,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 6589000,
+          "global_charts": 7202000,
+          "factor": 1.093033844285931
         }
       ],
       "min": 1.0248181429182712,
       "max": 1.135753176043557,
-      "avg": 1.0744257418417824,
+      "avg": 1.0747643042171653,
       "excluded_dates": {}
     },
     "bieber": {
@@ -3342,12 +3421,27 @@
           "global_charts": 14949000,
           "factor": 1.4503735325506937,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 10618000,
+          "global_charts": 15341000,
+          "factor": 1.4448106988133358,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 10982000,
+          "global_charts": 16036000,
+          "factor": 1.4602076124567474
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.4489151789374413,
-      "excluded_dates": {}
+      "avg": 1.4490073321860977,
+      "excluded_dates": {
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+      }
     },
     "fuerzaregida": {
       "points": [
@@ -3679,13 +3773,20 @@
           "own_counter": 12150000,
           "global_charts": 21964000,
           "factor": 1.8077366255144034
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 13271000,
+          "global_charts": 24866000,
+          "factor": 1.873709592344209
         }
       ],
       "min": 1.7902593767493935,
       "max": 2.0459057071960296,
-      "avg": 1.874232432339519,
+      "avg": 1.8742225674339468,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
     },
     "future": {
@@ -4012,11 +4113,24 @@
           "global_charts": 5643000,
           "factor": 1.4634336099585061,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 4061000,
+          "global_charts": 5900000,
+          "factor": 1.4528441270622998,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 4375000,
+          "global_charts": 6405000,
+          "factor": 1.464
         }
       ],
       "min": 1.3861924686192468,
       "max": 1.5302083333333334,
-      "avg": 1.451877229615294,
+      "avg": 1.4521242044800433,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -4686,13 +4800,27 @@
           "global_charts": 14581000,
           "factor": 1.803909439564518,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 8211000,
+          "global_charts": 15006000,
+          "factor": 1.8275484106686153,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 9317000,
+          "global_charts": 16772000,
+          "factor": 1.8001502629601802
         }
       ],
       "min": 1.675373655538483,
       "max": 2.231873321603852,
-      "avg": 1.9750230385442977,
+      "avg": 1.968941012063924,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
     },
     "kendrick": {
@@ -5016,13 +5144,27 @@
           "global_charts": 5409000,
           "factor": 1.154043097930446,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 4862000,
+          "global_charts": 5560000,
+          "factor": 1.1435623200329084,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 4898000,
+          "global_charts": 5592000,
+          "factor": 1.1416904859126173
         }
       ],
       "min": 1.10840160030482,
       "max": 1.2364990689013036,
-      "avg": 1.1659499197864738,
+      "avg": 1.1650697870765225,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
     },
     "olivia": {
@@ -5349,11 +5491,24 @@
           "global_charts": 8133000,
           "factor": 1.2302223566782635,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 6601000,
+          "global_charts": 8074000,
+          "factor": 1.2231480078775943,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 6602000,
+          "global_charts": 8005000,
+          "factor": 1.2125113601938806
         }
       ],
       "min": 1.1144982615023853,
       "max": 1.3743439009027925,
-      "avg": 1.2528408172913996,
+      "avg": 1.251519642451563,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -6028,11 +6183,24 @@
           "global_charts": 5418000,
           "factor": 1.1910309958232579,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 4366000,
+          "global_charts": 5193000,
+          "factor": 1.189418231791113,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 4328000,
+          "global_charts": 5139000,
+          "factor": 1.1873844731977818
         }
       ],
       "min": 1.1167411058062529,
       "max": 1.408994708994709,
-      "avg": 1.2911633231088921,
+      "avg": 1.2872855128970262,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
@@ -6360,11 +6528,24 @@
           "global_charts": 18379000,
           "factor": 1.2343183344526527,
           "backfill": true
+        },
+        {
+          "date": "2026-10-29",
+          "own_counter": 15144000,
+          "global_charts": 18578000,
+          "factor": 1.22675647120972,
+          "backfill": true
+        },
+        {
+          "date": "2026-10-30",
+          "own_counter": 15532000,
+          "global_charts": 19147000,
+          "factor": 1.2327453000257533
         }
       ],
       "min": 1.1888460989873058,
       "max": 1.3330507756209207,
-      "avg": 1.2529122429111377,
+      "avg": 1.2520382294283678,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
