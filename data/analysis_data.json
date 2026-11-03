@@ -964,11 +964,17 @@
           "own_counter": 11342000,
           "global_charts": 13175000,
           "factor": 1.1616117086933522
+        },
+        {
+          "date": "2026-11-01",
+          "own_counter": 8815000,
+          "global_charts": 10570000,
+          "factor": 1.1990924560408396
         }
       ],
       "min": 1.0183307039290812,
       "max": 1.2725324078799634,
-      "avg": 1.1647542544134162,
+      "avg": 1.1651889151935102,
       "excluded_dates": {
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
@@ -3447,11 +3453,17 @@
           "own_counter": 10982000,
           "global_charts": 16036000,
           "factor": 1.4602076124567474
+        },
+        {
+          "date": "2026-11-01",
+          "own_counter": 9759000,
+          "global_charts": 14522000,
+          "factor": 1.488062301465314
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.4490073321860977,
+      "avg": 1.4495016988858347,
       "excluded_dates": {
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
