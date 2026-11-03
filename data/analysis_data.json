@@ -1460,11 +1460,24 @@
           "own_counter": 4025000,
           "global_charts": 4497000,
           "factor": 1.1172670807453415
+        },
+        {
+          "date": "2026-10-31",
+          "own_counter": 3611000,
+          "global_charts": 4002000,
+          "factor": 1.10828025477707,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-01",
+          "own_counter": 2928000,
+          "global_charts": 3312000,
+          "factor": 1.1311475409836065
         }
       ],
       "min": 1.0788276907529055,
       "max": 1.2332798287854467,
-      "avg": 1.114299770188597,
+      "avg": 1.1144351233808905,
       "excluded_dates": {}
     },
     "badbunny": {
