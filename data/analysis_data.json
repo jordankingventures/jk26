@@ -485,22 +485,19 @@
           "global_charts": 13231000,
           "factor": 1.2055580865603646,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 10687000,
-          "global_charts": 13590000,
-          "factor": 1.271638439225227
         }
       ],
       "min": 1.1013500784929355,
       "max": 1.3128205128205128,
-      "avg": 1.208271972375927,
+      "avg": 1.2074490312480142,
       "excluded_dates": {
         "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-26": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
-        "2026-09-27": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC)."
+        "2026-09-27": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
     },
     "drake": {
@@ -1526,18 +1523,16 @@
           "global_charts": 3751000,
           "factor": 1.1157049375371801,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 3353000,
-          "global_charts": 3941000,
-          "factor": 1.1753653444676408
         }
       ],
       "min": 1.0788276907529055,
       "max": 1.2332798287854467,
-      "avg": 1.1151936603960495,
-      "excluded_dates": {}
+      "avg": 1.1144508000988695,
+      "excluded_dates": {
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
+      }
     },
     "badbunny": {
       "points": [
@@ -3074,18 +3069,16 @@
           "global_charts": 6112000,
           "factor": 1.0834958340719731,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 5640000,
-          "global_charts": 6426000,
-          "factor": 1.1393617021276596
         }
       ],
       "min": 1.0248181429182712,
-      "max": 1.1393617021276596,
-      "avg": 1.0760468207427443,
-      "excluded_dates": {}
+      "max": 1.135753176043557,
+      "avg": 1.0752651555404613,
+      "excluded_dates": {
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
+      }
     },
     "bieber": {
       "points": [
@@ -4323,19 +4316,16 @@
           "global_charts": 5291000,
           "factor": 1.4624101713653952,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 3678000,
-          "global_charts": 5588000,
-          "factor": 1.5193039695486676
         }
       ],
       "min": 1.3861924686192468,
       "max": 1.5302083333333334,
-      "avg": 1.4547653230726423,
+      "avg": 1.4536128472427134,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
     },
     "kanye": {
@@ -5788,19 +5778,16 @@
           "global_charts": 7465000,
           "factor": 1.226585606309563,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 5701000,
-          "global_charts": 7573000,
-          "factor": 1.3283634450096475
         }
       ],
       "min": 1.1144982615023853,
       "max": 1.3743439009027925,
-      "avg": 1.252643395174873,
+      "avg": 1.2512912514278234,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
     },
     "postmalone": {
@@ -6161,19 +6148,16 @@
           "global_charts": 5600000,
           "factor": 1.11155220325526,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 4965000,
-          "global_charts": 5800000,
-          "factor": 1.1681772406847934
         }
       ],
       "min": 1.0998941051888458,
       "max": 1.244602048857368,
-      "avg": 1.1471952753700434,
+      "avg": 1.1468205974179944,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
     },
     "tatemcrae": {
@@ -6534,19 +6518,16 @@
           "global_charts": 4339000,
           "factor": 1.217793993825428,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 3444000,
-          "global_charts": 4371000,
-          "factor": 1.269163763066202
         }
       ],
       "min": 1.1167411058062529,
       "max": 1.408994708994709,
-      "avg": 1.2836714864484602,
+      "avg": 1.283930552937429,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
     },
     "weeknd": {
@@ -6906,19 +6887,16 @@
           "global_charts": 17422000,
           "factor": 1.215771109560363,
           "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 13687000,
-          "global_charts": 18379000,
-          "factor": 1.3428070431796595
         }
       ],
       "min": 1.1888460989873058,
-      "max": 1.3428070431796595,
-      "avg": 1.2526920547186062,
+      "max": 1.3330507756209207,
+      "avg": 1.2510828584960874,
       "excluded_dates": {
-        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
+        "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
     }
   }
