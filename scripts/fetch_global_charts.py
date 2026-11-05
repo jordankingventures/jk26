@@ -86,6 +86,16 @@ for _key, _dates in {"ariana": ("2026-10-30", "2026-10-31"), "kanye": ("2026-10-
                      "fuerzaregida": ("2026-10-31",), "katseye": ("2026-10-31",), "kendrick": ("2026-10-31",)}.items():
     EXCLUDED_DATES.setdefault(_key, {}).update({_d: _GAT for _d in _dates})
 
+# 3-5 nov 2026: YouTube liet in een paar dagen honderden video's uit de uploads-
+# playlist van de "Topic"-kanalen verdwijnen (Taylor -1.156, The Weeknd -532, ...);
+# fetch_views.py volgde die video's toen niet meer, dus de eigen counter
+# onderschatte deze dagen (de video's bestaan nog en tellen in Global Charts wel
+# mee). Hersteld in fetch_views.py (merge_known_ids) op 5 nov; de dagen
+# ervoor/erna zijn niet betrouwbaar.
+_TOPIC_GAT = "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
+for _key in ("taylor", "wallen", "youngboy", "future", "olivia", "postmalone", "tatemcrae", "weeknd"):
+    EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT for _d in ("2026-11-03", "2026-11-04", "2026-11-05")})
+
 ARTISTS = {
     "taylor":      {"entity_id": "/m/0dl567",     "data_file": "data/taylor_data.json"},
     "drake":        {"entity_id": "/m/05mt_q",     "data_file": "data/drake_data.json"},

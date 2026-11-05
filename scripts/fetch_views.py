@@ -260,6 +260,38 @@ def ids_without_uploads_playlist(channel_id, cache):
     return ids
 
 
+DEAD_AFTER_DAYS = 3  # een ID dat 3+ dagen achter elkaar niet meer door videos.list terugkomt, geldt als verwijderd/prive
+
+
+def is_dead(cache, vid):
+    first = (cache.get("_missing") or {}).get(vid)
+    if not first:
+        return False
+    today = datetime.now(DAY_BOUNDARY_TZ).date()
+    try:
+        return (today - datetime.strptime(first, "%Y-%m-%d").date()).days >= DEAD_AFTER_DAYS
+    except ValueError:
+        return False
+
+
+def merge_known_ids(channel_id, listed, cache):
+    """
+    Houd eerder bekende video-ID's gevolgd ook als de uploads-playlist ze niet
+    meer noemt. Sinds 1 okt (en vooral 3-5 nov 2026) laat YouTube steeds meer
+    video's uit de uploads-playlist van "Topic"-kanalen verdwijnen (bij Taylor
+    -1.156, The Weeknd -532, ...) terwijl die video's gewoon blijven bestaan en
+    meetellen in Global Charts. Zonder deze samenvoeging verdween hun dagelijkse
+    groei uit de eigen counter. Een ID valt pas weg als videos.list het
+    DEAD_AFTER_DAYS dagen achter elkaar niet meer teruggeeft (verwijderd/prive).
+    """
+    listed_set = set(listed)
+    prev = (cache.get(channel_id) or {}).get("ids", [])
+    kept = [v for v in prev if v not in listed_set and not is_dead(cache, v)]
+    if kept:
+        print(f"  [{channel_id}] {len(kept)} eerder bekende video's staan niet meer in de playlist -- blijven gevolgd")
+    return listed + kept
+
+
 def get_video_ids(channel_id, uploads_playlist_id, cache):
     """Video-ID's van de uploads-playlist van één kanaal, per kanaal 1x per dag (DAY_BOUNDARY_TZ) gecachet."""
     today = datetime.now(DAY_BOUNDARY_TZ).strftime("%Y-%m-%d")
@@ -286,6 +318,7 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
     except PlaylistNotFound:
         return ids_without_uploads_playlist(channel_id, cache)  # zet de cache zelf (incl. zoektijdstip)
 
+    ids = merge_known_ids(channel_id, ids, cache)
     cache[channel_id] = {"date": today, "ids": ids}
     print(f"  [{channel_id}] Video IDs opgehaald: {len(ids)}")
     return ids
@@ -577,6 +610,25 @@ if __name__ == "__main__":
     unique_ids = list(dict.fromkeys(all_ids))
 
     videos = get_video_details(unique_ids)
+
+    # Bijhouden welke bekende ID's videos.list niet meer teruggeeft (verwijderd of
+    # prive); na DEAD_AFTER_DAYS dagen vallen ze uit de cache (zie merge_known_ids).
+    returned = {v["id"] for v in videos}
+    today_key = datetime.now(DAY_BOUNDARY_TZ).strftime("%Y-%m-%d")
+    missing = cache.setdefault("_missing", {})
+    for vid in unique_ids:
+        if vid not in returned:
+            missing.setdefault(vid, today_key)
+    for vid in list(missing):
+        if vid in returned or vid not in unique_ids and is_dead(cache, vid):
+            del missing[vid]
+    for c in CHANNELS:
+        entry = cache.get(c["id"])
+        if entry:
+            entry["ids"] = [v for v in entry["ids"] if not is_dead(cache, v)]
+    with open(CACHE_FILE, "w") as f:
+        json.dump(cache, f)
+
     for v in videos:
         v["channel"] = id_to_channel.get(v["id"], "Onbekend")
     pub_total      = sum(v["views"] for v in videos)
