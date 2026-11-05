@@ -6612,11 +6612,38 @@
           "own_counter": 15532000,
           "global_charts": 19147000,
           "factor": 1.2327453000257533
+        },
+        {
+          "date": "2026-10-31",
+          "own_counter": 15105000,
+          "global_charts": 18355000,
+          "factor": 1.2151605428666004,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-01",
+          "own_counter": 13571000,
+          "global_charts": 17258000,
+          "factor": 1.271682263650431,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-02",
+          "own_counter": 14330000,
+          "global_charts": 17422000,
+          "factor": 1.215771109560363,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-03",
+          "own_counter": 13687000,
+          "global_charts": 18379000,
+          "factor": 1.3428070431796595
         }
       ],
       "min": 1.1888460989873058,
-      "max": 1.3330507756209207,
-      "avg": 1.2520382294283678,
+      "max": 1.3428070431796595,
+      "avg": 1.2526920547186062,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog."
       }
