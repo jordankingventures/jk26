@@ -988,32 +988,18 @@
           "own_counter": 11342000,
           "global_charts": 13175000,
           "factor": 1.1616117086933522
-        },
-        {
-          "date": "2026-11-01",
-          "own_counter": 8815000,
-          "global_charts": 10570000,
-          "factor": 1.1990924560408396
-        },
-        {
-          "date": "2026-11-02",
-          "own_counter": 9045000,
-          "global_charts": 11108000,
-          "factor": 1.22808181315644,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 9228000,
-          "global_charts": 11604000,
-          "factor": 1.257477243172952
         }
       ],
       "min": 1.0183307039290812,
       "max": 1.2725324078799634,
-      "avg": 1.167104732797737,
+      "avg": 1.1647542544134162,
       "excluded_dates": {
-        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-02": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
       }
     },
     "wallen": {
@@ -2021,33 +2007,18 @@
           "own_counter": 17444000,
           "global_charts": 28570000,
           "factor": 1.6378124283421234
-        },
-        {
-          "date": "2026-11-01",
-          "own_counter": 14740000,
-          "global_charts": 21916000,
-          "factor": 1.4868385345997286,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-02",
-          "own_counter": 14531000,
-          "global_charts": 23388000,
-          "factor": 1.6095244649370313,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 15304000,
-          "global_charts": 24857000,
-          "factor": 1.6242158912702562
         }
       ],
-      "min": 1.4868385345997286,
+      "min": 1.5689803969917395,
       "max": 1.753676924978371,
-      "avg": 1.6315673726211364,
+      "avg": 1.633799721685962,
       "excluded_dates": {
-        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-02": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
       }
     },
     "ariana": {
@@ -3929,33 +3900,19 @@
           "own_counter": 13271000,
           "global_charts": 24866000,
           "factor": 1.873709592344209
-        },
-        {
-          "date": "2026-11-01",
-          "own_counter": 11760000,
-          "global_charts": 20244000,
-          "factor": 1.7214285714285715,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-02",
-          "own_counter": 10789000,
-          "global_charts": 19840000,
-          "factor": 1.83891000092687
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 11297000,
-          "global_charts": 20852000,
-          "factor": 1.8457997698504027
         }
       ],
-      "min": 1.7214285714285715,
+      "min": 1.7902593767493935,
       "max": 2.0459057071960296,
-      "avg": 1.870355971717947,
+      "avg": 1.8742225674339468,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
-        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-02": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
       }
     },
     "future": {
@@ -5026,34 +4983,19 @@
           "own_counter": 9317000,
           "global_charts": 16772000,
           "factor": 1.8001502629601802
-        },
-        {
-          "date": "2026-11-01",
-          "own_counter": 8934000,
-          "global_charts": 15624000,
-          "factor": 1.7488247145735394,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-02",
-          "own_counter": 7641000,
-          "global_charts": 13803000,
-          "factor": 1.806438947781704,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 7282000,
-          "global_charts": 13515000,
-          "factor": 1.8559461686349903
         }
       ],
       "min": 1.675373655538483,
       "max": 2.231873321603852,
-      "avg": 1.9600907762567537,
+      "avg": 1.968941012063924,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
-        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-02": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
       }
     },
     "kendrick": {
@@ -5390,34 +5332,19 @@
           "own_counter": 4898000,
           "global_charts": 5592000,
           "factor": 1.1416904859126173
-        },
-        {
-          "date": "2026-11-01",
-          "own_counter": 3866000,
-          "global_charts": 4708000,
-          "factor": 1.2177961717537507,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-02",
-          "own_counter": 4149000,
-          "global_charts": 5034000,
-          "factor": 1.2133044107013737,
-          "backfill": true
-        },
-        {
-          "date": "2026-11-03",
-          "own_counter": 4290000,
-          "global_charts": 5315000,
-          "factor": 1.2389277389277389
         }
       ],
       "min": 1.10840160030482,
-      "max": 1.2389277389277389,
-      "avg": 1.168191554222117,
+      "max": 1.2364990689013036,
+      "avg": 1.1650697870765225,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
-        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
+        "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
+        "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-02": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-03": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-04": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
+        "2026-11-05": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
       }
     },
     "olivia": {

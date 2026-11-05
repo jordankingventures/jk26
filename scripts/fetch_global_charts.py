@@ -96,6 +96,14 @@ _TOPIC_GAT = "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracki
 for _key in ("taylor", "wallen", "youngboy", "future", "olivia", "postmalone", "tatemcrae", "weeknd"):
     EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT for _d in ("2026-11-03", "2026-11-04", "2026-11-05")})
 
+# Deel 2 van dezelfde uitval: video's die vanaf 31 okt uit de Topic-playlist
+# verdwenen (Drake, Kendrick, Bad Bunny, Fuerza Regida, KATSEYE) -- hun eigen
+# counter was tot het herstel op 5 nov te laag (Drake/Kendrick bijgeteld in
+# fetch_views' log, de andere drie niet). Niet bruikbaar voor de UCG-factor.
+_TOPIC_GAT2 = "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
+for _key in ("drake", "kendrick", "badbunny", "fuerzaregida", "katseye"):
+    EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT2 for _d in ("2026-11-01", "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05")})
+
 ARTISTS = {
     "taylor":      {"entity_id": "/m/0dl567",     "data_file": "data/taylor_data.json"},
     "drake":        {"entity_id": "/m/05mt_q",     "data_file": "data/drake_data.json"},

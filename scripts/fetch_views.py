@@ -458,6 +458,29 @@ def estimate_midnight_baseline(videos, last_snapshot, today, now_utc):
     }
 
 
+def apply_pending_correction(day_key, log_entry):
+    """
+    Optionele, handmatig vastgelegde bijtelling voor een dagtotaal in
+    data/<artiest>_corrections.json ({"YYYY-MM-DD": views}), bv. voor de dagen
+    waarop video's tijdelijk niet gevolgd werden (zie merge_known_ids). Wordt
+    precies 1x toegepast: op het moment dat dit script het dagtotaal van die dag
+    definitief afsluit.
+    """
+    path = DATA_FILE.replace("_data.json", "_corrections.json")
+    if not os.path.exists(path):
+        return
+    try:
+        extra = json.loads(open(path).read()).get(day_key)
+    except Exception:
+        return
+    if not extra or "final_day_total" not in log_entry or "final_day_correction" in log_entry:
+        return
+    log_entry["final_day_total_raw"] = log_entry["final_day_total"]
+    log_entry["final_day_correction"] = int(extra)
+    log_entry["final_day_total"] = log_entry["final_day_total"] + int(extra)
+    print(f"  Correctie toegepast op {day_key}: {int(extra):+,} views")
+
+
 def save_snapshot(videos, official_total):
     data = {"log": [], "day_baseline": None, "last_snapshot": None, "videos": []}
     if os.path.exists(DATA_FILE):
@@ -498,6 +521,7 @@ def save_snapshot(videos, official_total):
             data["log"][0]["final_day_video_count"] = len(old_baseline["views"])
             data["log"][0]["final_day_interpolated"] = new_baseline.get("interpolated", False)
             data["log"][0]["final_day_gap_minutes"] = new_baseline.get("gap_minutes")
+            apply_pending_correction(old_baseline["date"], data["log"][0])
 
         data["day_baseline"] = new_baseline
 
