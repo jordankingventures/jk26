@@ -1557,11 +1557,21 @@ const BLEND_WEEKPATTERN_WEIGHT = 0.3;
 // gelijkwaardig, 10 ankers duidelijk slechter.
 const WP_ANCHOR_DAYS = 5;
 
+// Alle officiele Global Charts-waarden van een artiest: de UCG-punten plus de
+// aparte reeks `official` (ook van dagen die niet in de UCG-factor-historie
+// meedoen, bv. omdat de eigen counter die dag niet klopte -- de officiele
+// cijfers zelf kloppen wel). Datum -> waarde.
+function officialByDate(artistKey) {
+  const m = new Map((analysisData?.ucg_factor?.[artistKey]?.points || []).map(p => [p.date, p.global_charts]));
+  for (const [d, v] of Object.entries(analysisData?.official?.[artistKey] || {})) m.set(d, v);
+  return m;
+}
+
 // `totals`: dagtotalen van de lopende week (zie getWeekToDateTotals); standaard
 // die van de Voorspelling-tab, de Kalshi-tab geeft z'n eigen mee.
 function weekForecastData(artistKey, totals = predictionDays) {
   const hist = analysisData?.ucg_factor?.[artistKey];
-  const gcByDate = new Map((hist?.points || []).map(p => [p.date, p.global_charts]));
+  const gcByDate = officialByDate(artistKey);
   const stats = getUcgStats(artistKey);
   const minFactor = stats ? stats.excl.min : null;
   const maxFactor = stats ? stats.excl.max : null;
@@ -1608,7 +1618,7 @@ function weekForecastData(artistKey, totals = predictionDays) {
   // verse ankers verlagen de fout van de dag-voor-dag-schatting met ~0,4-0,5
   // procentpunt (2,82% -> 2,33% voor de volgende dag, 3,72% -> 3,28% op 5
   // dagen) en die van de weekmax met ~0,4-0,7 pp (95%-BI sluit 0 uit).
-  const officialPts = hist?.points || [];
+  const officialPts = [...gcByDate].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([date, v]) => ({ date, global_charts: v })); // ook de officiele dagen buiten de UCG-historie: het laatste officiele niveau is het beste anker
   const wpEstimate = (i, dateKey, fresh) => {
     const anchors = fresh || officialPts.filter(p => p.date < dateKey).slice(-WP_ANCHOR_DAYS).map(p => ({ date: p.date, v: p.global_charts, src: 'officieel' }));
     if (!anchors.length) return null;
@@ -2236,7 +2246,7 @@ function kalshiWeekRange(days, minFactor, maxFactor) {
 // dus "minimaal de hoogste al bekende dag, mogelijk hoger als een nog niet
 // bevestigde dag daar overheen gaat".
 function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor) {
-  const histPoints = (analysisData?.ucg_factor?.[artistKey]?.points || []).filter(p => p.date.startsWith(monthKey));
+  const histPoints = [...officialByDate(artistKey)].filter(([d]) => d.startsWith(monthKey)).map(([date, v]) => ({ date, global_charts: v }));
   let knownMax = null, knownDay = null;
   for (const p of histPoints) {
     if (knownMax == null || p.global_charts > knownMax) { knownMax = p.global_charts; knownDay = p.date; }

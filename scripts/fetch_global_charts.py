@@ -93,15 +93,21 @@ for _key, _dates in {"ariana": ("2026-10-30", "2026-10-31"), "kanye": ("2026-10-
 # mee). Hersteld in fetch_views.py (merge_known_ids) op 5 nov; de dagen
 # ervoor/erna zijn niet betrouwbaar.
 _TOPIC_GAT = "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
+# De dagtotalen van 3 en 4 nov zijn achteraf bijgeteld (final_day_correction in het
+# log) en komen met Global Charts weer op de normale factor uit (gem. afwijking
+# 2,7% i.p.v. 15,8%); die dagen doen weer mee. 5 nov blijft uit: dat is nog te
+# grof gecorrigeerd (factor ~3% te hoog).
 for _key in ("taylor", "wallen", "youngboy", "future", "olivia", "postmalone", "tatemcrae", "weeknd"):
-    EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT for _d in ("2026-11-03", "2026-11-04", "2026-11-05")})
+    EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT for _d in ("2026-11-05",)})
 
 # Deel 2 van dezelfde uitval: video's die vanaf 31 okt uit de Topic-playlist
 # verdwenen (Drake, Kendrick, Bad Bunny, Fuerza Regida, KATSEYE) -- hun eigen
 # counter was tot het herstel op 5 nov te laag (Drake/Kendrick bijgeteld in
 # fetch_views' log, de andere drie niet). Niet bruikbaar voor de UCG-factor.
 _TOPIC_GAT2 = "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026)."
-for _key in ("drake", "kendrick", "badbunny", "fuerzaregida", "katseye"):
+for _key in ("drake", "kendrick"):  # bijgeteld; 3 en 4 nov kloppen weer (zie hierboven)
+    EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT2 for _d in ("2026-11-01", "2026-11-02", "2026-11-05")})
+for _key in ("badbunny", "fuerzaregida", "katseye"):  # niet gecorrigeerd
     EXCLUDED_DATES.setdefault(_key, {}).update({_d: _TOPIC_GAT2 for _d in ("2026-11-01", "2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05")})
 
 ARTISTS = {
@@ -195,6 +201,16 @@ def merge_artist(analysis, key, info, gc_by_date, fresh_from=None):
     points_by_date = {p["date"]: p for p in existing_points}
     for d in excluded:
         points_by_date.pop(d, None)
+
+    # Alle officiele Global Charts-waarden bewaren, ook die van dagen die niet in de
+    # UCG-factor-historie meedoen (uitgesloten of zonder betrouwbare eigen counter):
+    # de officiele cijfers zelf kloppen wel, en de pagina toont ze in "Deze week
+    # bekend & voorspeld" en gebruikt ze voor de Kalshi-maandrange.
+    official = analysis.setdefault("official", {}).setdefault(key, {})
+    for date, gc_raw in gc_by_date.items():
+        if date not in official or (fresh_from is not None and date >= fresh_from):
+            official[date] = floor1000(gc_raw)
+    analysis["official"][key] = dict(sorted(official.items()))
 
     updated = 0
     for date, gc_raw in gc_by_date.items():
