@@ -39,35 +39,10 @@ jobs:
           KALSHI_DRY_RUN: ${{ secrets.KALSHI_DRY_RUN }}
         run: python scripts/kalshi_auto_taylor.py
 
-      - name: Commit & push state
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if [ ! -f data/kalshi_state.json ]; then
-            echo "Geen kalshi_state.json geschreven (dry-run of vroegtijdig gestopt) -- niets te committen"
-            exit 0
-          fi
-          git add data/kalshi_state.json
-          if git diff --staged --quiet; then
-            echo "Geen wijzigingen om te committen"
-            exit 0
-          fi
-          git commit -m "Kalshi: Taylor Swift dagmarkt gequote $(date -u '+%Y-%m-%d %H:%M') UTC"
-
-          for i in $(seq 1 20); do
-            if git push; then
-              exit 0
-            fi
-            echo "Push mislukt (poging $i/20) -- rebasen en opnieuw proberen..."
-            git fetch origin main
-            if git rebase origin/main; then
-              sleep $((RANDOM % 12 + 3))
-              continue
-            fi
-            git rebase --abort
-            echo "Rebase-conflict -- eigen update overgeslagen."
-            exit 0
-          done
-          echo "::error::Kon na 20 pogingen niet pushen naar main"
-          exit 1
+      # LET OP: de orderstatus (data/kalshi_state.json) staat sinds nov 2026 in
+      # .gitignore en wordt NIET meer naar de openbare repo gecommit -- dat zou je
+      # orders en strategie voor iedereen zichtbaar maken. Zonder opgeslagen status
+      # weet de volgende run niet welke dag al gequote is. Zet deze workflow dus pas
+      # live (KALSHI_DRY_RUN=false) nadat de status ergens privé wordt bewaard.
+      - name: Status niet committen (openbare repo)
+        run: echo "kalshi_state.json wordt bewust niet gecommit (openbare repo)."

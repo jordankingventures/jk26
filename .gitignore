@@ -6,3 +6,6 @@ __pycache__/
 *.key
 kalshi-key*.txt
 API Key/
+
+# Eigen Kalshi-orders: nooit in de openbare repo (zie ook data/kalshi_state.json in .github/workflows/kalshi_taylor.yml)
+data/kalshi_state.json
