@@ -2522,11 +2522,24 @@
           "own_counter": 10479000,
           "global_charts": 13998000,
           "factor": 1.3358144861150874
+        },
+        {
+          "date": "2026-11-04",
+          "own_counter": 11128000,
+          "global_charts": 14270000,
+          "factor": 1.28235082674335,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-05",
+          "own_counter": 10579000,
+          "global_charts": 14318000,
+          "factor": 1.3534360525569524
         }
       ],
       "min": 1.168424468602953,
       "max": 1.386380537554446,
-      "avg": 1.2980300960344389,
+      "avg": 1.298514567829944,
       "excluded_dates": {
         "2026-10-30": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
@@ -3555,11 +3568,24 @@
           "own_counter": 10256000,
           "global_charts": 15037000,
           "factor": 1.4661661466458658
+        },
+        {
+          "date": "2026-11-04",
+          "own_counter": 10953000,
+          "global_charts": 15368000,
+          "factor": 1.4030859125353785,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-05",
+          "own_counter": 10510000,
+          "global_charts": 15509000,
+          "factor": 1.4756422454804947
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.4495576463892457,
+      "avg": 1.4493120182595756,
       "excluded_dates": {
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
@@ -4636,11 +4662,24 @@
           "own_counter": 3562000,
           "global_charts": 4693000,
           "factor": 1.3175182481751824
+        },
+        {
+          "date": "2026-11-04",
+          "own_counter": 3769000,
+          "global_charts": 4767000,
+          "factor": 1.2647917219421598,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-05",
+          "own_counter": 3643000,
+          "global_charts": 4870000,
+          "factor": 1.336810321163876
         }
       ],
       "min": 1.1928934010152283,
       "max": 1.3776709401709402,
-      "avg": 1.2764483661134114,
+      "avg": 1.2773028452516433,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-10-30": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
