@@ -125,6 +125,7 @@
     .day-chevron { display: inline-block; width: 14px; color: var(--muted); font-size: 0.7rem; }
     .day-badge { margin-left: 8px; padding: 1px 6px; font-size: 0.58rem; vertical-align: 1px; }
     .badge.release { color: var(--accent); border-color: var(--accent); }
+    .ucg-excl-row td { color: var(--muted); }
     /* Eigen hover-tooltip i.p.v. het native title-attribuut -- dat bleek in
        de praktijk niet betrouwbaar te verschijnen (traag/inconsistent per
        browser). data-tooltip + ::after verschijnt direct en overal gelijk. */
@@ -1938,7 +1939,7 @@ function renderUcgHistory() {
   // streepje. De WEL-gefilterde versie (excl. releaseweken) is exact de
   // factorenset die de weekgrafiek hierboven ook echt gebruikt -- zie de
   // samenvattingsregel verderop.
-  const gcByDate = new Map(hist.points.map(q => [q.date, q.global_charts]));
+  const gcByDate = officialByDate(activeArtist); // ook officiele dagen die niet in de factor-historie meedoen
   const weekPatternRatio = (p) => {
     const dow = new Date(p.date + 'T12:00:00Z').getUTCDay(); // 0=zo, 1=ma .. 6=za
     if (dow === 5 || !p.global_charts) return null;
@@ -1951,6 +1952,19 @@ function renderUcgHistory() {
   };
 
   const pointRow = (p) => {
+    if (p.officialOnly) {
+      // Officieel cijfer zonder betrouwbare eigen counter: toont het getal, maar telt
+      // niet mee in de UCG-factor (zie excluded_dates in analysis_data.json).
+      const reason = (hist.excluded_dates || {})[p.date] || 'Geen betrouwbaar eigen dagtotaal voor deze dag.';
+      const r0 = weekPatternRatio(p);
+      return `<tr class="ucg-excl-row">
+    <td>${ptDateLabel(p.date + 'T12:00:00Z')} <span class="est-tag" data-tooltip="${esc(reason + ' Het officiële cijfer is wel correct; de dag telt alleen niet mee in de UCG-factor.')}">niet in factor</span></td>
+    <td><span class="neu">—</span></td>
+    <td>${fmt(floor1000(p.global_charts))}</td>
+    <td><span class="neu">—</span></td>
+    <td class="ucg-weekpattern-col">${r0 == null ? '<span class="neu">—</span>' : r0.toFixed(2)}</td>
+  </tr>`;
+    }
     const isRelease = predictionReleaseDays.has(p.date);
     const isDayBefore = !isRelease && predictionReleaseDays.has(addDaysToDateKey(p.date, 1));
     const isDayAfter = !isRelease && !isDayBefore && excludedDates.has(p.date);
@@ -1974,7 +1988,9 @@ function renderUcgHistory() {
   // Laatste 7 dagen los tonen, de rest onder een inklapbare "Oudere data"-rij
   // -- zelfde patroon als het Refresh log, en scheelt flink wat ruimte bij
   // een paar weken historie.
-  const pointsDesc = [...hist.points].reverse();
+  const pointDates = new Set(hist.points.map(q => q.date));
+  const officialOnly = [...gcByDate].filter(([d]) => !pointDates.has(d)).map(([date, v]) => ({ date, global_charts: v, officialOnly: true }));
+  const pointsDesc = [...hist.points, ...officialOnly].sort((a, b) => (a.date < b.date ? 1 : -1)); // nieuwste eerst
   const recentPoints = pointsDesc.slice(0, 7);
   const olderPoints  = pointsDesc.slice(7);
 
