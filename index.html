@@ -72,6 +72,17 @@
     .modal-card ol { list-style: none; display: flex; flex-direction: column; gap: 12px; }
     .modal-card li { font-size: 0.8rem; line-height: 1.55; color: var(--text); }
     .modal-card li b { color: var(--accent); font-weight: 700; }
+    .modal-card.wide { max-width: 720px; }
+    .modal-intro { font-size: 0.78rem; color: var(--muted); margin: -6px 0 12px; line-height: 1.5; }
+    .modal-card details { border-top: 1px solid var(--border); padding: 9px 0; }
+    .modal-card summary { cursor: pointer; font-size: 0.84rem; font-weight: 700; color: var(--text); list-style: none; }
+    .modal-card summary::-webkit-details-marker { display: none; }
+    .modal-card summary::before { content: '▸'; display: inline-block; width: 14px; color: var(--accent); }
+    .modal-card details[open] > summary::before { content: '▾'; }
+    .modal-card ul { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 8px 0 2px 14px; }
+    .modal-card ul li { font-size: 0.78rem; line-height: 1.55; color: var(--text); }
+    .modal-card ul li b { color: var(--accent); font-weight: 700; }
+    .modal-card code { font-size: 0.72rem; background: var(--surface2); padding: 1px 5px; border-radius: 4px; }
     .modal-close {
       position: absolute; top: 12px; right: 12px; background: none; border: none;
       color: var(--muted); font-size: 1.1rem; cursor: pointer; line-height: 1; padding: 4px;
@@ -354,21 +365,106 @@
 </header>
 
 <div class="modal-overlay" id="info-modal" onclick="if (event.target === this) toggleInfoModal(false)">
-  <div class="modal-card">
+  <div class="modal-card wide">
     <button class="modal-close" onclick="toggleInfoModal(false)">✕</button>
-    <h2>Hoe deze tracker werkt</h2>
-    <ol>
-      <li><b>Elk uur</b> haalt een geautomatiseerd script (GitHub Actions, getriggerd door cron-job.org) de actuele viewcounts op van alle video's.</li>
-      <li><b>Twee kanalen samen:</b> het hoofdkanaal én het door YouTube automatisch gegenereerde "Topic"-kanaal (officiële audio, remixen, alternatieve versies) tellen samen als één artiestentotaal.</li>
-      <li><b>Nieuwe video's opsporen</b> gebeurt op twee snelheden: 1x per dag wordt de volledige videocatalogus van elk kanaal ververst, en daarnaast checkt élke uurlijkse run ook meteen de 10 nieuwste uploads. Zo wordt een net-verschenen video (bv. vrijdagochtend-release) al binnen het uur ontdekt, in plaats van pas bij de eerstvolgende dagelijkse scan.</li>
-      <li><b>Shorts (≤60 sec) tellen niet mee</b> in de totalen -- die trekken geen "echte" kijkpiek en zouden de cijfers vervuilen. Ze blijven wel gewoon zichtbaar in de videolijst.</li>
-      <li><b>Nieuwe video's krijgen een baseline:</b> zodra een video ontdekt wordt (net uitgebracht, of voor het eerst opgemerkt) telt zijn volledige bestaande viewcount niet in één klap mee als groei. Hij start op zijn huidige stand ("baseline") en alleen de groei daarna telt mee bij "views vandaag" en het uurtotaal.</li>
-      <li><b>Verdwenen video's</b> (tijdelijk niet in de scan, bv. een API-hikje of verwijderde video) worden ook uit de baseline gehaald zodra ze weer wél of blijvend niet meer meetellen -- anders zou het totaal onterecht vals-negatief kunnen worden.</li>
-      <li><b>Middernacht (00:00, vaste UTC-8) is de daggrens.</b> Omdat metingen niet precies om 00:00 binnenkomen, wordt het exacte middernacht-totaal lineair geïnterpoleerd tussen de laatste meting vóór en de eerste ná middernacht.</li>
-      <li><b>Dagafsluiting met terugwerkende kracht:</b> zodra de nieuwe dag begint, krijgt de zojuist afgesloten dag zijn definitieve, complete dagtotaal geschreven op de laatste logregel -- inclusief het laatste stukje groei tot precies middernacht, maar zonder vervuiling door video's die pas de volgende dag ontdekt worden (of verdwijnen).</li>
-      <li><b>Officieel totaal vs. eigen totaal:</b> naast de som van alle losse video's wordt ook YouTube's eigen "officiële" kanaaltotaal opgehaald. Dat officiële cijfer ligt structureel wat hoger, omdat YouTube's Global Charts ook UGC (fancontent met Content ID-matching) meetelt die via de API niet per video te achterhalen is.</li>
-      <li><b>Geschiedenis:</b> per artiest worden de laatste ~450 uurlijkse metingen bewaard (ruim 18 dagen), zodat er altijd genoeg terugkijkdata is voor trends en dagtotalen.</li>
-    </ol>
+    <h2>Hoe deze tracker werkt &mdash; alle regels</h2>
+    <p class="modal-intro">Persoonlijke tracker voor de YouTube Global Charts-weekmarkten op Kalshi (hoogste dagtotaal per week). Bijgewerkt november 2026.</p>
+
+    <details open>
+      <summary>1. Wat meet de tracker?</summary>
+      <ul>
+        <li><b>Eigen counter:</b> de som van de views van alle video's van een artiest (hoofdkanaal + het automatische "Topic"-kanaal), per dag. Dit is een eigen meting en komt niet overeen met de officiële cijfers.</li>
+        <li><b>Officieel (Global Charts):</b> het dagtotaal op charts.youtube.com. Dat ligt structureel hoger (UGC, Vevo en andere kanalen). De verhouding officieel &divide; eigen heet de <b>UCG-factor</b>.</li>
+        <li><b>Doel:</b> met de eigen counter (die live is) het officiële cijfer van een dag voorspellen, en daarmee de weekmax per artiest voor de Kalshi-markten.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>2. Eigen counter: hoe de data binnenkomt</summary>
+      <ul>
+        <li><b>Schema:</b> elke 2 uur, op de even UTC-uren (cron-job.org, tijdzone UTC), een GitHub Action per artiest. De Kalshi-prijzen worden elke 5 minuten opgehaald. De tijden in de app staan in vaste UTC-8.</li>
+        <li><b>Bron:</b> de YouTube Data API. Dagquotum 10.000 units voor alle artiesten samen; er wordt ongeveer 7.000&ndash;9.000 gebruikt, dus weinig marge.</li>
+        <li><b>Wat telt:</b> alle video's van beide kanalen. <b>Shorts (&le; 60 sec) en actieve livestreams tellen niet mee</b> (zij zijn wel zichtbaar in de videolijst).</li>
+        <li><b>Nieuwe video's:</b> elke run controleert de 50 nieuwste uploads; 1&times; per dag wordt de hele catalogus ververst. Een nieuwe video start op zijn huidige stand (baseline): alleen groei daarna telt als groei.</li>
+        <li><b>Bekende video's blijven gevolgd.</b> YouTube laat soms video's uit de uploads-playlist van een Topic-kanaal verdwijnen (3&ndash;5 nov 2026: honderden per artiest) terwijl ze blijven bestaan. De tracker volgt een bekend video-ID daarom door, en laat het pas los als YouTube het 3 dagen achter elkaar niet meer teruggeeft (verwijderd/priv&eacute;). Ontbreekt de uploads-playlist van een kanaal helemaal, dan zoekt de tracker 1&times; per dag naar nieuwe uploads.</li>
+        <li><b>Daggrens:</b> 00:00 vaste UTC-8 (geen zomertijd). Het exacte middernachttotaal wordt lineair ge&iuml;nterpoleerd tussen de metingen eromheen. De afgesloten dag krijgt zijn definitieve dagtotaal op de laatste logregel.</li>
+        <li><b>Geschiedenis:</b> per artiest ~450 metingen (ruim 5 weken bij 2-uurlijks). Daarnaast een klein statusbestand per artiest met de meettijdstippen.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>3. Officiële Global Charts bijwerken (handmatig)</summary>
+      <ul>
+        <li><b>Waarom handmatig:</b> sinds 5 okt 2026 geeft YouTube de automatische ophaalroute een HTTP 429; alleen Safari mag het nog. De dagelijkse automatische run is daarom onbetrouwbaar.</li>
+        <li><b>Stappen:</b> open in Safari een artiestpagina op charts.youtube.com, open de console (Cmd+Option+C), plak het snippet uit <code>data/incoming/README.md</code> (of <code>scripts/gc_bookmarklet.js</code>) en wacht op "Klaar: 16 artiesten". Upload de <code>gc.json</code> in Downloads via github.com in de map <code>data/incoming/</code> (Add file &rarr; Upload files). Elke keer dezelfde bestandsnaam is goed.</li>
+        <li><b>Verwerking:</b> de workflow "Verwerk Global Charts-upload" controleert het bestand, vult alleen ontbrekende dagen aan en verwijdert de upload weer. Controleer op het tabblad Actions of de run groen is; rood = afgekeurd.</li>
+        <li><b>Regel:</b> de <b>eerst beschikbare waarde</b> van een dag blijft staan (Kalshi resolveert op wat YouTube direct toont). Bestaande waarden worden nooit overschreven; alleen de laatste 2 dagen mogen nog worden bijgewerkt.</li>
+        <li><b>Achterstand:</b> Global Charts loopt 2&ndash;4 dagen achter op de actuele dag.</li>
+        <li><b>Twee reeksen:</b> de UCG-historie (alleen betrouwbare dagen) en een aparte reeks met <b>alle</b> officiële waarden. De grafiek "Deze week bekend &amp; voorspeld" gebruikt die tweede, zodat alle officiële dagen zichtbaar zijn.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>4. UCG-factor</summary>
+      <ul>
+        <li><b>Definitie:</b> officieel dagtotaal &divide; eigen dagtotaal.</li>
+        <li><b>Gebruikt:</b> het gemiddelde van de laatste <b>14 schone dagen</b>; de range is hun minimum en maximum. (Getoetst: 14 dagen is beter dan 10 of 21.)</li>
+        <li><b>Releasedagen tellen niet mee:</b> de dag voor, de dag zelf en 3 dagen na een nieuwe video van meer dan 60 sec. Global Charts verwerkt de views van nieuwe video's vertraagd, dus de factor valt dan laag uit.</li>
+        <li><b>Uitgesloten dagen:</b> dagen waarop de eigen counter aantoonbaar niet klopte (storingen, tijdelijk verdwenen video's) staan niet in de historie, tenzij ze achteraf zijn hersteld en gecontroleerd.</li>
+        <li><b>Schuif:</b> de UCG-schuif in de Voorspelling-tab is los van de grafiek "Deze week bekend &amp; voorspeld": die grafiek reageert er niet op.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>5. Hoe er wordt voorspeld</summary>
+      <ul>
+        <li><b>Methode 1, eigen counter &times; UCG:</b> voor een afgelopen dag waarvan de eigen counter af is, maar het officiële cijfer er nog niet is.</li>
+        <li><b>Methode 2, weekpatroon:</b> weekdagfactoren t.o.v. vrijdag (ma&ndash;do: vrijdag/dag; za/zo: dag/vrijdag), per artiest eigen waarden vanaf 2 schone weken, anders gepoold over alle artiesten. De schatting is het gemiddelde over de <b>laatste 5 dagen</b>, elk omgerekend naar de gevraagde weekdag. Daarbij tellen de officiële dagen mee, en voor de dagen sinds het laatste officiële cijfer eigen counter &times; UCG ("verse ankers").</li>
+        <li><b>Gecombineerd:</b> voor afgeronde dagen 70% eigen counter &times; UCG + 30% weekpatroon. Voor vandaag en de rest van de week: het weekpatroon. Officiële dagen zijn leidend. De Kalshi-rij "Gecomb." is het hoogste van die waarden.</li>
+        <li><b>Nauwkeurigheid (getoetst):</b> ongeveer 1,7% fout op een gewone dag, ~3,5% rond een release, weekmax ~3&ndash;4% midden in de week. Een groot deel van de fout is een schok die alle artiesten op dezelfde dag raakt en niet te voorspellen is.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>6. De tabbladen</summary>
+      <ul>
+        <li><b>Log:</b> de metingen, het dagtotaal per dag en de videolijst per kanaal.</li>
+        <li><b>Voorspelling:</b> de UCG-factor met historie, en "Deze week bekend &amp; voorspeld" (officieel, eigen counter &times; UCG als range, gecombineerd en weekpatroon per dag).</li>
+        <li><b>Kalshi:</b> live marktprijzen voor week en maand, met jouw range (min&ndash;max UCG) en de gecombineerde schatting. Strikes buiten je range worden uitgelicht: onder je minimum een YES, boven je maximum een NO. Het maximum kan alleen stijgen, dus een YES onder je ondergrens is veiliger dan een NO, en een NO zegt pas iets na vrijdag/zaterdag.</li>
+        <li><b>Orders:</b> staat verborgen (nog niet in gebruik).</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>7. Data-gezondheid (het uitroepteken)</summary>
+      <ul>
+        <li><b>Oranje !</b> bij een artiestknop: er zaten deze week gaten in van minimaal 2 gemiste metingen achter elkaar (zo'n 5 uur). De weekmax en dagtotalen zijn dan minder betrouwbaar.</li>
+        <li><b>Rood !</b>: de laatste meting is al meer dan 3 intervallen oud (zo'n 6 uur), de data komt nu niet binnen.</li>
+        <li><b>Hover</b> over de knop voor de laatste meting en het aantal gemiste metingen. Boven in beeld staat het aantal artiesten met een probleem. De melding blijft de hele week staan; maandag begint een nieuwe week.</li>
+        <li><b>Let op:</b> neem geen posities op basis van een week met ontbrekende data zonder die eerst te controleren.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>8. Als er iets misgaat</summary>
+      <ul>
+        <li><b>Metingen komen niet binnen:</b> kijk op github.com &rarr; Actions of de run van die artiest rood is; de laatste regels van de stap "Run fetch script" noemen de oorzaak. Controleer ook of de jobs in cron-job.org nog draaien (tijdzone UTC).</li>
+        <li><b>Video's weggevallen:</b> een plotselinge daling van het aantal video's (zie het aantal in de log) wijst op verdwenen Topic-video's. De tracker volgt bekende video's nu door; herstel van dagtotalen gebeurt met een correctie in <code>data/&lt;artiest&gt;_corrections.json</code>, die bij het afsluiten van de dag automatisch wordt opgeteld.</li>
+        <li><b>Global Charts 429:</b> zie punt 3; werk handmatig bij via Safari.</li>
+        <li><b>Tijden lijken 1 uur te verschuiven:</b> de app gebruikt vaste UTC-8, ook als Nederland of de VS van zomer- naar wintertijd gaan.</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>9. Beperkingen en onderhoud</summary>
+      <ul>
+        <li><b>Het model is geen garantie.</b> Rond releases (en bij artiesten met weinig historie, zoals KATSEYE) is de onzekerheid groot.</li>
+        <li><b>Kalshi resolveert</b> op de waarden die YouTube Charts toont vanaf een New Yorks IP-adres; die kunnen licht afwijken van wat hier is opgehaald.</li>
+        <li><b>De repository is openbaar</b> (GitHub Pages). Er staan geen sleutels in, wel de data en eerdere Kalshi-orders.</li>
+        <li><b>De repository groeit</b> ongeveer 4&ndash;5 MB per dag; t.z.t. wordt oude geschiedenis opgeruimd.</li>
+        <li><b>Onofficiële bron:</b> de Global Charts-route is niet gedocumenteerd en kan zonder aankondiging veranderen of wegvallen.</li>
+      </ul>
+    </details>
   </div>
 </div>
 
