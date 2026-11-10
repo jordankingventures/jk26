@@ -845,6 +845,7 @@ function switchArtist(key) {
   loadData();
 }
 
+let loadDataTimer = null;
 async function loadData() {
   document.getElementById('badge-updated').textContent = 'Laden...';
   document.getElementById('badge-updated').className = 'badge';
@@ -879,7 +880,11 @@ async function loadData() {
   }
 
   // Automatisch herladen na 5 minuten (data komt van server, geen API-quota kosten)
-  setTimeout(loadData, 5 * 60 * 1000);
+  // Altijd maar 1 herlaad-timer: loadData() wordt ook bij elke artiestwissel aangeroepen,
+  // en elke aanroep zette vroeger een EIGEN 5-minuten-herhaling erbij (na 20 wissels 20
+  // parallelle herlaadketens van het grote databestand).
+  clearTimeout(loadDataTimer);
+  loadDataTimer = setTimeout(loadData, 5 * 60 * 1000);
 }
 
 function renderLog() {
@@ -1247,6 +1252,7 @@ function switchView(view) {
   document.getElementById('kalshi-view').style.display = view === 'kalshi' ? '' : 'none';
   document.getElementById('orders-view').style.display = view === 'orders' ? '' : 'none';
   if (view === 'prediction' && appData) renderPrediction();
+  if (view === 'kalshi') loadKalshiMarkets();
   if (view === 'kalshi' && appData) renderKalshiTab();
   if (view === 'orders') renderOrders();
 }
@@ -2660,6 +2666,11 @@ loadData();
 loadAnalysisData();
 loadKalshiMarkets();
 loadDataStatus();
+// Kalshi-prijzen verversen terwijl je de Kalshi-tab open hebt staan (het bestand wordt elke
+// 5 min bijgewerkt; vroeger werd het maar 1x per paginabezoek geladen, dus bleven
+// prijzen op een openstaande pagina oud). Analysegegevens (officiele cijfers) elk half uur.
+setInterval(() => { if (!document.hidden && activeView === 'kalshi') loadKalshiMarkets(); }, 2 * 60 * 1000);
+setInterval(() => { if (!document.hidden) loadAnalysisData(); }, 30 * 60 * 1000);
 setInterval(loadDataStatus, 5 * 60 * 1000);
 setInterval(renderDataHealth, 60 * 1000);
 loadKalshiState();
