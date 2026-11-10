@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 import urllib.parse
@@ -180,23 +181,45 @@ class PlaylistNotFound(Exception):
     """De uploads-playlist van een kanaal bestaat niet (meer) volgens de API."""
 
 
+RETRY_WAITS = (2, 6)  # seconden tussen de pogingen: 3 pogingen in totaal
+
+
 def yt_get(endpoint, params):
+    """
+    GET naar de YouTube Data API met 3 pogingen bij TIJDELIJKE fouten (time-out,
+    verbindingsfout, HTTP 5xx/429). Eén hapering mag niet een hele meting kosten
+    (voorheen: één time-out = mislukte run = gat van 4 uur in de data). Echte
+    fouten (quota 403, 404 playlistNotFound, 400) worden niet herhaald.
+    """
     params["key"] = API_KEY
     url = f"https://www.googleapis.com/youtube/v3/{endpoint}?" + urllib.parse.urlencode(params)
-    try:
-        with urllib.request.urlopen(url, timeout=15) as resp:
-            data = json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        # De foutmelding van de API zit in de body; zonder deze regel zie je in
-        # de Actions-log alleen "HTTP Error 404" en niet wat er echt aan de hand is.
+    for attempt in range(len(RETRY_WAITS) + 1):
         try:
-            body = e.read().decode("utf-8", "replace")
-        except Exception:
-            body = ""
-        print(f"  YouTube API HTTP {e.code} op {endpoint}: {body[:400]}")
-        if e.code == 404 and "playlistNotFound" in body:
-            raise PlaylistNotFound(params.get("playlistId", "")) from e
-        raise
+            with urllib.request.urlopen(url, timeout=20) as resp:
+                data = json.loads(resp.read())
+            break
+        except urllib.error.HTTPError as e:
+            # De foutmelding van de API zit in de body; zonder deze regel zie je in
+            # de Actions-log alleen "HTTP Error 404" en niet wat er echt aan de hand is.
+            try:
+                body = e.read().decode("utf-8", "replace")
+            except Exception:
+                body = ""
+            print(f"  YouTube API HTTP {e.code} op {endpoint}: {body[:400]}")
+            if e.code == 404 and "playlistNotFound" in body:
+                raise PlaylistNotFound(params.get("playlistId", "")) from e
+            transient = e.code >= 500 or e.code == 429
+            if transient and attempt < len(RETRY_WAITS):
+                print(f"  tijdelijke fout, nieuwe poging over {RETRY_WAITS[attempt]}s ({attempt + 2}/{len(RETRY_WAITS) + 1})")
+                time.sleep(RETRY_WAITS[attempt])
+                continue
+            raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            if attempt < len(RETRY_WAITS):
+                print(f"  netwerkfout op {endpoint} ({e}); nieuwe poging over {RETRY_WAITS[attempt]}s ({attempt + 2}/{len(RETRY_WAITS) + 1})")
+                time.sleep(RETRY_WAITS[attempt])
+                continue
+            raise
     if "error" in data:
         raise RuntimeError(data["error"]["message"])
     return data
@@ -224,11 +247,41 @@ def search_recent_video_ids(channel_id, count=50):
     return [item["id"]["videoId"] for item in data.get("items", []) if item.get("id", {}).get("videoId")]
 
 
-# Zoeken kost 100 units per call; voor kanalen zonder uploads-playlist doen we
-# dat 1x per dag (de eerste run van de nieuwe dag, zie get_video_ids), zodat
-# het dagquotum (10.000 units voor alle artiesten samen) niet opraakt:
-# 8 kanalen x 100 = 800 units per dag. Meer dan 1x per dag is bewust afgekeurd
-# (3x = 2.400 units liet te weinig marge).
+# Zoeken kost 100 units per call; voor kanalen zonder uploads-playlist doen we dat
+# 1x per dag (de eerste run van de nieuwe dag, zie get_video_ids). Meer dan 1x per
+# dag voor alle kanalen is afgekeurd (3x = 2.400 units liet te weinig marge).
+#
+# UITZONDERING rond een release: de Topic-versie van een nieuwe track verschijnt
+# vaak uren vóór de dagelijkse zoekactie (vrijdag ~05:00 UTC, zoekactie 08:01
+# UTC), en de eerste uren aan views zouden dan niet meetellen (een nieuwe video
+# start op zijn huidige stand). Ontdekt de snelle check van het hoofdkanaal een
+# nieuwe video (> 60 sec), dan staat er 6 uur lang een "boost" aan en mag dit
+# kanaal om de ~100 minuten (dus max 3x per release) opnieuw zoeken. Kost alleen
+# quotum op releasemomenten.
+BOOST_HOURS = 6
+BOOST_MIN_INTERVAL = timedelta(minutes=100)
+
+
+def _parse_utc(ts):
+    try:
+        return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def boost_active(cache):
+    until = _parse_utc((cache.get("_boost") or {}).get("until"))
+    return bool(until and datetime.now(timezone.utc) < until)
+
+
+def boost_search_due(entry):
+    last = _parse_utc(entry.get("searched_at"))
+    return last is None or datetime.now(timezone.utc) - last >= BOOST_MIN_INTERVAL
+
+
+def start_release_boost(cache):
+    until = datetime.now(timezone.utc) + timedelta(hours=BOOST_HOURS)
+    cache["_boost"] = {"until": until.strftime("%Y-%m-%dT%H:%M:%SZ")}
 
 
 def ids_without_uploads_playlist(channel_id, cache):
@@ -298,6 +351,9 @@ def get_video_ids(channel_id, uploads_playlist_id, cache):
 
     cached = cache.get(channel_id)
     if cached and cached.get("date") == today:
+        if cached.get("uploads_missing") and boost_active(cache) and boost_search_due(cached):
+            print(f"  [{channel_id}] Release gedetecteerd: extra zoekronde naar nieuwe Topic-uploads")
+            return ids_without_uploads_playlist(channel_id, cache)
         print(f"  [{channel_id}] Video IDs uit cache: {len(cached['ids'])}")
         return cached["ids"]
 
@@ -620,6 +676,14 @@ if __name__ == "__main__":
         new_ids    = [vid for vid in recent_ids if vid not in ids]
         if new_ids:
             print(f"  [{c['id']}] Nieuw ontdekt via snelle check: {len(new_ids)}")
+            # Is er een echte release bij (geen Short)? Dan de Topic-zoekactie 6 uur
+            # lang vaker toestaan, zie BOOST_HOURS. Kost 1 unit extra (videos.list).
+            try:
+                if any(not is_short(v) for v in get_video_details(new_ids)):
+                    print(f"  [{c['id']}] Nieuwe video > 60 sec: release-boost voor Topic-zoekactie aan")
+                    start_release_boost(cache)
+            except Exception as e:
+                print(f"  [{c['id']}] Release-check mislukt ({e}) -- geen boost")
             ids = ids + new_ids
             cache[c["id"]]["ids"] = ids  # ook in de dagcache zetten, anders 'nieuw' bij elke volgende run
 
