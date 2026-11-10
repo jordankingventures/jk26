@@ -151,17 +151,33 @@ def fetch_monthly(artists):
             a["monthly"].sort(key=lambda x: x["close_time"] or "")
 
 
+MONTHS = {"JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12}
+
+
+def event_end_date(event_ticker):
+    """'KXYTVIEWSW-TAY26NOV08' -> '2026-11-08' (laatste dag van de weekmarkt), of None."""
+    m = re.search(r"(\d{2})([A-Z]{3})(\d{2})$", event_ticker or "")
+    if not m or m.group(2) not in MONTHS:
+        return None
+    return f"20{m.group(1)}-{MONTHS[m.group(2)]:02d}-{m.group(3)}"
+
+
 def main():
     events = fetch_events()
     markets = fetch_all_markets()
 
-    artists = {}
+    # Per artiest kunnen op maandag/dinsdag TWEE weekmarkten tegelijk open staan (de
+    # vorige week sluit pas dinsdag 10:00 ET, de nieuwe opent maandag). Vroeger
+    # werden hun brackets op 1 hoop gegooid (dubbele strikes, prijzen van beide
+    # weken door elkaar). Nu per event gescheiden: de nieuwste week is de hoofdmarkt,
+    # de vorige (nog open) week staat onder "previous_week".
+    by_artist = {}
     for e in events:
         key = artist_key_for_event_ticker(e["event_ticker"])
         if not key:
             print(f"WAARSCHUWING: onbekend artiest-prefix voor event {e['event_ticker']}")
             continue
-        artists[key] = {
+        by_artist.setdefault(key, {})[e["event_ticker"]] = {
             "artist_name": (e.get("title") or "").split(":")[0].strip(),
             "event_ticker": e["event_ticker"],
             "title": e.get("title"),
@@ -172,14 +188,23 @@ def main():
     unmatched = 0
     for m in markets:
         key = artist_key_for_event_ticker(m["event_ticker"])
-        if not key or key not in artists:
+        entry = by_artist.get(key, {}).get(m["event_ticker"]) if key else None
+        if not entry:
             unmatched += 1
             continue
-        artists[key]["close_time"] = m.get("close_time")
-        artists[key]["brackets"].append(bracket_from_market(m))
+        entry["close_time"] = m.get("close_time")
+        entry["brackets"].append(bracket_from_market(m))
 
-    for a in artists.values():
-        a["brackets"].sort(key=lambda b: b["floor_strike"] if b["floor_strike"] is not None else 0)
+    artists = {}
+    for key, evs in by_artist.items():
+        for entry in evs.values():
+            entry["brackets"].sort(key=lambda b: b["floor_strike"] if b["floor_strike"] is not None else 0)
+        # nieuwste week laatst: sorteren op einddatum uit het ticker (anders op sluittijd)
+        ordered = sorted(evs.values(), key=lambda x: (event_end_date(x["event_ticker"]) or "", x["close_time"] or ""))
+        latest = dict(ordered[-1])
+        if len(ordered) > 1:
+            latest["previous_week"] = ordered[-2]
+        artists[key] = latest
 
     fetch_monthly(artists)
 
