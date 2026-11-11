@@ -1,7 +1,7 @@
 {
   "series_ticker": "KXYTVIEWSW",
   "monthly_series_ticker": "KXYTVIEWSHIGH",
-  "fetched_at": "2026-11-10T23:55:33Z",
+  "fetched_at": "2026-11-11T00:01:19Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -419,8 +419,8 @@
           "floor_strike": 28500000,
           "label": "Above 28.5M",
           "yes_bid": 0.14,
-          "yes_ask": 0.48,
-          "no_bid": 0.52,
+          "yes_ask": 0.47,
+          "no_bid": 0.53,
           "no_ask": 0.86
         },
         {
@@ -651,10 +651,10 @@
               "ticker": "KXYTVIEWSHIGH-BAD26DEC-28.5M",
               "floor_strike": 28500000,
               "label": "Above 28.5M",
-              "yes_bid": 0.31,
+              "yes_bid": 0.35,
               "yes_ask": 0.87,
               "no_bid": 0.13,
-              "no_ask": 0.69
+              "no_ask": 0.65
             },
             {
               "ticker": "KXYTVIEWSHIGH-BAD26DEC-29.0M",
@@ -797,8 +797,8 @@
           "floor_strike": 11750000,
           "label": "Above 11.75M",
           "yes_bid": 0.28,
-          "yes_ask": 0.97,
-          "no_bid": 0.03,
+          "yes_ask": 0.95,
+          "no_bid": 0.05,
           "no_ask": 0.72
         },
         {
@@ -806,8 +806,8 @@
           "floor_strike": 12000000,
           "label": "Above 12M",
           "yes_bid": 0.1,
-          "yes_ask": 0.96,
-          "no_bid": 0.04,
+          "yes_ask": 0.94,
+          "no_bid": 0.06,
           "no_ask": 0.9
         },
         {
@@ -815,8 +815,8 @@
           "floor_strike": 12250000,
           "label": "Above 12.25M",
           "yes_bid": 0.1,
-          "yes_ask": 0.97,
-          "no_bid": 0.03,
+          "yes_ask": 0.95,
+          "no_bid": 0.05,
           "no_ask": 0.9
         },
         {
@@ -824,8 +824,8 @@
           "floor_strike": 12500000,
           "label": "Above 12.5M",
           "yes_bid": 0.1,
-          "yes_ask": 0.97,
-          "no_bid": 0.03,
+          "yes_ask": 0.96,
+          "no_bid": 0.04,
           "no_ask": 0.9
         },
         {
@@ -1317,10 +1317,10 @@
               "ticker": "KXYTVIEWSHIGH-FUE26DEC-24.0M",
               "floor_strike": 24000000,
               "label": "Above 24M",
-              "yes_bid": 0.69,
+              "yes_bid": 0.71,
               "yes_ask": 0.98,
               "no_bid": 0.02,
-              "no_ask": 0.31
+              "no_ask": 0.29
             },
             {
               "ticker": "KXYTVIEWSHIGH-FUE26DEC-25.0M",
@@ -1615,19 +1615,19 @@
           "ticker": "KXYTVIEWSW-JUS26NOV15-16.5M",
           "floor_strike": 16500000,
           "label": "Above 16.5M",
-          "yes_bid": 0.18,
+          "yes_bid": 0.19,
           "yes_ask": 0.86,
           "no_bid": 0.14,
-          "no_ask": 0.82
+          "no_ask": 0.81
         },
         {
           "ticker": "KXYTVIEWSW-JUS26NOV15-16.75M",
           "floor_strike": 16750000,
           "label": "Above 16.75M",
-          "yes_bid": 0.17,
+          "yes_bid": 0.18,
           "yes_ask": 0.86,
           "no_bid": 0.14,
-          "no_ask": 0.83
+          "no_ask": 0.82
         },
         {
           "ticker": "KXYTVIEWSW-JUS26NOV15-17.0M",
@@ -2037,10 +2037,10 @@
               "ticker": "KXYTVIEWSHIGH-KAT26DEC-24.0M",
               "floor_strike": 24000000,
               "label": "Above 24M",
-              "yes_bid": 0.26,
-              "yes_ask": 0.92,
-              "no_bid": 0.08,
-              "no_ask": 0.74
+              "yes_bid": 0.28,
+              "yes_ask": 0.93,
+              "no_bid": 0.07,
+              "no_ask": 0.72
             },
             {
               "ticker": "KXYTVIEWSHIGH-KAT26DEC-25.0M",
@@ -2199,10 +2199,10 @@
               "ticker": "KXYTVIEWSHIGH-KEN26DEC-6.5M",
               "floor_strike": 6500000,
               "label": "Above 6.5M",
-              "yes_bid": 0.14,
+              "yes_bid": 0.13,
               "yes_ask": 0.69,
               "no_bid": 0.31,
-              "no_ask": 0.86
+              "no_ask": 0.87
             },
             {
               "ticker": "KXYTVIEWSHIGH-KEN26DEC-7.0M",
@@ -2245,28 +2245,28 @@
           "ticker": "KXYTVIEWSW-MOR26NOV15-4.0M",
           "floor_strike": 4000000,
           "label": "Above 4M",
-          "yes_bid": 0.28,
+          "yes_bid": 0.31,
           "yes_ask": 0.97,
           "no_bid": 0.03,
-          "no_ask": 0.72
+          "no_ask": 0.69
         },
         {
           "ticker": "KXYTVIEWSW-MOR26NOV15-4.25M",
           "floor_strike": 4250000,
           "label": "Above 4.25M",
-          "yes_bid": 0.28,
+          "yes_bid": 0.29,
           "yes_ask": 0.97,
           "no_bid": 0.03,
-          "no_ask": 0.72
+          "no_ask": 0.71
         },
         {
           "ticker": "KXYTVIEWSW-MOR26NOV15-4.5M",
           "floor_strike": 4500000,
           "label": "Above 4.5M",
-          "yes_bid": 0.34,
-          "yes_ask": 0.58,
-          "no_bid": 0.42,
-          "no_ask": 0.66
+          "yes_bid": 0.35,
+          "yes_ask": 0.6,
+          "no_bid": 0.4,
+          "no_ask": 0.65
         },
         {
           "ticker": "KXYTVIEWSW-MOR26NOV15-4.75M",
@@ -2317,10 +2317,10 @@
           "ticker": "KXYTVIEWSW-MOR26NOV15-6.0M",
           "floor_strike": 6000000,
           "label": "Above 6M",
-          "yes_bid": 0.05,
+          "yes_bid": 0.04,
           "yes_ask": 0.07,
           "no_bid": 0.93,
-          "no_ask": 0.95
+          "no_ask": 0.96
         },
         {
           "ticker": "KXYTVIEWSW-MOR26NOV15-6.25M",
@@ -2335,10 +2335,10 @@
           "ticker": "KXYTVIEWSW-MOR26NOV15-6.5M",
           "floor_strike": 6500000,
           "label": "Above 6.5M",
-          "yes_bid": 0.05,
+          "yes_bid": 0.04,
           "yes_ask": 0.07,
           "no_bid": 0.93,
-          "no_ask": 0.95
+          "no_ask": 0.96
         },
         {
           "ticker": "KXYTVIEWSW-MOR26NOV15-6.75M",
@@ -2623,10 +2623,10 @@
           "ticker": "KXYTVIEWSW-OLI26NOV15-7.0M",
           "floor_strike": 7000000,
           "label": "Above 7M",
-          "yes_bid": 0.53,
+          "yes_bid": 0.52,
           "yes_ask": 0.96,
           "no_bid": 0.04,
-          "no_ask": 0.47
+          "no_ask": 0.48
         },
         {
           "ticker": "KXYTVIEWSW-OLI26NOV15-7.5M",
@@ -2642,8 +2642,8 @@
           "floor_strike": 8000000,
           "label": "Above 8M",
           "yes_bid": 0.66,
-          "yes_ask": 0.89,
-          "no_bid": 0.11,
+          "yes_ask": 0.88,
+          "no_bid": 0.12,
           "no_ask": 0.34
         }
       ],
@@ -2974,10 +2974,10 @@
           "ticker": "KXYTVIEWSW-TAT26NOV15-3.7M",
           "floor_strike": 3700000,
           "label": "Above 3.7M",
-          "yes_bid": 0.66,
-          "yes_ask": 0.97,
-          "no_bid": 0.03,
-          "no_ask": 0.34
+          "yes_bid": 0.67,
+          "yes_ask": 0.96,
+          "no_bid": 0.04,
+          "no_ask": 0.33
         },
         {
           "ticker": "KXYTVIEWSW-TAT26NOV15-3.8M",
@@ -3144,10 +3144,10 @@
               "ticker": "KXYTVIEWSHIGH-TAT26DEC-4.9M",
               "floor_strike": 4900000,
               "label": "Above 4.9M",
-              "yes_bid": 0.19,
+              "yes_bid": 0.17,
               "yes_ask": 0.33,
               "no_bid": 0.67,
-              "no_ask": 0.81
+              "no_ask": 0.83
             },
             {
               "ticker": "KXYTVIEWSHIGH-TAT26DEC-5.0M",
@@ -3172,36 +3172,36 @@
           "ticker": "KXYTVIEWSW-TAY26NOV15-13.0M",
           "floor_strike": 13000000,
           "label": "Above 13M",
-          "yes_bid": 0.94,
-          "yes_ask": 0.95,
-          "no_bid": 0.05,
-          "no_ask": 0.06
+          "yes_bid": 0.96,
+          "yes_ask": 0.97,
+          "no_bid": 0.03,
+          "no_ask": 0.04
         },
         {
           "ticker": "KXYTVIEWSW-TAY26NOV15-13.1M",
           "floor_strike": 13100000,
           "label": "Above 13.1M",
-          "yes_bid": 0.81,
+          "yes_bid": 0.82,
           "yes_ask": 0.91,
           "no_bid": 0.09,
-          "no_ask": 0.19
+          "no_ask": 0.18
         },
         {
           "ticker": "KXYTVIEWSW-TAY26NOV15-13.2M",
           "floor_strike": 13200000,
           "label": "Above 13.2M",
-          "yes_bid": 0.44,
-          "yes_ask": 0.8,
-          "no_bid": 0.2,
-          "no_ask": 0.56
+          "yes_bid": 0.41,
+          "yes_ask": 0.85,
+          "no_bid": 0.15,
+          "no_ask": 0.59
         },
         {
           "ticker": "KXYTVIEWSW-TAY26NOV15-13.3M",
           "floor_strike": 13300000,
           "label": "Above 13.3M",
           "yes_bid": 0.26,
-          "yes_ask": 0.82,
-          "no_bid": 0.18,
+          "yes_ask": 0.87,
+          "no_bid": 0.13,
           "no_ask": 0.74
         },
         {
@@ -3236,8 +3236,8 @@
           "floor_strike": 13700000,
           "label": "Above 13.7M",
           "yes_bid": 0.27,
-          "yes_ask": 0.83,
-          "no_bid": 0.17,
+          "yes_ask": 0.81,
+          "no_bid": 0.19,
           "no_ask": 0.73
         },
         {
@@ -3991,10 +3991,10 @@
           "ticker": "KXYTVIEWSW-YE26NOV15-6.5M",
           "floor_strike": 6500000,
           "label": "Above 6.5M",
-          "yes_bid": 0.06,
+          "yes_bid": 0.05,
           "yes_ask": 0.07,
           "no_bid": 0.93,
-          "no_ask": 0.94
+          "no_ask": 0.95
         },
         {
           "ticker": "KXYTVIEWSW-YE26NOV15-7.0M",
@@ -4144,10 +4144,10 @@
           "ticker": "KXYTVIEWSW-YOU26NOV15-7.0M",
           "floor_strike": 7000000,
           "label": "Above 7M",
-          "yes_bid": 0.56,
-          "yes_ask": 0.83,
-          "no_bid": 0.17,
-          "no_ask": 0.44
+          "yes_bid": 0.55,
+          "yes_ask": 0.84,
+          "no_bid": 0.16,
+          "no_ask": 0.45
         },
         {
           "ticker": "KXYTVIEWSW-YOU26NOV15-8.0M",
