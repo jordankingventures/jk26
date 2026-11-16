@@ -1,7 +1,7 @@
 {
   "series_ticker": "KXYTVIEWSW",
   "monthly_series_ticker": "KXYTVIEWSHIGH",
-  "fetched_at": "2026-11-16T00:45:44Z",
+  "fetched_at": "2026-11-16T00:50:49Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -437,8 +437,8 @@
           "floor_strike": 31000000,
           "label": "Above 31M",
           "yes_bid": 0.04,
-          "yes_ask": 0.08,
-          "no_bid": 0.92,
+          "yes_ask": 0.09,
+          "no_bid": 0.91,
           "no_ask": 0.96
         },
         {
@@ -1282,10 +1282,10 @@
           "ticker": "KXYTVIEWSW-JUS26NOV15-14.25M",
           "floor_strike": 14250000,
           "label": "Above 14.25M",
-          "yes_bid": 0.21,
+          "yes_bid": 0.22,
           "yes_ask": 1.0,
           "no_bid": 0.0,
-          "no_ask": 0.79
+          "no_ask": 0.78
         },
         {
           "ticker": "KXYTVIEWSW-JUS26NOV15-14.5M",
@@ -1300,10 +1300,10 @@
           "ticker": "KXYTVIEWSW-JUS26NOV15-14.75M",
           "floor_strike": 14750000,
           "label": "Above 14.75M",
-          "yes_bid": 0.77,
+          "yes_bid": 0.78,
           "yes_ask": 1.0,
           "no_bid": 0.0,
-          "no_ask": 0.23
+          "no_ask": 0.22
         },
         {
           "ticker": "KXYTVIEWSW-JUS26NOV15-15.0M",
@@ -1318,10 +1318,10 @@
           "ticker": "KXYTVIEWSW-JUS26NOV15-15.25M",
           "floor_strike": 15250000,
           "label": "Above 15.25M",
-          "yes_bid": 0.79,
+          "yes_bid": 0.8,
           "yes_ask": 1.0,
           "no_bid": 0.0,
-          "no_ask": 0.21
+          "no_ask": 0.2
         },
         {
           "ticker": "KXYTVIEWSW-JUS26NOV15-15.5M",
@@ -2352,10 +2352,10 @@
               "ticker": "KXYTVIEWSHIGH-POS26DEC-6.5M",
               "floor_strike": 6500000,
               "label": "Above 6.5M",
-              "yes_bid": 0.33,
+              "yes_bid": 0.34,
               "yes_ask": 0.97,
               "no_bid": 0.03,
-              "no_ask": 0.67
+              "no_ask": 0.66
             },
             {
               "ticker": "KXYTVIEWSHIGH-POS26DEC-7.0M",
@@ -2596,10 +2596,10 @@
           "ticker": "KXYTVIEWSW-TAT26NOV15-4.2M",
           "floor_strike": 4200000,
           "label": "Above 4.2M",
-          "yes_bid": 0.78,
+          "yes_bid": 0.79,
           "yes_ask": 1.0,
           "no_bid": 0.0,
-          "no_ask": 0.22
+          "no_ask": 0.21
         },
         {
           "ticker": "KXYTVIEWSW-TAT26NOV15-4.3M",
@@ -2830,10 +2830,10 @@
           "ticker": "KXYTVIEWSW-TAY26NOV15-13.9M",
           "floor_strike": 13900000,
           "label": "Above 13.9M",
-          "yes_bid": 0.07,
+          "yes_bid": 0.06,
           "yes_ask": 0.27,
           "no_bid": 0.73,
-          "no_ask": 0.93
+          "no_ask": 0.94
         },
         {
           "ticker": "KXYTVIEWSW-TAY26NOV15-14.0M",
@@ -3108,10 +3108,10 @@
               "ticker": "KXYTVIEWSHIGH-TAY26DEC-14.6M",
               "floor_strike": 14600000,
               "label": "Above 14.6M",
-              "yes_bid": 0.3,
+              "yes_bid": 0.44,
               "yes_ask": 0.68,
               "no_bid": 0.32,
-              "no_ask": 0.7
+              "no_ask": 0.56
             },
             {
               "ticker": "KXYTVIEWSHIGH-TAY26DEC-14.7M",
@@ -3585,10 +3585,10 @@
               "ticker": "KXYTVIEWSHIGH-YE26DEC-7.5M",
               "floor_strike": 7500000,
               "label": "Above 7.5M",
-              "yes_bid": 0.09,
+              "yes_bid": 0.08,
               "yes_ask": 0.53,
               "no_bid": 0.47,
-              "no_ask": 0.91
+              "no_ask": 0.92
             },
             {
               "ticker": "KXYTVIEWSHIGH-YE26DEC-8.0M",
@@ -3738,10 +3738,10 @@
               "ticker": "KXYTVIEWSHIGH-YOU26DEC-12.0M",
               "floor_strike": 12000000,
               "label": "Above 12M",
-              "yes_bid": 0.06,
+              "yes_bid": 0.05,
               "yes_ask": 0.61,
               "no_bid": 0.39,
-              "no_ask": 0.94
+              "no_ask": 0.95
             }
           ]
         }
