@@ -505,11 +505,45 @@
           "own_counter": 10331000,
           "global_charts": 12472000,
           "factor": 1.2072403445939406
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 10333000,
+          "global_charts": 13432000,
+          "factor": 1.2999129004161425,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 11729000,
+          "global_charts": 13425000,
+          "factor": 1.1445988575326114,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 11022000,
+          "global_charts": 13673000,
+          "factor": 1.2405189620758483,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 10767000,
+          "global_charts": 13188000,
+          "factor": 1.2248537196990805,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 10073000,
+          "global_charts": 12418000,
+          "factor": 1.2328005559416262
         }
       ],
       "min": 1.1013500784929355,
       "max": 1.3128205128205128,
-      "avg": 1.207549348765856,
+      "avg": 1.208783916434515,
       "excluded_dates": {
         "2026-09-24": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
         "2026-09-25": "Livestream 'The Life of a Showgirl: The Encore STATION' werd als gewone video meegeteld en blies het dagtotaal kunstmatig op (voor fetch_views.py's is_live()-fix, actief sinds 28 sep 2026 ~16:55 UTC).",
@@ -1026,11 +1060,45 @@
           "own_counter": 9033000,
           "global_charts": 10490000,
           "factor": 1.1612974648511014
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 9616000,
+          "global_charts": 11740000,
+          "factor": 1.2208818635607321,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 10755000,
+          "global_charts": 11995000,
+          "factor": 1.1152952115295212,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 10871000,
+          "global_charts": 13188000,
+          "factor": 1.2131358660656792,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 10662000,
+          "global_charts": 12777000,
+          "factor": 1.198368036015757,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 9273000,
+          "global_charts": 11105000,
+          "factor": 1.1975628167798986
         }
       ],
       "min": 1.0183307039290812,
       "max": 1.2725324078799634,
-      "avg": 1.1645137658239018,
+      "avg": 1.1659402189033445,
       "excluded_dates": {
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
         "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
@@ -1565,11 +1633,45 @@
           "own_counter": 3163000,
           "global_charts": 3474000,
           "factor": 1.0983243755927916
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 3522000,
+          "global_charts": 4038000,
+          "factor": 1.1465076660988074,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 3838000,
+          "global_charts": 4130000,
+          "factor": 1.0760812923397602,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 4031000,
+          "global_charts": 4553000,
+          "factor": 1.129496402877698,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 3747000,
+          "global_charts": 4171000,
+          "factor": 1.1131571924206032,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 3122000,
+          "global_charts": 3464000,
+          "factor": 1.1095451633568225
         }
       ],
-      "min": 1.0788276907529055,
+      "min": 1.0760812923397602,
       "max": 1.2332798287854467,
-      "avg": 1.1139757220029627,
+      "avg": 1.1140308805094667,
       "excluded_dates": {
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
@@ -2067,11 +2169,45 @@
           "own_counter": 14495000,
           "global_charts": 23047000,
           "factor": 1.5899965505346672
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 15684000,
+          "global_charts": 25873000,
+          "factor": 1.649642948227493,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 16821000,
+          "global_charts": 26262000,
+          "factor": 1.561262707330123,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 17190000,
+          "global_charts": 28106000,
+          "factor": 1.635020360674811,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 17645000,
+          "global_charts": 28811000,
+          "factor": 1.632813828279966,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 14304000,
+          "global_charts": 23142000,
+          "factor": 1.6178691275167785
         }
       ],
-      "min": 1.5689803969917395,
+      "min": 1.561262707330123,
       "max": 1.753676924978371,
-      "avg": 1.6332452511650595,
+      "avg": 1.6324164739770104,
       "excluded_dates": {
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
         "2026-11-01": "Eigen counter te laag: Topic-video's waren niet gevolgd (31 okt - 5 nov 2026).",
@@ -2601,11 +2737,45 @@
           "own_counter": 10390000,
           "global_charts": 13592000,
           "factor": 1.3081809432146294
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 10164000,
+          "global_charts": 14236000,
+          "factor": 1.400629673356946,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 11395000,
+          "global_charts": 14298000,
+          "factor": 1.2547608600263274,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 10743000,
+          "global_charts": 14733000,
+          "factor": 1.3714046355766545,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 10609000,
+          "global_charts": 14516000,
+          "factor": 1.3682722216985579,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 9892000,
+          "global_charts": 13638000,
+          "factor": 1.3786898503841487
         }
       ],
       "min": 1.168424468602953,
-      "max": 1.386380537554446,
-      "avg": 1.2986310301839765,
+      "max": 1.400629673356946,
+      "avg": 1.3018196902990076,
       "excluded_dates": {
         "2026-10-30": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
@@ -3139,11 +3309,45 @@
           "own_counter": 5661000,
           "global_charts": 6013000,
           "factor": 1.0621798268857092
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 5695000,
+          "global_charts": 6453000,
+          "factor": 1.133099209833187,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 6380000,
+          "global_charts": 6560000,
+          "factor": 1.0282131661442007,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 6414000,
+          "global_charts": 7089000,
+          "factor": 1.1052385406922358,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 6430000,
+          "global_charts": 6918000,
+          "factor": 1.0758942457231726,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 5485000,
+          "global_charts": 5850000,
+          "factor": 1.0665451230628988
         }
       ],
       "min": 1.0248181429182712,
       "max": 1.135753176043557,
-      "avg": 1.0753455262225775,
+      "avg": 1.0757080279567666,
       "excluded_dates": {
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
       }
@@ -3684,11 +3888,31 @@
           "own_counter": 11553000,
           "global_charts": 15938000,
           "factor": 1.3795550939150005
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 11312000,
+          "global_charts": 16957000,
+          "factor": 1.4990275813295615,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 11413000,
+          "global_charts": 16865000,
+          "factor": 1.477700867431876,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 10254000,
+          "global_charts": 15237000,
+          "factor": 1.4859566998244587
         }
       ],
       "min": 1.361630829377269,
       "max": 1.550448314954138,
-      "avg": 1.4489465617614488,
+      "avg": 1.4502481961805673,
       "excluded_dates": {
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026)."
       }
@@ -4041,11 +4265,38 @@
           "own_counter": 11423000,
           "global_charts": 21608000,
           "factor": 1.8916221658058303
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 12157000,
+          "global_charts": 22445000,
+          "factor": 1.8462614131775932,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 12564000,
+          "global_charts": 24686000,
+          "factor": 1.9648201209805793,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 13588000,
+          "global_charts": 26577000,
+          "factor": 1.9559169855755079,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 11597000,
+          "global_charts": 22218000,
+          "factor": 1.9158403035267741
         }
       ],
       "min": 1.7824023056709333,
       "max": 2.0459057071960296,
-      "avg": 1.8728694644631991,
+      "avg": 1.8761128706565493,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
@@ -4434,11 +4685,45 @@
           "own_counter": 3858000,
           "global_charts": 5414000,
           "factor": 1.4033177812337998
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 4822000,
+          "global_charts": 6766000,
+          "factor": 1.403152218996267,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 5091000,
+          "global_charts": 6706000,
+          "factor": 1.3172264780986054,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 4910000,
+          "global_charts": 6950000,
+          "factor": 1.415478615071283,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 4669000,
+          "global_charts": 6580000,
+          "factor": 1.409295352323838,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 3872000,
+          "global_charts": 5464000,
+          "factor": 1.4111570247933884
         }
       ],
-      "min": 1.3861924686192468,
+      "min": 1.3172264780986054,
       "max": 1.5302083333333334,
-      "avg": 1.452981471751377,
+      "avg": 1.4481596331658535,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
@@ -4814,11 +5099,45 @@
           "own_counter": 3397000,
           "global_charts": 4330000,
           "factor": 1.2746541065646158
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 3552000,
+          "global_charts": 4809000,
+          "factor": 1.353885135135135,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 3984000,
+          "global_charts": 4861000,
+          "factor": 1.2201305220883534,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 3845000,
+          "global_charts": 4976000,
+          "factor": 1.294148244473342,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 3729000,
+          "global_charts": 4767000,
+          "factor": 1.2783588093322606,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 3314000,
+          "global_charts": 4264000,
+          "factor": 1.2866626433313217
         }
       ],
       "min": 1.1928934010152283,
       "max": 1.3776709401709402,
-      "avg": 1.2772571773432462,
+      "avg": 1.2780016133375982,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-10-30": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
@@ -5167,11 +5486,45 @@
           "own_counter": 9040000,
           "global_charts": 15813000,
           "factor": 1.7492256637168142
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 8395000,
+          "global_charts": 14518000,
+          "factor": 1.7293627159023228,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 8461000,
+          "global_charts": 14407000,
+          "factor": 1.702753811606193,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 9056000,
+          "global_charts": 16451000,
+          "factor": 1.8165856890459364,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 10503000,
+          "global_charts": 19048000,
+          "factor": 1.813577073217176,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 8879000,
+          "global_charts": 15959000,
+          "factor": 1.7973870931411196
         }
       ],
       "min": 1.675373655538483,
       "max": 2.231873321603852,
-      "avg": 1.9648722093167552,
+      "avg": 1.948521452305382,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
@@ -5536,11 +5889,45 @@
           "own_counter": 4074000,
           "global_charts": 4642000,
           "factor": 1.1394207167403043
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 4415000,
+          "global_charts": 5282000,
+          "factor": 1.1963759909399774,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 4940000,
+          "global_charts": 5359000,
+          "factor": 1.0848178137651823,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 4785000,
+          "global_charts": 5516000,
+          "factor": 1.1527690700104494,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 4593000,
+          "global_charts": 5234000,
+          "factor": 1.1395602003048118,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 4126000,
+          "global_charts": 4738000,
+          "factor": 1.1483276781386331
         }
       ],
-      "min": 1.10840160030482,
+      "min": 1.0848178137651823,
       "max": 1.2364990689013036,
-      "avg": 1.1639770608260576,
+      "avg": 1.1623699370396439,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-10-31": "Gat in de eigen counter door uitval van fetch_views.py (31 okt 2026).",
@@ -5927,11 +6314,45 @@
           "own_counter": 6984000,
           "global_charts": 8448000,
           "factor": 1.2096219931271477
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 6772000,
+          "global_charts": 8699000,
+          "factor": 1.2845540460720615,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 7313000,
+          "global_charts": 8541000,
+          "factor": 1.1679201422124983,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 6533000,
+          "global_charts": 8514000,
+          "factor": 1.3032297566202358,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 6457000,
+          "global_charts": 8372000,
+          "factor": 1.2965773579061484,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 6164000,
+          "global_charts": 7928000,
+          "factor": 1.2861778066190785
         }
       ],
       "min": 1.1144982615023853,
       "max": 1.3743439009027925,
-      "avg": 1.2500119106839396,
+      "avg": 1.2513931537466008,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
@@ -6315,11 +6736,45 @@
           "own_counter": 4975000,
           "global_charts": 5436000,
           "factor": 1.0926633165829145
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 5089000,
+          "global_charts": 5911000,
+          "factor": 1.1615248575358617,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 5684000,
+          "global_charts": 5967000,
+          "factor": 1.0497888810696692,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 5656000,
+          "global_charts": 6365000,
+          "factor": 1.1253536067892504,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 5656000,
+          "global_charts": 6227000,
+          "factor": 1.100954738330976,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 4990000,
+          "global_charts": 5503000,
+          "factor": 1.102805611222445
         }
       ],
-      "min": 1.0926633165829145,
+      "min": 1.0497888810696692,
       "max": 1.244602048857368,
-      "avg": 1.1448293042253728,
+      "avg": 1.1419586975663312,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
@@ -6703,11 +7158,45 @@
           "own_counter": 3309000,
           "global_charts": 4016000,
           "factor": 1.2136597159262617
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 3272000,
+          "global_charts": 4315000,
+          "factor": 1.3187652811735942,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 3568000,
+          "global_charts": 4295000,
+          "factor": 1.203755605381166,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 3344000,
+          "global_charts": 4197000,
+          "factor": 1.2550837320574162,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 3242000,
+          "global_charts": 4003000,
+          "factor": 1.2347316471314003,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 3025000,
+          "global_charts": 3822000,
+          "factor": 1.2634710743801654
         }
       ],
       "min": 1.1167411058062529,
       "max": 1.408994708994709,
-      "avg": 1.2809744173803346,
+      "avg": 1.2789577807119294,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
@@ -7090,11 +7579,45 @@
           "own_counter": 13875000,
           "global_charts": 17047000,
           "factor": 1.2286126126126127
+        },
+        {
+          "date": "2026-11-11",
+          "own_counter": 14118000,
+          "global_charts": 18463000,
+          "factor": 1.3077631392548519,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-12",
+          "own_counter": 17990000,
+          "global_charts": 21236000,
+          "factor": 1.1804335742078933,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-13",
+          "own_counter": 18651000,
+          "global_charts": 23230000,
+          "factor": 1.2455096241488393,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-14",
+          "own_counter": 17222000,
+          "global_charts": 21555000,
+          "factor": 1.2515967947973523,
+          "backfill": true
+        },
+        {
+          "date": "2026-11-15",
+          "own_counter": 15891000,
+          "global_charts": 20051000,
+          "factor": 1.2617833994084702
         }
       ],
-      "min": 1.1888460989873058,
+      "min": 1.1804335742078933,
       "max": 1.3330507756209207,
-      "avg": 1.2502808323225503,
+      "avg": 1.250213369356998,
       "excluded_dates": {
         "2026-09-07": "Eerste (halve) dag dat de eigen counter live stond -- factor kunstmatig hoog.",
         "2026-11-05": "Eigen counter te laag: Topic-video's waren tijdelijk uit de tracking verdwenen (3-5 nov 2026)."
@@ -7183,7 +7706,12 @@
       "2026-11-03": 13590000,
       "2026-11-04": 13686000,
       "2026-11-05": 13593000,
-      "2026-11-08": 12472000
+      "2026-11-08": 12472000,
+      "2026-11-11": 13432000,
+      "2026-11-12": 13425000,
+      "2026-11-13": 13673000,
+      "2026-11-14": 13188000,
+      "2026-11-15": 12418000
     },
     "drake": {
       "2026-08-14": 12544000,
@@ -7270,7 +7798,12 @@
       "2026-11-03": 11604000,
       "2026-11-04": 11667000,
       "2026-11-05": 11925000,
-      "2026-11-08": 10490000
+      "2026-11-08": 10490000,
+      "2026-11-11": 11740000,
+      "2026-11-12": 11995000,
+      "2026-11-13": 13188000,
+      "2026-11-14": 12777000,
+      "2026-11-15": 11105000
     },
     "wallen": {
       "2026-08-14": 5345000,
@@ -7357,7 +7890,12 @@
       "2026-11-03": 3941000,
       "2026-11-04": 3995000,
       "2026-11-05": 4131000,
-      "2026-11-08": 3474000
+      "2026-11-08": 3474000,
+      "2026-11-11": 4038000,
+      "2026-11-12": 4130000,
+      "2026-11-13": 4553000,
+      "2026-11-14": 4171000,
+      "2026-11-15": 3464000
     },
     "badbunny": {
       "2026-08-14": 27698000,
@@ -7444,7 +7982,12 @@
       "2026-11-03": 24857000,
       "2026-11-04": 25745000,
       "2026-11-05": 26547000,
-      "2026-11-08": 23047000
+      "2026-11-08": 23047000,
+      "2026-11-11": 25873000,
+      "2026-11-12": 26262000,
+      "2026-11-13": 28106000,
+      "2026-11-14": 28811000,
+      "2026-11-15": 23142000
     },
     "ariana": {
       "2026-08-14": 16154000,
@@ -7531,7 +8074,12 @@
       "2026-11-03": 13998000,
       "2026-11-04": 14270000,
       "2026-11-05": 14318000,
-      "2026-11-08": 13592000
+      "2026-11-08": 13592000,
+      "2026-11-11": 14236000,
+      "2026-11-12": 14298000,
+      "2026-11-13": 14733000,
+      "2026-11-14": 14516000,
+      "2026-11-15": 13638000
     },
     "youngboy": {
       "2026-08-14": 7279000,
@@ -7618,7 +8166,12 @@
       "2026-11-03": 6426000,
       "2026-11-04": 6425000,
       "2026-11-05": 6628000,
-      "2026-11-08": 6013000
+      "2026-11-08": 6013000,
+      "2026-11-11": 6453000,
+      "2026-11-12": 6560000,
+      "2026-11-13": 7089000,
+      "2026-11-14": 6918000,
+      "2026-11-15": 5850000
     },
     "bieber": {
       "2026-08-14": 15686000,
@@ -7707,7 +8260,10 @@
       "2026-11-05": 15509000,
       "2026-11-08": 14592000,
       "2026-11-11": 15764000,
-      "2026-11-12": 15938000
+      "2026-11-12": 15938000,
+      "2026-11-13": 16957000,
+      "2026-11-14": 16865000,
+      "2026-11-15": 15237000
     },
     "fuerzaregida": {
       "2026-09-08": 18833000,
@@ -7770,7 +8326,11 @@
       "2026-11-04": 21402000,
       "2026-11-05": 22008000,
       "2026-11-08": 21027000,
-      "2026-11-11": 21608000
+      "2026-11-11": 21608000,
+      "2026-11-12": 22445000,
+      "2026-11-13": 24686000,
+      "2026-11-14": 26577000,
+      "2026-11-15": 22218000
     },
     "future": {
       "2026-09-08": 6001000,
@@ -7832,7 +8392,12 @@
       "2026-11-03": 5588000,
       "2026-11-04": 5661000,
       "2026-11-05": 5777000,
-      "2026-11-08": 5414000
+      "2026-11-08": 5414000,
+      "2026-11-11": 6766000,
+      "2026-11-12": 6706000,
+      "2026-11-13": 6950000,
+      "2026-11-14": 6580000,
+      "2026-11-15": 5464000
     },
     "kanye": {
       "2026-09-08": 5243000,
@@ -7894,7 +8459,12 @@
       "2026-11-03": 4693000,
       "2026-11-04": 4767000,
       "2026-11-05": 4870000,
-      "2026-11-08": 4330000
+      "2026-11-08": 4330000,
+      "2026-11-11": 4809000,
+      "2026-11-12": 4861000,
+      "2026-11-13": 4976000,
+      "2026-11-14": 4767000,
+      "2026-11-15": 4264000
     },
     "katseye": {
       "2026-09-08": 17845000,
@@ -7956,7 +8526,12 @@
       "2026-11-03": 13515000,
       "2026-11-04": 13664000,
       "2026-11-05": 14002000,
-      "2026-11-08": 15813000
+      "2026-11-08": 15813000,
+      "2026-11-11": 14518000,
+      "2026-11-12": 14407000,
+      "2026-11-13": 16451000,
+      "2026-11-14": 19048000,
+      "2026-11-15": 15959000
     },
     "kendrick": {
       "2026-09-08": 5416000,
@@ -8018,7 +8593,12 @@
       "2026-11-03": 5315000,
       "2026-11-04": 5381000,
       "2026-11-05": 5420000,
-      "2026-11-08": 4642000
+      "2026-11-08": 4642000,
+      "2026-11-11": 5282000,
+      "2026-11-12": 5359000,
+      "2026-11-13": 5516000,
+      "2026-11-14": 5234000,
+      "2026-11-15": 4738000
     },
     "olivia": {
       "2026-09-08": 6683000,
@@ -8080,7 +8660,12 @@
       "2026-11-03": 7573000,
       "2026-11-04": 7694000,
       "2026-11-05": 7923000,
-      "2026-11-08": 8448000
+      "2026-11-08": 8448000,
+      "2026-11-11": 8699000,
+      "2026-11-12": 8541000,
+      "2026-11-13": 8514000,
+      "2026-11-14": 8372000,
+      "2026-11-15": 7928000
     },
     "postmalone": {
       "2026-09-08": 7272000,
@@ -8142,7 +8727,12 @@
       "2026-11-03": 5800000,
       "2026-11-04": 5835000,
       "2026-11-05": 5974000,
-      "2026-11-08": 5436000
+      "2026-11-08": 5436000,
+      "2026-11-11": 5911000,
+      "2026-11-12": 5967000,
+      "2026-11-13": 6365000,
+      "2026-11-14": 6227000,
+      "2026-11-15": 5503000
     },
     "tatemcrae": {
       "2026-09-08": 2658000,
@@ -8204,7 +8794,12 @@
       "2026-11-03": 4371000,
       "2026-11-04": 4387000,
       "2026-11-05": 4382000,
-      "2026-11-08": 4016000
+      "2026-11-08": 4016000,
+      "2026-11-11": 4315000,
+      "2026-11-12": 4295000,
+      "2026-11-13": 4197000,
+      "2026-11-14": 4003000,
+      "2026-11-15": 3822000
     },
     "weeknd": {
       "2026-09-08": 16145000,
@@ -8266,7 +8861,12 @@
       "2026-11-03": 18379000,
       "2026-11-04": 19208000,
       "2026-11-05": 19122000,
-      "2026-11-08": 17047000
+      "2026-11-08": 17047000,
+      "2026-11-11": 18463000,
+      "2026-11-12": 21236000,
+      "2026-11-13": 23230000,
+      "2026-11-14": 21555000,
+      "2026-11-15": 20051000
     }
   }
 }
