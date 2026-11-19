@@ -7,6 +7,8 @@ Safari werkt het wel (niet in Chrome). Zo werk je de officiële totalen bij:
 
 Safari → Instellingen → **Geavanceerd** → vink **"Toon functies voor webontwikkelaars"** aan.
 
+> **Let op (nov 2026):** YouTube Charts eist sinds kort een reCAPTCHA-token bij elke aanvraag. Het automatisch ophalen met deze code geeft daardoor een 403 ("PERMISSION_DENIED"), ook ingelogd. Dit is bewuste bot-detectie van YouTube en wordt niet omzeild. De code hieronder werkt tot nader order niet.
+
 ## Elke keer
 
 1. Open in **Safari** een artiestpagina, bijvoorbeeld:
