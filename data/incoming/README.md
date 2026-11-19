@@ -1,4 +1,30 @@
-# Global Charts bijwerken (handmatig, via Safari)
+# Global Charts bijwerken
+
+## Sinds 19 nov 2026: via Claude in Chrome (werkt)
+
+YouTube Charts eist sinds nov 2026 een reCAPTCHA-token bij elke aanvraag. Scripts
+(Safari-code hieronder, GitHub Action, curl) krijgen daardoor een **403**. De pagina zelf
+werkt wel gewoon in een echte browser en toont per artiest een tabel met de dagwaarden
+van de laatste 28 dagen. Zo werk je de totalen bij:
+
+1. Zet Chrome open met de Claude-in-Chrome-extensie actief (je hoeft niet in te loggen).
+2. Vraag Claude: **"haal de totalen op via Chrome"**.
+3. Claude opent de 16 artiestpagina's, leest de tabel "Date Views" uit de pagina, controleert
+   2 bekende dagen als overlap, voegt alleen ontbrekende dagen toe
+   (`scripts/process_gc_upload.py`) en pusht `data/analysis_data.json`.
+
+**Tip voor de URL:** `https://charts.youtube.com/artist/<id>?date_end=2026-11-21T00%3A00%3A00Z`.
+Het datum-deel mag een paar dagen later zijn dan de laatste bekende dag. De pagina begrenst het
+zelf op de laatste beschikbare dag, dus met *vandaag + 2 dagen* krijg je de nieuwste 1-2 dagen
+extra. (De grafiek loopt ca. 2 dagen achter; 6 nov 2026 ontbreekt bij YouTube voor alle artiesten.)
+
+Er wordt niets omzeild: geen tokens, geen cookies, geen eigen API-aanvragen. Verschijnt er
+een echte CAPTCHA-uitdaging, dan stopt Claude en moet jij het doen.
+
+---
+
+## Verouderd: Safari-console en upload (werkt sinds nov 2026 niet meer)
+
 
 Het automatisch ophalen krijgt sinds okt 2026 een HTTP 429-fout van YouTube. In
 Safari werkt het wel (niet in Chrome). Zo werk je de officiële totalen bij:
