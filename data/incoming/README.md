@@ -18,6 +18,9 @@ Het datum-deel mag een paar dagen later zijn dan de laatste bekende dag. De pagi
 zelf op de laatste beschikbare dag, dus met *vandaag + 2 dagen* krijg je de nieuwste 1-2 dagen
 extra. (De grafiek loopt ca. 2 dagen achter; 6 nov 2026 ontbreekt bij YouTube voor alle artiesten.)
 
+**Tip tegen CAPTCHA's:** als Claude de pagina's zelf opent, toont YouTube na ca. 8 pagina's een CAPTCHA. Sneller en rustiger: open de 16 pagina's zelf in één keer met
+`open -a "Google Chrome" "<url1>" "<url2>" ...` (Terminal), los een CAPTCHA zelf op, sleep de nieuwe tabbladen naar de Claude-tabgroep en vraag Claude de tabbladen uit te lezen.
+
 Er wordt niets omzeild: geen tokens, geen cookies, geen eigen API-aanvragen. Verschijnt er
 een echte CAPTCHA-uitdaging, dan stopt Claude en moet jij het doen.
 
