@@ -2327,7 +2327,7 @@ function renderKalshiTab() {
   // op de eigen counter x UCG-factor-range, net als de week.
   let month = null;
   if (monthly) {
-    month = kalshiMonthRange(activeArtist, monthly.month, appData.log, minFactor, maxFactor);
+    month = kalshiMonthRange(activeArtist, monthly.month, appData.log, minFactor, maxFactor, mondayKey);
     mRangeEl.innerHTML = kalshiRangeRow('Maand', month);
   } else {
     mRangeEl.innerHTML = market ? '<div class="kalshi-range-row"><span class="kalshi-range-label">Maand</span><span class="neu">geen lopende maandmarkt voor deze artiest</span></div>' : '';
@@ -2392,46 +2392,64 @@ function kalshiWeekRange(days, minFactor, maxFactor) {
   };
 }
 
-// Maand-range: voor elke dag deze maand die al een officiele Global Charts-
-// waarde heeft (via analysis_data.json), gebruiken we die waarde direct --
-// geen schatting nodig. Alleen voor dagen die Global Charts nog niet
-// gepubliceerd heeft (de laatste dag of twee, zie fetch_global_charts.py se
-// venster) vallen we terug op eigen counter x UCG-factor. Het resultaat is
-// dus "minimaal de hoogste al bekende dag, mogelijk hoger als een nog niet
-// bevestigde dag daar overheen gaat".
-function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor) {
-  const histPoints = [...officialByDate(artistKey)].filter(([d]) => d.startsWith(monthKey)).map(([date, v]) => ({ date, global_charts: v }));
-  let knownMax = null, knownDay = null;
-  for (const p of histPoints) {
-    if (knownMax == null || p.global_charts > knownMax) { knownMax = p.global_charts; knownDay = p.date; }
+// Maand-range, in twee delen (splitsing op de maandag van de getoonde week,
+// weekStartKey):
+//  - eerdere weken van de maand: de officiele Global Charts-totalen (die
+//    dagen liggen vast; alleen een dag zonder officiele waarde, bv. 6 nov,
+//    valt terug op eigen counter x UCG-range);
+//  - de getoonde (lopende) week: per dag officieel als Global Charts die al
+//    heeft, anders de live eigen counter x UCG-range (min en max).
+// De maand-range is het maximum over alle dagen: min = hoogste ondergrens,
+// max = hoogste bovengrens. De toelichting laat beide delen apart zien, zodat
+// je ziet welk deel de maand bepaalt.
+function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor, weekStartKey = null) {
+  const official = [...officialByDate(artistKey)].filter(([d]) => d.startsWith(monthKey));
+  const days = official.map(([key, v]) => ({ key, lo: v, hi: v, src: 'official' }));
+  const officialKeys = new Set(official.map(([d]) => d));
+  for (const d of getMonthToDateTotals(log, monthKey)) {
+    if (d.total == null || officialKeys.has(d.key) || minFactor == null || maxFactor == null) continue;
+    days.push({ key: d.key, lo: d.total * minFactor, hi: d.total * maxFactor, src: 'live' });
   }
-  const knownDates = new Set(histPoints.map(p => p.date));
 
-  const monthDays = getMonthToDateTotals(log, monthKey).filter(d => d.total != null && !knownDates.has(d.key));
-  const openHighest = monthDays.length ? monthDays.reduce((a, b) => (b.total > a.total ? b : a)) : null;
-  const openMin = (openHighest && minFactor != null) ? openHighest.total * minFactor : null;
-  const openMax = (openHighest && maxFactor != null) ? openHighest.total * maxFactor : null;
-
-  const minCandidates = [knownMax, openMin].filter(v => v != null);
-  const maxCandidates = [knownMax, openMax].filter(v => v != null);
-  const known = minCandidates.length > 0;
-  const min = known ? Math.max(...minCandidates) : null;
-  const max = known ? Math.max(...maxCandidates) : null;
+  const known = days.length > 0;
+  const min = known ? Math.max(...days.map(d => d.lo)) : null;
+  const max = known ? Math.max(...days.map(d => d.hi)) : null;
+  const officialMax = official.length ? Math.max(...official.map(([, v]) => v)) : null;
+  const liveMax = days.filter(d => d.src === 'live').reduce((m, d) => Math.max(m, d.hi), -Infinity);
   // "Definitief" zodra geen enkele nog-onbevestigde dag de bekende piek nog kan overtreffen.
-  const settled = known && (openMax == null || knownMax >= openMax);
+  const settled = known && (liveMax === -Infinity || (officialMax != null && officialMax >= liveMax));
 
-  const knownLabel = knownDay ? new Date(knownDay + 'T12:00:00Z').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : null;
+  const short = key => new Date(key + 'T12:00:00Z').toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const val = v => fmt(floor1000(v));
+  const peak = list => list.reduce((a, b) => (b.hi > a.hi ? b : a));
+  const prior = weekStartKey ? days.filter(d => d.key < weekStartKey) : days;
+  const cur = weekStartKey ? days.filter(d => d.key >= weekStartKey) : [];
+
   let meta = '', tooltip = '';
   if (known) {
-    if (settled) {
-      meta = `officiële Global Charts-piek, ${knownLabel}`;
-      tooltip = 'Hoogste al door Global Charts gepubliceerde dagtotaal deze maand -- geen schatting.';
-    } else if (knownMax != null) {
-      meta = `bekende piek ${knownLabel} · resterende dagen via UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}`;
-      tooltip = 'Ondergrens is de al bekende Global Charts-piek; bovengrens gaat ervan uit dat de nog niet gepubliceerde dag(en) die overtreffen.';
-    } else {
+    if (!official.length) {
       meta = `nog geen Global Charts-data deze maand · UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}`;
       tooltip = 'Nog geen dag deze maand heeft een gepubliceerde Global Charts-waarde -- volledig geschat via eigen counter x UCG-factor.';
+    } else {
+      const parts = [];
+      if (prior.length) {
+        const pk = peak(prior);
+        parts.push(`eerdere weken: ${pk.src === 'official' ? 'officiële piek' : 'geschatte piek'} ${val(pk.hi)} (${short(pk.key)})`);
+      } else if (weekStartKey) {
+        parts.push('eerdere weken: geen dagen');
+      }
+      if (cur.length) {
+        const cmin = Math.max(...cur.map(d => d.lo)), cmax = Math.max(...cur.map(d => d.hi));
+        const nOff = cur.filter(d => d.src === 'official').length, nLive = cur.length - nOff;
+        const basis = [nOff ? `${nOff} dag${nOff > 1 ? 'en' : ''} officieel` : '', nLive ? `${nLive} live × UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}` : ''].filter(Boolean).join(' + ');
+        parts.push(`${kalshiWeekView === 'previous' ? 'getoonde week' : 'deze week'}: ${cmin === cmax ? val(cmax) : `${val(cmin)}–${val(cmax)}`} (${basis})`);
+      } else if (!weekStartKey) {
+        parts.push(`resterende dagen via UCG ${minFactor.toFixed(2)}–${maxFactor.toFixed(2)}`);
+      }
+      meta = parts.join(' · ');
+      tooltip = settled
+        ? 'Hoogste al door Global Charts gepubliceerde dagtotaal deze maand -- geen schatting. Eerdere weken: officiële totalen; getoonde week: officieel waar bekend, anders live x UCG, en geen enkele nog onbevestigde dag kan de piek nog overtreffen.'
+        : 'Eerdere weken van de maand: officiële Global Charts-totalen. Getoonde week: per dag officieel als bekend, anders live eigen counter x UCG-range. Ondergrens = hoogste ondergrens van alle dagen; bovengrens gaat ervan uit dat de nog niet gepubliceerde dag(en) bovenaan van de UCG-range uitkomen.';
     }
   }
   return { min, max, known, settled, meta, tooltip };
