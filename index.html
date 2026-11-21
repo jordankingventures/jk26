@@ -2394,9 +2394,10 @@ function kalshiWeekRange(days, minFactor, maxFactor) {
 
 // Maand-range, in twee delen (splitsing op de maandag van de getoonde week,
 // weekStartKey):
-//  - eerdere weken van de maand: de officiele Global Charts-totalen (die
-//    dagen liggen vast; alleen een dag zonder officiele waarde, bv. 6 nov,
-//    valt terug op eigen counter x UCG-range);
+//  - eerdere weken van de maand: alleen de officiele Global Charts-totalen
+//    (die dagen liggen vast). Een dag zonder officiele waarde, bv. 6 nov
+//    (YouTube toont die dag niet), telt NIET mee -- Kalshi kan hem ook niet
+//    uit de grafiek lezen;
 //  - de getoonde (lopende) week: per dag officieel als Global Charts die al
 //    heeft, anders de live eigen counter x UCG-range (min en max).
 // De maand-range is het maximum over alle dagen: min = hoogste ondergrens,
@@ -2408,6 +2409,7 @@ function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor, weekSt
   const officialKeys = new Set(official.map(([d]) => d));
   for (const d of getMonthToDateTotals(log, monthKey)) {
     if (d.total == null || officialKeys.has(d.key) || minFactor == null || maxFactor == null) continue;
+    if (weekStartKey && d.key < weekStartKey) continue; // eerdere weken: alleen officieel
     days.push({ key: d.key, lo: d.total * minFactor, hi: d.total * maxFactor, src: 'live' });
   }
 
@@ -2434,7 +2436,7 @@ function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor, weekSt
       const parts = [];
       if (prior.length) {
         const pk = peak(prior);
-        parts.push(`eerdere weken: ${pk.src === 'official' ? 'officiële piek' : 'geschatte piek'} ${val(pk.hi)} (${short(pk.key)})`);
+        parts.push(`eerdere weken: officiële piek ${val(pk.hi)} (${short(pk.key)})`);
       } else if (weekStartKey) {
         parts.push('eerdere weken: geen dagen');
       }
@@ -2449,7 +2451,7 @@ function kalshiMonthRange(artistKey, monthKey, log, minFactor, maxFactor, weekSt
       meta = parts.join(' · ');
       tooltip = settled
         ? 'Hoogste al door Global Charts gepubliceerde dagtotaal deze maand -- geen schatting. Eerdere weken: officiële totalen; getoonde week: officieel waar bekend, anders live x UCG, en geen enkele nog onbevestigde dag kan de piek nog overtreffen.'
-        : 'Eerdere weken van de maand: officiële Global Charts-totalen. Getoonde week: per dag officieel als bekend, anders live eigen counter x UCG-range. Ondergrens = hoogste ondergrens van alle dagen; bovengrens gaat ervan uit dat de nog niet gepubliceerde dag(en) bovenaan van de UCG-range uitkomen.';
+        : 'Eerdere weken van de maand: alleen officiële Global Charts-totalen (een dag zonder officieel cijfer, zoals 6 nov, telt niet mee). Getoonde week: per dag officieel als bekend, anders live eigen counter x UCG-range. Ondergrens = hoogste ondergrens van alle dagen; bovengrens gaat ervan uit dat de nog niet gepubliceerde dag(en) bovenaan van de UCG-range uitkomen.';
     }
   }
   return { min, max, known, settled, meta, tooltip };
