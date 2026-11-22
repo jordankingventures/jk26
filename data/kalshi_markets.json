@@ -1,7 +1,7 @@
 {
   "series_ticker": "KXYTVIEWSW",
   "monthly_series_ticker": "KXYTVIEWSHIGH",
-  "fetched_at": "2026-11-22T16:35:34Z",
+  "fetched_at": "2026-11-22T16:40:45Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -786,10 +786,10 @@
               "ticker": "KXYTVIEWSHIGH-DRA26DEC-13.75M",
               "floor_strike": 13750000,
               "label": "Above 13.75M",
-              "yes_bid": 0.08,
+              "yes_bid": 0.07,
               "yes_ask": 0.96,
               "no_bid": 0.04,
-              "no_ask": 0.92
+              "no_ask": 0.93
             },
             {
               "ticker": "KXYTVIEWSHIGH-DRA26DEC-14.0M",
@@ -2119,10 +2119,10 @@
           "ticker": "KXYTVIEWSW-POS26NOV22-7.5M",
           "floor_strike": 7500000,
           "label": "Above 7.5M",
-          "yes_bid": 0.01,
+          "yes_bid": 0.02,
           "yes_ask": 0.04,
           "no_bid": 0.96,
-          "no_ask": 0.99
+          "no_ask": 0.98
         },
         {
           "ticker": "KXYTVIEWSW-POS26NOV22-8.0M",
@@ -2155,8 +2155,8 @@
               "floor_strike": 7000000,
               "label": "Above 7M",
               "yes_bid": 0.2,
-              "yes_ask": 0.25,
-              "no_bid": 0.75,
+              "yes_ask": 0.36,
+              "no_bid": 0.64,
               "no_ask": 0.8
             },
             {
@@ -2173,8 +2173,8 @@
               "floor_strike": 8000000,
               "label": "Above 8M",
               "yes_bid": 0.05,
-              "yes_ask": 0.29,
-              "no_bid": 0.71,
+              "yes_ask": 0.4,
+              "no_bid": 0.6,
               "no_ask": 0.95
             }
           ]
@@ -2380,10 +2380,10 @@
           "ticker": "KXYTVIEWSW-TAT26NOV22-4.1M",
           "floor_strike": 4100000,
           "label": "Above 4.1M",
-          "yes_bid": 0.76,
+          "yes_bid": 0.84,
           "yes_ask": 1.0,
           "no_bid": 0.0,
-          "no_ask": 0.24
+          "no_ask": 0.16
         },
         {
           "ticker": "KXYTVIEWSW-TAT26NOV22-4.2M",
