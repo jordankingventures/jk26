@@ -1,7 +1,7 @@
 {
   "series_ticker": "KXYTVIEWSW",
   "monthly_series_ticker": "KXYTVIEWSHIGH",
-  "fetched_at": "2026-11-24T03:01:14Z",
+  "fetched_at": "2026-11-24T03:05:34Z",
   "artists": {
     "ariana": {
       "artist_name": "Ariana Grande",
@@ -2507,19 +2507,19 @@
               "ticker": "KXYTVIEWSHIGH-KAT26DEC-22.0M",
               "floor_strike": 22000000,
               "label": "Above 22M",
-              "yes_bid": 0.24,
+              "yes_bid": 0.3,
               "yes_ask": 0.93,
               "no_bid": 0.07,
-              "no_ask": 0.76
+              "no_ask": 0.7
             },
             {
               "ticker": "KXYTVIEWSHIGH-KAT26DEC-23.0M",
               "floor_strike": 23000000,
               "label": "Above 23M",
-              "yes_bid": 0.32,
+              "yes_bid": 0.34,
               "yes_ask": 0.95,
               "no_bid": 0.05,
-              "no_ask": 0.68
+              "no_ask": 0.66
             },
             {
               "ticker": "KXYTVIEWSHIGH-KAT26DEC-24.0M",
@@ -2750,8 +2750,8 @@
               "floor_strike": 6500000,
               "label": "Above 6.5M",
               "yes_bid": 0.14,
-              "yes_ask": 0.3,
-              "no_bid": 0.7,
+              "yes_ask": 0.29,
+              "no_bid": 0.71,
               "no_ask": 0.86
             },
             {
@@ -3602,8 +3602,8 @@
               "floor_strike": 7000000,
               "label": "Above 7M",
               "yes_bid": 0.27,
-              "yes_ask": 0.56,
-              "no_bid": 0.44,
+              "yes_ask": 0.65,
+              "no_bid": 0.35,
               "no_ask": 0.73
             },
             {
@@ -5019,10 +5019,10 @@
               "ticker": "KXYTVIEWSHIGH-YOU26DEC-12.0M",
               "floor_strike": 12000000,
               "label": "Above 12M",
-              "yes_bid": 0.12,
+              "yes_bid": 0.07,
               "yes_ask": 0.29,
               "no_bid": 0.71,
-              "no_ask": 0.88
+              "no_ask": 0.93
             }
           ]
         }
